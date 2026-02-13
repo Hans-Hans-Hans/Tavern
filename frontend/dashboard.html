@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tavern Dashboard</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <div class="logo">Tavern 🍺</div>
+      <a href="https://github.com/Hans-Hans-Hans/Tavern.git" target="_blank" class="github-link">GitHub</a>
+    </div>
+  </header>
+
+  <main class="dashboard-main">
+
+    <aside class="sidebar">
+      <h2>Your Taverns</h2>
+      <ul id="tavern-list"></ul>
+      <input type="text" id="new-tavern-name" placeholder="New Tavern Name">
+      <button id="create-tavern">Add Tavern</button>
+    </aside>
+
+    <section class="chat-area">
+      <div id="channel-header">Select a tavern to see channels</div>
+      <ul id="channel-list"></ul>
+
+      <div id="chat-container" class="chat-container">
+        <ul id="messages"></ul>
+        <div class="chat-input">
+          <input type="text" id="message-input" placeholder="Type a message...">
+          <button id="send-message">Send</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>© 2026 Tavern</footer>
+
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

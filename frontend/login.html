@@ -27,16 +27,14 @@
     </div>
 
     <form id="loginForm">
-      <!-- MESSAGE CONTAINER -->
-      <div id="loginMessage" class="message"></div>
+        <label>Username</label>
+        <input type="text" id="loginUsername" required />
 
-      <label for="loginUsername">Username</label>
-      <input type="text" id="loginUsername" name="loginUsername" placeholder="Enter your username">
+        <label>Password</label>
+        <input type="password" id="loginPassword" required />
 
-      <label for="loginPassword">Password</label>
-      <input type="password" id="loginPassword" name="loginPassword" placeholder="Enter your password">
-
-      <button type="submit">Login</button>
+        <button type="submit">Login</button>
+        <div id="loginMessage"></div>
     </form>
 
     <p class="form-link">
@@ -48,6 +46,6 @@
     © 2026 Tavern
   </footer>
 
-  <script src="js/app.js"></script>
+  <script src="js/app.js" defer></script>
 </body>
 </html>
