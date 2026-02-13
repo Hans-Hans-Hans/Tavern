@@ -3,31 +3,50 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tavern - Login</title>
+  <title>Login - Tavern</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
 </head>
 <body>
   <header>
-    <h1>Login to Tavern</h1>
+    <div class="header-content">
+      <div class="logo">Tavern 🍺</div>
+      <a href="https://github.com/Hans-Hans-Hans/Tavern.git" target="_blank" class="github-link">GitHub</a>
+    </div>
   </header>
 
-  <main>
-    <form id="loginForm">
-      <label for="loginUsername">Username:</label>
-      <input type="text" id="loginUsername" placeholder="Username" required>
+  <main class="page-container">
+    <div class="hero-title-wrapper">
+      <svg class="hero-crest" viewBox="0 0 512 512" fill="none" stroke="white" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M256 40 L420 120 V260 C420 350 340 430 256 470 C172 430 92 350 92 260 V120 Z"/>
+        <line x1="256" y1="120" x2="256" y2="370"/>
+        <line x1="220" y1="160" x2="292" y2="160"/>
+      </svg>
+      <h1>Enter the Tavern</h1>
+    </div>
 
-      <label for="loginPassword">Password:</label>
-      <input type="password" id="loginPassword" placeholder="Password" required>
+    <form id="loginForm">
+      <!-- MESSAGE CONTAINER -->
+      <div id="loginMessage" class="message"></div>
+
+      <label for="loginUsername">Username</label>
+      <input type="text" id="loginUsername" name="loginUsername" placeholder="Enter your username">
+
+      <label for="loginPassword">Password</label>
+      <input type="password" id="loginPassword" name="loginPassword" placeholder="Enter your password">
 
       <button type="submit">Login</button>
     </form>
 
-    <p id="loginMessage" class="message"></p>
-    <p>Don't have an account? <a href="register.html">Register here</a></p>
+    <p class="form-link">
+      Don't have an account? <a href="register.html">Register here</a>
+    </p>
   </main>
+
+  <footer>
+    © 2026 Tavern
+  </footer>
 
   <script src="js/app.js"></script>
 </body>

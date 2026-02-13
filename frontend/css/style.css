@@ -34,8 +34,35 @@ header {
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.github-link {
+  text-decoration: none;
+  color: #fff;
+  font-weight: 500;
+  padding: 0.4rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+  transition: all 0.25s ease;
+}
+
+.github-link:hover {
+  background-color: rgba(255,255,255,0.15);
+  transform: translateY(-2px);
+}
+
 /* ========================= */
-/* Main Layout */
+/* Main Layout / Hero Section */
 /* ========================= */
 main {
   flex: 1;
@@ -48,9 +75,6 @@ main {
   width: 100%;
 }
 
-/* ========================= */
-/* Hero Section */
-/* ========================= */
 .hero {
   text-align: center;
   max-width: 700px;
@@ -60,9 +84,36 @@ main {
   gap: 1.5rem;
 }
 
-.hero h1 {
-  font-size: 2.6rem;
-  font-weight: 700;
+.hero-title-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-title-wrapper h1 {
+  position: relative;
+  z-index: 2;
+  font-family: 'UnifrakturCook', cursive;
+  color: #f5deb3;
+  text-shadow: 1px 1px 3px #000000aa;
+  letter-spacing: 1px;
+}
+
+.hero-crest {
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  opacity: 0.05;
+  z-index: 1;
+  pointer-events: none;
+  animation: floatCrest 6s ease-in-out infinite;
+}
+
+@keyframes floatCrest {
+  0% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-8px) scale(1.02); }
+  100% { transform: translateY(0px) scale(1); }
 }
 
 .tagline {
@@ -92,7 +143,6 @@ main {
   transition: all 0.25s ease;
 }
 
-/* Primary (Enter the Tavern) */
 .buttons .primary {
   background: linear-gradient(90deg, #8b5e34, #b0895a);
   color: #fff;
@@ -104,7 +154,6 @@ main {
   box-shadow: 0 10px 25px rgba(0,0,0,0.5);
 }
 
-/* Secondary */
 .buttons .secondary {
   background-color: #3a3a4d;
   border: 1px solid #6b5847;
@@ -146,9 +195,35 @@ main {
   font-size: 1.1rem;
 }
 
+.icon {
+  margin-bottom: 1rem;
+}
+
+.icon svg {
+  width: 38px;
+  height: 38px;
+  stroke: #ffffff;
+  opacity: 0.85;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.feature:hover .icon svg {
+  transform: scale(1.1);
+  opacity: 1;
+}
+
 /* ========================= */
-/* Forms */
+/* Forms (Login/Register Pages) */
 /* ========================= */
+.page-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  gap: 1rem;
+}
+
 form {
   background-color: #2c2c3c;
   padding: 2rem;
@@ -206,7 +281,7 @@ form button:hover {
 }
 
 /* ========================= */
-/* Messages */
+/* Messages (Login/Register) */
 /* ========================= */
 .message {
   font-weight: 500;
@@ -215,6 +290,7 @@ form button:hover {
   border-radius: 8px;
   background-color: rgba(255,255,255,0.05);
   backdrop-filter: blur(4px);
+  text-align: center;
   transition: all 0.3s ease;
 }
 
@@ -244,100 +320,6 @@ footer {
   text-align: center;
   font-size: 0.9rem;
   box-shadow: 0 -4px 12px rgba(0,0,0,0.3);
-}
-
-/* Header Layout */
-.header-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.logo {
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: 1px;
-}
-
-/* GitHub Link */
-.github-link {
-  text-decoration: none;
-  color: #fff;
-  font-weight: 500;
-  padding: 0.4rem 0.9rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.2);
-  transition: all 0.25s ease;
-}
-
-.github-link:hover {
-  background-color: rgba(255,255,255,0.15);
-  transform: translateY(-2px);
-}
-.icon {
-  margin-bottom: 1rem;
-}
-
-.icon svg {
-  width: 38px;
-  height: 38px;
-  stroke: #ffffff;
-  opacity: 0.85;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-}
-
-.feature:hover .icon svg {
-  transform: scale(1.1);
-  opacity: 1;
-}
-
-.hero-title-wrapper {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.hero-title-wrapper h1 {
-  position: relative;
-  z-index: 2;
-}
-
-.hero-crest {
-  position: absolute;
-  width: 260px;
-  height: 260px;
-  opacity: 0.05;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.hero-crest {
-  position: absolute;
-  width: 260px;
-  height: 260px;
-  opacity: 0.05;
-  z-index: 1;
-  pointer-events: none;
-
-  animation: floatCrest 6s ease-in-out infinite;
-}
-
-/* Floating animation */
-@keyframes floatCrest {
-  0% {
-    transform: translateY(0px) scale(1);
-  }
-  50% {
-    transform: translateY(-8px) scale(1.02);
-  }
-  100% {
-    transform: translateY(0px) scale(1);
-  }
-}
-
-footer {
   position: relative;
   overflow: hidden;
 }
-
