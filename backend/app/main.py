@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 import sqlite3
 from typing import List
@@ -8,7 +9,7 @@ from datetime import datetime
 # Import your auth utilities
 from app.auth.hashing import hash_password, verify_password
 from app.auth.validator import validate_password
-from app.auth.jwt import create_access_token, decode_access_token
+from app.auth.jwt import create_access_token, verify_access_token
 
 app = FastAPI(title="Tavern API")
 
@@ -106,20 +107,24 @@ class MessageOut(BaseModel):
     timestamp: str
 
 # ----------------------
-# Authentication Dependency
+# JWT Authentication Dependency
 # ----------------------
-def get_current_user(token: str = Depends(lambda: "")):
-    # Normally use OAuth2PasswordBearer or header
-    # For simplicity, expecting token as query param ?token=
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+
+def get_current_user(token: str = Depends(oauth2_scheme)):
     if not token:
         raise HTTPException(status_code=401, detail="Token required")
 
-    payload = decode_access_token(token)
+    payload = verify_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
     username = payload.get("sub")
     cursor.execute("SELECT id, username FROM users WHERE username = ?", (username,))
     row = cursor.fetchone()
     if not row:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise HTTPException(status_code=401, detail="User not found")
+
     return {"id": row[0], "username": row[1]}
 
 # ----------------------
@@ -133,7 +138,6 @@ def register(user: UserCreate):
         raise HTTPException(status_code=400, detail=str(e))
 
     hashed = hash_password(user.password)
-
     try:
         cursor.execute(
             "INSERT INTO users (username, password_hash) VALUES (?, ?)",
@@ -173,7 +177,11 @@ def create_tavern(tavern: TavernCreate, user=Depends(get_current_user)):
 
 @app.get("/taverns")
 def list_taverns():
-    cursor.execute("SELECT t.id, t.name, u.username FROM taverns t JOIN users u ON t.owner_id = u.id")
+    cursor.execute("""
+        SELECT t.id, t.name, u.username 
+        FROM taverns t 
+        JOIN users u ON t.owner_id = u.id
+    """)
     taverns = [{"id": row[0], "name": row[1], "owner": row[2]} for row in cursor.fetchall()]
     return taverns
 
@@ -223,11 +231,11 @@ def send_message(message: MessageCreate, user=Depends(get_current_user)):
 @app.get("/channels/{channel_id}/messages", response_model=List[MessageOut])
 def get_messages(channel_id: int):
     cursor.execute("""
-    SELECT m.content, m.timestamp, u.username
-    FROM messages m
-    JOIN users u ON m.sender_id = u.id
-    WHERE m.channel_id = ?
-    ORDER BY m.id ASC
+        SELECT m.content, m.timestamp, u.username
+        FROM messages m
+        JOIN users u ON m.sender_id = u.id
+        WHERE m.channel_id = ?
+        ORDER BY m.id ASC
     """, (channel_id,))
     rows = cursor.fetchall()
     messages = [{"sender": row[2], "content": row[0], "timestamp": row[1]} for row in rows]

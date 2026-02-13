@@ -11,36 +11,42 @@
   <header>
     <div class="header-content">
       <div class="logo">Tavern 🍺</div>
-      <a href="https://github.com/Hans-Hans-Hans/Tavern.git" target="_blank" class="github-link">GitHub</a>
+      <div class="header-buttons">
+        <button id="logout-button" class="secondary">Logout</button>
+        <a href="https://github.com/Hans-Hans-Hans/Tavern.git" target="_blank" class="github-link">GitHub</a>
+      </div>
     </div>
   </header>
 
   <main class="dashboard-main">
-
+    <!-- Sidebar: Taverns -->
     <aside class="sidebar">
       <h2>Your Taverns</h2>
-      <ul id="tavern-list"></ul>
+      <ul id="tavern-list" class="clickable-list"></ul>
       <input type="text" id="new-tavern-name" placeholder="New Tavern Name">
       <button id="create-tavern">Add Tavern</button>
     </aside>
 
-    <section class="chat-area">
-      <div id="channel-header">Select a tavern to see channels</div>
-      <ul id="channel-list"></ul>
+    <!-- Channels Panel -->
+    <div class="channels-panel">
+      <div class="channels-header" id="channel-header">Select a tavern to see channels</div>
+      <ul id="channel-list" class="clickable-list"></ul>
+    </div>
 
-      <div id="chat-container" class="chat-container">
-        <ul id="messages"></ul>
-        <div class="chat-input">
-          <input type="text" id="message-input" placeholder="Type a message...">
-          <button id="send-message">Send</button>
-        </div>
+    <!-- Chat Panel -->
+    <div class="chat-panel">
+      <ul id="messages"></ul>
+      <div class="chat-input">
+        <input type="text" id="message-input" placeholder="Type a message...">
+        <button id="send-message">Send</button>
       </div>
-    </section>
-
+    </div>
   </main>
 
   <footer>© 2026 Tavern</footer>
 
-  <script src="js/dashboard.js"></script>
+  <!-- JS -->
+  <script src="js/app.js"></script>
+  <script src="js/dashboard.js" defer></script>
 </body>
 </html>
