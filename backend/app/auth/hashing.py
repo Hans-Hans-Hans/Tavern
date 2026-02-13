@@ -1,5 +1,6 @@
 import hashlib
 from passlib.context import CryptContext
+from validator import validate_password
 
 pwd_context = CryptContext(
     schemes=["bcrypt"],
@@ -10,6 +11,7 @@ def _normalize_password(password: str) -> str:
     return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
 def hash_password(password: str) -> str:
+    validate_password(password)
     normalized = _normalize_password(password)
     return pwd_context.hash(normalized)
 
