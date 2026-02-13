@@ -26,3 +26,7 @@ Thumbs.db
 
 # Docker
 *.pid
+
+# SQLite DB
+users.db
+*.sqlite3

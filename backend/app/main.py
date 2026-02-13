@@ -1,3 +1,4 @@
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import sqlite3
@@ -7,6 +8,20 @@ from app.auth.validator import validate_password
 from app.auth.jwt import create_access_token
 
 app = FastAPI(title="Tavern Auth API")
+
+# Allow your frontend to talk to the backend
+origins = [
+    "http://127.0.0.1:3000",  # your frontend
+    "http://localhost:3000",  # also allow localhost
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],    # allow GET, POST, etc.
+    allow_headers=["*"],    # allow headers like Content-Type, Authorization
+)
 
 # Database setup
 DB_FILE = "users.db"
