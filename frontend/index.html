@@ -4,23 +4,114 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tavern - Home</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
+
   <header>
-    <h1>Welcome to Tavern</h1>
+    <div class="header-content">
+        <div class="logo">Tavern 🍺</div>
+
+        <a 
+        href="https://github.com/Hans-Hans-Hans/Tavern.git" 
+        target="_blank" 
+        class="github-link"
+        >
+        GitHub
+        </a>
+    </div>
   </header>
 
   <main>
-    <p>Your self-hosted chat and server platform.</p>
-    <div class="buttons">
-      <a href="register.html"><button>Register</button></a>
-      <a href="login.html"><button>Login</button></a>
-    </div>
+
+    <section class="hero">
+        <div class="hero-title-wrapper">
+
+            <!-- Shield Crest -->
+            <svg class="hero-crest" viewBox="0 0 512 512" fill="none" stroke="white" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+            
+                <!-- Shield -->
+                <path d="M256 40
+                        L420 120
+                        V260
+                        C420 350 340 430 256 470
+                        C172 430 92 350 92 260
+                        V120
+                        Z"/>
+                
+                <!-- Vertical Sword -->
+                <line x1="256" y1="120" x2="256" y2="370"/>
+                <line x1="220" y1="160" x2="292" y2="160"/>
+                
+
+            </svg>
+
+            <h1>Welcome to Tavern</h1>
+
+        </div>
+
+        <p class="tagline">
+            Gather your allies. Create Taverns. Form Guilds.
+        </p>
+
+        <div class="buttons">
+            <a href="register.html">
+                <button class="primary">Enter the Tavern</button>
+            </a>
+            <a href="login.html">
+                <button class="secondary">Already Inside?</button>
+            </a>
+        </div>
+    </section>
+
+
+
+    <section class="features">
+
+        <div class="feature">
+            <div class="icon">
+            <!-- Castle -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6">
+                    <path d="M3 21V8l4-3 4 3 4-3 4 3v13H3z"/>
+                    <path d="M9 21V12h6v9"/>
+                </svg>
+            </div>
+            <h3>Taverns</h3>
+            <p>Create custom servers with multiple text channels.</p>
+        </div>
+
+        <div class="feature">
+            <div class="icon">
+            <!-- Shield -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6">
+                    <path d="M12 2l7 4v6c0 5-3.5 9-7 10-3.5-1-7-5-7-10V6l7-4z"/>
+                </svg>
+            </div>
+            <h3>Guilds</h3>
+            <p>Private group chats for your trusted members.</p>
+        </div>
+
+        <div class="feature">
+            <div class="icon">
+            <!-- Lock -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6">
+                    <rect x="4" y="11" width="16" height="10" rx="2"/>
+                    <path d="M8 11V7a4 4 0 118 0v4"/>
+                </svg>
+            </div>
+            <h3>Self-Hosted</h3>
+            <p>You control the data. You control the platform.</p>
+        </div>
+
+    </section>
+
   </main>
 
-  <footer>
-    <p>© 2026 Tavern</p>
-  </footer>
+<footer>
+  © 2026 Tavern
+</footer>
+
 </body>
 </html>

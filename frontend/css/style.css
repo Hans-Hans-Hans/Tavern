@@ -1,4 +1,6 @@
+/* ========================= */
 /* General Reset */
+/* ========================= */
 * {
   margin: 0;
   padding: 0;
@@ -6,7 +8,9 @@
   font-family: 'Inter', Arial, sans-serif;
 }
 
+/* ========================= */
 /* Body */
+/* ========================= */
 body {
   background-color: #1e1e2f;
   color: #e0e0e0;
@@ -16,7 +20,9 @@ body {
   transition: background-color 0.3s, color 0.3s;
 }
 
+/* ========================= */
 /* Header */
+/* ========================= */
 header {
   background: linear-gradient(90deg, #4a3f35, #6b5847);
   color: #fff;
@@ -28,7 +34,9 @@ header {
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
-/* Main content */
+/* ========================= */
+/* Main Layout */
+/* ========================= */
 main {
   flex: 1;
   display: flex;
@@ -36,10 +44,111 @@ main {
   align-items: center;
   justify-content: center;
   padding: 3rem 1rem;
+  gap: 3rem;
+  width: 100%;
+}
+
+/* ========================= */
+/* Hero Section */
+/* ========================= */
+.hero {
+  text-align: center;
+  max-width: 700px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 1.5rem;
 }
 
+.hero h1 {
+  font-size: 2.6rem;
+  font-weight: 700;
+}
+
+.tagline {
+  color: #bbb;
+  font-size: 1.1rem;
+  max-width: 600px;
+}
+
+/* ========================= */
+/* Buttons */
+/* ========================= */
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.buttons button {
+  padding: 0.85rem 1.6rem;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: all 0.25s ease;
+}
+
+/* Primary (Enter the Tavern) */
+.buttons .primary {
+  background: linear-gradient(90deg, #8b5e34, #b0895a);
+  color: #fff;
+  font-size: 1rem;
+}
+
+.buttons .primary:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+/* Secondary */
+.buttons .secondary {
+  background-color: #3a3a4d;
+  border: 1px solid #6b5847;
+  color: #e0e0e0;
+}
+
+.buttons .secondary:hover {
+  background-color: #4a4a63;
+  transform: translateY(-2px);
+}
+
+/* ========================= */
+/* Features Section */
+/* ========================= */
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 2rem;
+  width: 100%;
+  max-width: 900px;
+}
+
+.feature {
+  background-color: #2c2c3c;
+  padding: 1.6rem;
+  border-radius: 14px;
+  text-align: center;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.5);
+}
+
+.feature h3 {
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+}
+
+/* ========================= */
 /* Forms */
+/* ========================= */
 form {
   background-color: #2c2c3c;
   padding: 2rem;
@@ -97,10 +206,8 @@ form button:hover {
 }
 
 /* ========================= */
-/* Modern Message Styling */
+/* Messages */
 /* ========================= */
-
-/* Base message */
 .message {
   font-weight: 500;
   margin-top: 1rem;
@@ -115,46 +222,21 @@ form button:hover {
   display: none;
 }
 
-/* Success messages */
 .success {
   color: #48bb78;
   background-color: rgba(72, 187, 120, 0.15);
   border: 1px solid rgba(72, 187, 120, 0.4);
 }
 
-/* Error messages */
 .error {
   color: #f56565;
   background-color: rgba(245, 101, 101, 0.15);
   border: 1px solid rgba(245, 101, 101, 0.4);
 }
 
-/* Buttons on index */
-.buttons {
-  margin-top: 2rem;
-  display: flex;
-  gap: 1rem;
-}
-
-.buttons button {
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(90deg, #4a3f35, #6b5847);
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
-}
-
-.buttons button:hover {
-  background: linear-gradient(90deg, #6b5847, #4a3f35);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-}
-
+/* ========================= */
 /* Footer */
+/* ========================= */
 footer {
   background: linear-gradient(90deg, #4a3f35, #6b5847);
   color: #fff;
@@ -163,3 +245,99 @@ footer {
   font-size: 0.9rem;
   box-shadow: 0 -4px 12px rgba(0,0,0,0.3);
 }
+
+/* Header Layout */
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+/* GitHub Link */
+.github-link {
+  text-decoration: none;
+  color: #fff;
+  font-weight: 500;
+  padding: 0.4rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+  transition: all 0.25s ease;
+}
+
+.github-link:hover {
+  background-color: rgba(255,255,255,0.15);
+  transform: translateY(-2px);
+}
+.icon {
+  margin-bottom: 1rem;
+}
+
+.icon svg {
+  width: 38px;
+  height: 38px;
+  stroke: #ffffff;
+  opacity: 0.85;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.feature:hover .icon svg {
+  transform: scale(1.1);
+  opacity: 1;
+}
+
+.hero-title-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-title-wrapper h1 {
+  position: relative;
+  z-index: 2;
+}
+
+.hero-crest {
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  opacity: 0.05;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.hero-crest {
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  opacity: 0.05;
+  z-index: 1;
+  pointer-events: none;
+
+  animation: floatCrest 6s ease-in-out infinite;
+}
+
+/* Floating animation */
+@keyframes floatCrest {
+  0% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.02);
+  }
+  100% {
+    transform: translateY(0px) scale(1);
+  }
+}
+
+footer {
+  position: relative;
+  overflow: hidden;
+}
+
