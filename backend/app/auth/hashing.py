@@ -1,6 +1,6 @@
 import hashlib
 from passlib.context import CryptContext
-from validator import validate_password
+from .validator import validate_password
 
 pwd_context = CryptContext(
     schemes=["bcrypt"],
