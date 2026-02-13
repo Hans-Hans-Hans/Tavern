@@ -10,6 +10,7 @@ venv/
 env/
 
 # Environment variables
+backend/.env
 .env
 
 # IDE
