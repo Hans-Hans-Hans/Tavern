@@ -1,44 +1,119 @@
+######################################
 # Python
+######################################
+
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
 
-# Virtual environments
+######################################
+# Virtual Environments
+######################################
+
 venv/
 env/
 .venv/
+ENV/
+env.bak/
+venv.bak/
 
-# Django
-*.log
-db.sqlite3
-media/
+######################################
+# Environment Variables (CRITICAL)
+######################################
 
-# Environment variables
 .env
 .env.*
+!.env.example
 
-# Node
+######################################
+# Django / App Logs
+######################################
+
+*.log
+logs/
+*.sqlite3
+db.sqlite3
+
+######################################
+# Database Backups / Dumps
+######################################
+
+*.sql
+*.dump
+*.backup
+
+######################################
+# PostgreSQL Local Files (if ever used)
+######################################
+
+pgdata/
+postgres_data/
+
+######################################
+# Static / Media (if generated)
+######################################
+
+staticfiles/
+media/
+
+######################################
+# Node / Frontend (future-proofing)
+######################################
+
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# Mac
-.DS_Store
-
-# VS Code
-.vscode/
-
-# IDEs
-.idea/
-
-# Build / dist
 dist/
 build/
 
-# Coverage
+######################################
+# Docker
+######################################
+
+docker-compose.override.yml
+*.pid
+
+######################################
+# Testing / Coverage
+######################################
+
 htmlcov/
 .coverage
+.pytest_cache/
+.tox/
 
-# Misc
+######################################
+# IDEs / Editors
+######################################
+
+.vscode/
+.idea/
 *.swp
+*.swo
+
+######################################
+# OS Files
+######################################
+
+.DS_Store
+Thumbs.db
+
+######################################
+# Secrets / Keys
+######################################
+
+*.pem
+*.key
+*.crt
+id_rsa
+id_rsa.pub
+
+######################################
+# Misc
+######################################
+
+*.tmp
+*.bak
+*.old
