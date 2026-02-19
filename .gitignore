@@ -34,6 +34,7 @@ venv.bak/
 logs/
 *.sqlite3
 db.sqlite3
+server\tavern.db
 
 ######################################
 # Database Backups / Dumps
