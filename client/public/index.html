@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tavern — Self-Hosted Messaging</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+  --bg: #f8f4e3;
+  --card: rgba(255,255,255,0.7);
+  --text: #2b2b2b;
+  --muted: #6d6d6d;
+  --accent: #a2a392;
+  --accent-strong: #7f8072;
+  --border: rgba(0,0,0,0.08);
+}
+
+.dark-mode {
+  --bg: #141414;
+  --card: rgba(40,40,40,0.6);
+  --text: #f5f5f5;
+  --muted: #aaaaaa;
+  --accent: #9a998c;
+  --accent-strong: #cfcfcf;
+  --border: rgba(255,255,255,0.08);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  transition: 0.3s ease;
+}
+
+/* Three.js canvas */
+#d20-canvas {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 600px;
+  height: 600px;
+  transform: translate(-50%, -50%);
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: -2;
+}
+
+.dark-mode #d20-canvas {
+  opacity: 0.15;
+}
+
+/* Glow background */
+body::before {
+  content: "";
+  position: fixed;
+  top: -200px;
+  right: -200px;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle at center, var(--accent), transparent 60%);
+  opacity: 0.15;
+  filter: blur(80px);
+  z-index: -3;
+}
+
+/* Top bar */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 60px;
+}
+
+/* Hero */
+.hero {
+  text-align: center;
+  padding: 90px 20px 60px;
+}
+
+.hero h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 64px;
+  margin: 0;
+}
+
+.hero h1 span {
+  color: var(--accent-strong);
+}
+
+.hero p {
+  margin-top: 20px;
+  color: var(--muted);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.tagline {
+  margin-top: 25px;
+  font-weight: 500;
+  color: var(--accent-strong);
+  letter-spacing: 0.5px;
+}
+
+/* Buttons */
+.cta {
+  margin-top: 40px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+button {
+  padding: 14px 28px;
+  border-radius: 30px;
+  border: none;
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.primary {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.primary:hover {
+  transform: translateY(-3px);
+}
+
+.secondary {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.secondary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+/* Features */
+.features {
+  margin: 20px auto;
+  padding: 0 20px;
+  max-width: 1100px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 40px;
+}
+
+.feature-card {
+  width: 100%;
+  padding: 40px;
+  border-radius: 20px;
+  backdrop-filter: blur(12px);
+  background: var(--card);
+  border: 1px solid var(--border);
+  transition: 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-8px);
+}
+
+.footer {
+  text-align: center;
+  padding: 40px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Theme toggle */
+#theme-toggle {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.github-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  backdrop-filter: blur(6px);
+  transition: 0.25s ease;
+}
+
+.github-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+</style>
+</head>
+<body>
+
+<canvas id="d20-canvas"></canvas>
+
+<div class="top-bar">
+  <div class="logo">Tavern</div>
+
+  <a href="https://github.com/Hans-Hans-Hans/tavern.git"
+     target="_blank"
+     class="github-link">
+     <i class="fab fa-github"></i> GitHub
+  </a>
+</div>
+
+<section class="hero">
+  <h1>Own your <span>conversations</span>.</h1>
+  <p>
+    Tavern is a self-hosted messaging platform built for privacy,
+    control, and real communities.
+  </p>
+
+  <div class="tagline">
+    Don’t roll the dice on your data. Own it. Control it.
+  </div>
+
+  <div class="cta">
+    <button class="primary" onclick="location.href='/register'">Get Started</button>
+    <button class="secondary" onclick="location.href='/login'">Login</button>
+  </div>
+</section>
+
+<section class="features">
+  <div class="feature-card">
+    <h3>Self-Hosted</h3>
+    <p>Run Tavern on your own infrastructure and maintain complete ownership of your data.</p>
+  </div>
+  <div class="feature-card">
+    <h3>Secure by Design</h3>
+    <p>Private servers and permission-based communication at its core.</p>
+  </div>
+  <div class="feature-card">
+    <h3>Organized & Flexible</h3>
+    <p>Create structured spaces tailored to your community.</p>
+  </div>
+</section>
+
+<div class="footer">
+  © 2026 Tavern — Built for private communities.
+</div>
+
+<i id="theme-toggle" class="fas fa-lightbulb"></i>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const canvas = document.getElementById('d20-canvas');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+
+renderer.setSize(600, 600);
+camera.position.z = 3;
+
+// Create geometry
+const geometry = new THREE.IcosahedronGeometry(1, 0);
+
+// Material (we'll update this dynamically)
+const material = new THREE.MeshBasicMaterial({
+  color: 0x7f8072,   // darker stone tone for light mode
+  wireframe: true
+});
+
+const d20 = new THREE.Mesh(geometry, material);
+scene.add(d20);
+
+let floatOffset = 0;
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  d20.rotation.x += 0.002;
+  d20.rotation.y += 0.003;
+
+  floatOffset += 0.01;
+  d20.position.y = Math.sin(floatOffset) * 0.2;
+
+  renderer.render(scene, camera);
+}
+
+animate();
+
+// THEME TOGGLE WITH COLOR SWITCH
+const toggle = document.getElementById("theme-toggle");
+
+toggle.addEventListener("click", () => {
+  document.body.classList.toggle("dark-mode");
+
+  if (document.body.classList.contains("dark-mode")) {
+    material.color.setHex(0xffffff); // white in dark mode
+  } else {
+    material.color.setHex(0x7f8072); // darker stone in light mode
+  }
+});
+</script>
+
+
+</body>
+</html>

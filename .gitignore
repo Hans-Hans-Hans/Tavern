@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Django
+*.log
+db.sqlite3
+media/
+
+# Environment variables
+.env
+.env.*
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Mac
+.DS_Store
+
+# VS Code
+.vscode/
+
+# IDEs
+.idea/
+
+# Build / dist
+dist/
+build/
+
+# Coverage
+htmlcov/
+.coverage
+
+# Misc
+*.swp
