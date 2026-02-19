@@ -1,43 +1,43 @@
-Tavern
+# Tavern
 
-Don't roll the dice on your data. Own it. Control it.
+> **Don't roll the dice on your data. Own it. Control it.**
 
 Tavern is a self-hosted, real-time communication platform built for people who want full control over their conversations. Inspired by modern community platforms, Tavern gives you servers, channels, and live messaging — without surrendering your data.
 
-🔥 Features
+---
 
-🏰 Servers & Channels — Organize communities however you want
+## 🔥 Features
 
-💬 Real-Time Messaging — WebSocket-powered updates
+- 🏰 **Servers & Channels** — Organize communities however you want  
+- 💬 **Real-Time Messaging** — WebSocket-powered updates  
+- 🔐 **Secure Authentication** — Cookie-based session auth  
+- 🧑‍🤝‍🧑 **Per-User Access Control** — Role-based server membership  
+- 🛠 **Self-Hosted First** — You own your infrastructure  
+- 🎨 **Modern UI** — Custom Tavern theme with light/dark mode  
 
-🔐 Secure Authentication — Cookie-based session auth
+---
 
-🧑‍🤝‍🧑 Per-User Access Control — Role-based server membership
+## 🧱 Tech Stack
 
-🛠 Self-Hosted First — You own your infrastructure
+**Backend**
+- Python
+- FastAPI
+- SQLAlchemy
+- WebSockets
+- SQLite (dev)
+- PostgreSQL (planned for production)
 
-🎨 Modern UI — Custom Tavern theme with light/dark mode
+**Frontend**
+- Vanilla HTML / CSS / JS (currently)
+- Real-time WebSocket updates
+- Dynamic theme switching
 
-🧱 Tech Stack
+---
 
-Backend
+## 🚀 Getting Started
 
-Python
+### 1️⃣ Clone the Repo
 
-FastAPI
-
-SQLAlchemy
-
-WebSockets
-
-SQLite (dev)
-
-PostgreSQL (planned for production)
-
-Frontend
-
-Vanilla HTML / CSS / JS (currently)
-
-Real-time WebSocket updates
-
-Dynamic theme switching
+```bash
+git clone https://github.com/Hans-Hans-Hans/tavern.git
+cd tavern
