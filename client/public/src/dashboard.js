@@ -229,6 +229,7 @@ const LAUNCH_CHECKLIST_STORAGE_KEY = "tavern.launchChecklist";
 const DRAFTS_STORAGE_KEY = "tavern.drafts";
 const CHANNEL_NOTIFICATION_STORAGE_KEY = "tavern.channelNotifications";
 const SAFE_MODE_STORAGE_KEY = "tavern.safeMode";
+const LAST_ACTIVE_CHAT_STORAGE_KEY = "tavern.lastActiveChat";
 const DEFAULT_LABS_SETTINGS = {
   unlocked: false,
   fxGrain: true,
@@ -291,6 +292,7 @@ let imagePreprocessState = null;
 let switcherIndex = 0;
 let switcherItems = [];
 let konamiIndex = 0;
+let memberNicknameDrafts = new Map();
 const REACTION_EMOJI_OPTIONS = ["👍", "❤️", "😂", "😮", "😢", "🔥", "🎉", "✅"];
 
 const THEME_PRESETS = [
@@ -329,6 +331,10 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function escapeRegExp(value) {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function renderMarkdown(rawText) {
   const text = typeof rawText === "string" ? rawText : "";
   if (window.marked && window.DOMPurify) {
@@ -336,6 +342,39 @@ function renderMarkdown(rawText) {
     return window.DOMPurify.sanitize(markdownHtml);
   }
   return escapeHtml(text).replaceAll("\n", "<br>");
+}
+
+function getMentionHighlightState(rawText) {
+  const text = String(rawText || "");
+  const everyone = /\B@(everyone|here)\b/i.test(text);
+  let user = false;
+  const username = String(currentUser?.username || "").trim();
+  const publicId = String(currentUser?.public_id || "").trim();
+  if (username) {
+    const usernameRegex = new RegExp(`\\B@${escapeRegExp(username)}\\b`, "i");
+    user = usernameRegex.test(text);
+  }
+  if (!user && publicId) {
+    const publicIdRegex = new RegExp(`\\B@${escapeRegExp(publicId)}\\b`, "i");
+    user = publicIdRegex.test(text);
+  }
+  return { everyone, user };
+}
+
+function applyMentionHighlightsToRenderedHtml(renderedHtml) {
+  let html = String(renderedHtml || "");
+  html = html.replace(/\B@(everyone|here)\b/gi, '<span class="mention-inline mention-everyone">$&</span>');
+  const username = String(currentUser?.username || "").trim();
+  if (username) {
+    const usernameRegex = new RegExp(`\\B@${escapeRegExp(username)}\\b`, "gi");
+    html = html.replace(usernameRegex, '<span class="mention-inline mention-user">$&</span>');
+  }
+  const publicId = String(currentUser?.public_id || "").trim();
+  if (publicId) {
+    const publicIdRegex = new RegExp(`\\B@${escapeRegExp(publicId)}\\b`, "gi");
+    html = html.replace(publicIdRegex, '<span class="mention-inline mention-user">$&</span>');
+  }
+  return html;
 }
 
 function renderSeparatorContent(rawText) {
@@ -595,6 +634,7 @@ function shouldNotifyForMessage(channelId, payload) {
   if (mode === "muted") return false;
   if (mode === "mentions") {
     const text = String(payload?.content || "").toLowerCase();
+    if (/\B@(everyone|here)\b/i.test(text)) return true;
     const username = String(currentUser?.username || "").toLowerCase();
     const publicId = String(currentUser?.public_id || "").toLowerCase();
     return (!!username && text.includes(`@${username}`)) || (!!publicId && text.includes(publicId));
@@ -623,6 +663,37 @@ function applySafeModeState() {
   if (settingsSafeModeBtn) settingsSafeModeBtn.textContent = `Safe Mode: ${safeModeEnabled ? "On" : "Off"}`;
   applyCustomCss();
   applyLabsSettings();
+}
+
+function saveLastActiveChatState(state) {
+  try {
+    localStorage.setItem(LAST_ACTIVE_CHAT_STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // Ignore storage failures
+  }
+}
+
+function loadLastActiveChatState() {
+  try {
+    const raw = localStorage.getItem(LAST_ACTIVE_CHAT_STORAGE_KEY);
+    const parsed = JSON.parse(raw || "null");
+    if (!parsed || typeof parsed !== "object") return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function persistActiveChatState() {
+  if (!currentUser?.public_id) return;
+  saveLastActiveChatState({
+    userPublicId: currentUser.public_id,
+    mode: activeMode,
+    serverId: activeServerId || null,
+    channelId: activeChannelId || null,
+    dmConversationId: activeDmConversationId || null,
+    savedAt: Date.now(),
+  });
 }
 
 function serializeSettingsBundle() {
@@ -709,6 +780,7 @@ function buildQuickSwitcherItems(query = "") {
           await loadDmMessages(convo.public_id, true);
           openDmMessageSocket(convo.public_id);
           applyDraftToComposer();
+          persistActiveChatState();
         } catch (err) {
           alert(err.message || "Failed to open DM");
         }
@@ -2243,11 +2315,17 @@ async function loadServerMembersModal() {
         const nickRow = document.createElement("div");
         nickRow.className = "member-nickname-controls";
         const nickInput = document.createElement("input");
+        const draftKey = member.user_public_id;
         nickInput.type = "text";
         nickInput.className = "member-nickname-input";
         nickInput.placeholder = "Set server nickname";
         nickInput.maxLength = 50;
-        nickInput.value = nicknameText;
+        nickInput.value = memberNicknameDrafts.has(draftKey)
+          ? memberNicknameDrafts.get(draftKey)
+          : nicknameText;
+        nickInput.addEventListener("input", () => {
+          memberNicknameDrafts.set(draftKey, nickInput.value);
+        });
         const saveBtn = document.createElement("button");
         saveBtn.type = "button";
         saveBtn.className = "member-nickname-save";
@@ -2259,6 +2337,7 @@ async function loadServerMembersModal() {
         saveBtn.addEventListener("click", async () => {
           try {
             await patchServerMemberNickname(activeServerId, member.user_public_id, nickInput.value);
+            memberNicknameDrafts.delete(draftKey);
             await loadServerMembersModal();
             if (activeChannelId) await loadMessages(activeChannelId, false);
           } catch (err) {
@@ -2268,7 +2347,9 @@ async function loadServerMembersModal() {
         clearBtn.addEventListener("click", async () => {
           try {
             nickInput.value = "";
+            memberNicknameDrafts.set(draftKey, "");
             await patchServerMemberNickname(activeServerId, member.user_public_id, "");
+            memberNicknameDrafts.delete(draftKey);
             await loadServerMembersModal();
             if (activeChannelId) await loadMessages(activeChannelId, false);
           } catch (err) {
@@ -3223,7 +3304,10 @@ function buildMessageElement(msg, options = {}) {
   if (displayAuthor.isNickname && msg.username) {
     author.title = `@${msg.username}`;
   }
-  content.innerHTML = renderMarkdown(msg.content || "");
+  const mentionState = getMentionHighlightState(msg.content || "");
+  if (mentionState.everyone) wrapper.classList.add("mentioned-everyone");
+  if (mentionState.user) wrapper.classList.add("mentioned-user");
+  content.innerHTML = applyMentionHighlightsToRenderedHtml(renderMarkdown(msg.content || ""));
   const rollData = parseRollMessage(msg.content || "");
 
   wrapper.appendChild(author);
@@ -3586,18 +3670,22 @@ async function loadDmConversations() {
     li.appendChild(nameEl);
     li.addEventListener("click", async () => {
       stopTypingNow();
+      activeMode = "dm";
       activeDmConversationId = dm.public_id;
+      activeServerId = null;
       activeChannelId = null;
       renderTypingIndicator();
       setPendingReply(null);
       activeThreadParentMessageId = null;
       closeModal(threadModal);
       activeChannelType = "text";
+      updateSidebarModeUI();
       highlightActiveChannel();
       updateTopbar(`@ ${dm.other_username}`, true);
       await loadDmMessages(dm.public_id, true);
       openDmMessageSocket(dm.public_id);
       applyDraftToComposer();
+      persistActiveChatState();
     });
     channelsPanel.appendChild(li);
   });
@@ -3744,6 +3832,7 @@ function renderDmFriendPicker(filter = "") {
         await loadDmMessages(convo.public_id, true);
         openDmMessageSocket(convo.public_id);
         applyDraftToComposer();
+        persistActiveChatState();
       } catch (err) {
         alert(err.message || "Failed to open DM");
       }
@@ -3777,6 +3866,7 @@ async function refreshFriendsModal() {
         await loadDmMessages(convo.public_id, true);
         openDmMessageSocket(convo.public_id);
         applyDraftToComposer();
+        persistActiveChatState();
       } catch (err) {
         alert(err.message || "Failed to open DM");
       }
@@ -4070,6 +4160,55 @@ async function loadDmMessages(conversationPublicId, shouldScrollToBottom = false
   setSendStatus(messages.some((m) => m.user_id === currentUserId) ? "Seen in active chat" : "", "ok");
 }
 
+async function restoreLastActiveChat() {
+  const state = loadLastActiveChatState();
+  if (!state || state.userPublicId !== currentUser?.public_id) return false;
+
+  if (state.mode === "dm") {
+    stopTypingNow();
+    activeMode = "dm";
+    activeServerId = null;
+    activeChannelId = null;
+    activeDmConversationId = state.dmConversationId || null;
+    activeChannelType = "text";
+    leaveVoiceChannel();
+    updateTextVsVoiceUI();
+    updateSidebarModeUI();
+    updateTopbar("", false);
+    await loadDmConversations();
+    if (state.dmConversationId) {
+      const dmEl = channelsPanel.querySelector(`.dm-item[data-dm-conversation-id="${state.dmConversationId}"]`);
+      if (dmEl) {
+        dmEl.click();
+        return true;
+      }
+    }
+    return true;
+  }
+
+  if (state.mode === "server" && state.serverId) {
+    stopTypingNow();
+    activeMode = "server";
+    activeServerId = state.serverId;
+    activeChannelId = null;
+    activeDmConversationId = null;
+    activeChannelType = "text";
+    closeDmMessageSocket();
+    leaveVoiceChannel();
+    updateSidebarModeUI();
+    updateTopbar("", false);
+    updateTextVsVoiceUI();
+    highlightActiveServer();
+    channelsPanel.innerHTML = "";
+    messagesPanel.innerHTML = '<div class="message-placeholder">Select a channel to start chatting</div>';
+    await loadChannels(state.serverId, { preferredChannelId: state.channelId || null });
+    applyDraftToComposer();
+    return true;
+  }
+
+  return false;
+}
+
 // --------------------
 // Load Dashboard & User
 // --------------------
@@ -4093,6 +4232,7 @@ async function loadDashboard() {
     connectPresenceSocket();
     updateSidebarModeUI();
     await loadServers();
+    await restoreLastActiveChat();
   } catch (err) {
     console.error("Network or other error loading dashboard:", err);
   }
@@ -4151,12 +4291,12 @@ async function loadServers() {
         messagesPanel.innerHTML = '<div class="message-placeholder">Select a channel to start chatting</div>';
         loadChannels(server.public_id);
         applyDraftToComposer();
+        persistActiveChatState();
       });
 
       li.addEventListener("contextmenu", (event) => {
         event.preventDefault();
         event.stopPropagation();
-        const currentNotif = getChannelNotificationMode(channel.public_id);
         showContextMenu(event.clientX, event.clientY, [
           {
             label: "Invite Member",
@@ -4196,7 +4336,7 @@ function highlightActiveServer() {
 // --------------------
 // Load Channels
 // --------------------
-async function loadChannels(serverPublicId) {
+async function loadChannels(serverPublicId, options = {}) {
   try {
     await ensureServerNicknames(serverPublicId, true);
     const res = await fetch(`/channels/server/${serverPublicId}`, { credentials: "include" });
@@ -4292,6 +4432,7 @@ async function loadChannels(serverPublicId) {
       li.draggable = true;
       li.addEventListener("click", async () => {
         stopTypingNow();
+        activeMode = "server";
         activeChannelId = channel.public_id;
         renderTypingIndicator();
         setPendingReply(null);
@@ -4315,10 +4456,12 @@ async function loadChannels(serverPublicId) {
           loadMessages(channel.public_id, true);
           applyDraftToComposer();
         }
+        persistActiveChatState();
       });
       li.addEventListener("contextmenu", (event) => {
         event.preventDefault();
         event.stopPropagation();
+        const currentNotif = getChannelNotificationMode(channel.public_id);
         showContextMenu(event.clientX, event.clientY, [
           {
             label: "Invite Member",
@@ -4357,6 +4500,10 @@ async function loadChannels(serverPublicId) {
     });
     applyUnreadStyles();
     await syncRealtimeSubscriptions();
+    if (options.preferredChannelId) {
+      const preferredEl = channelsPanel.querySelector(`.channel-item[data-channel-id="${options.preferredChannelId}"]`);
+      if (preferredEl) preferredEl.click();
+    }
   } catch (err) {
     console.error("Error loading channels:", err);
     channelsPanel.innerHTML = '<li class="message-placeholder">Could not load channels.</li>';
@@ -4517,6 +4664,7 @@ if (homeDmBtn) {
     updateSidebarModeUI();
     updateTopbar("", false);
     highlightActiveServer();
+    persistActiveChatState();
     try {
       await loadDmConversations();
       applyDraftToComposer();
@@ -4533,6 +4681,7 @@ if (openServerMembersBtn && serverMembersModal) {
       return;
     }
     try {
+      memberNicknameDrafts = new Map();
       await loadServerMembersModal();
       openModal(serverMembersModal);
     } catch (err) {
@@ -4647,6 +4796,7 @@ if (confirmDeleteServerBtn && deleteServerModal) {
       }
       closeModal(deleteServerModal);
       deleteServerTarget = null;
+      persistActiveChatState();
       await loadServers();
     } catch (err) {
       alert(err.message || "Failed to delete server");
@@ -4685,6 +4835,7 @@ if (confirmDeleteChannelBtn && deleteChannelModal) {
       deleteChannelTarget = null;
       if (activeServerId) await loadChannels(activeServerId);
       recalculateUnreadServers();
+      persistActiveChatState();
     } catch (err) {
       alert(err.message || "Failed to delete channel");
     }
@@ -4698,6 +4849,7 @@ if (confirmDeleteChannelBtn && deleteChannelModal) {
       if (modal === imagePreprocessModal) resolveImagePreprocessWithOriginal();
       closeModal(modal);
       if (modal === threadModal) activeThreadParentMessageId = null;
+      if (modal === serverMembersModal) memberNicknameDrafts = new Map();
     }
   });
 
@@ -4707,6 +4859,7 @@ if (confirmDeleteChannelBtn && deleteChannelModal) {
       if (modal === imagePreprocessModal) resolveImagePreprocessWithOriginal();
       closeModal(modal);
       if (modal === threadModal) activeThreadParentMessageId = null;
+      if (modal === serverMembersModal) memberNicknameDrafts = new Map();
     });
   }
 });
@@ -4743,6 +4896,7 @@ document.addEventListener("keydown", (event) => {
     closeModal(createDmModal);
     closeModal(adminModal);
     closeModal(serverMembersModal);
+    memberNicknameDrafts = new Map();
     closeModal(launchChecklistModal);
     closeModal(quickSwitcherModal);
     closeModal(shortcutsModal);

@@ -617,6 +617,44 @@ body.resizing-panels {
   padding-left: 10px;
   color: var(--muted);
 }
+.message.mentioned-user {
+  border-color: rgba(79, 143, 207, 0.58);
+  box-shadow: 0 0 0 1px rgba(79, 143, 207, 0.28) inset;
+  background: linear-gradient(145deg, rgba(79, 143, 207, 0.15), rgba(79, 143, 207, 0.06));
+}
+.message.mentioned-everyone {
+  border-color: rgba(223, 126, 90, 0.62);
+  box-shadow: 0 0 0 1px rgba(223, 126, 90, 0.3) inset;
+  background: linear-gradient(145deg, rgba(223, 126, 90, 0.18), rgba(223, 126, 90, 0.08));
+}
+.mention-inline {
+  display: inline-block;
+  padding: 0 6px;
+  margin: 0 1px;
+  border-radius: 6px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.mention-inline.mention-user {
+  color: #18436f;
+  background: rgba(79, 143, 207, 0.25);
+  border: 1px solid rgba(79, 143, 207, 0.45);
+}
+.mention-inline.mention-everyone {
+  color: #6e301d;
+  background: rgba(223, 126, 90, 0.27);
+  border: 1px solid rgba(223, 126, 90, 0.5);
+}
+.dark-mode .mention-inline.mention-user {
+  color: #d9ebff;
+  background: rgba(95, 121, 207, 0.36);
+  border-color: rgba(169, 185, 239, 0.58);
+}
+.dark-mode .mention-inline.mention-everyone {
+  color: #ffe6de;
+  background: rgba(205, 108, 83, 0.38);
+  border-color: rgba(240, 162, 142, 0.62);
+}
 .message-meta {
   position: absolute;
   top: 8px;
@@ -1458,7 +1496,21 @@ body.safe-mode * {
   border: 1px solid var(--border);
   background: rgba(255,255,255,0.16);
   color: var(--text);
+  caret-color: var(--text);
   padding: 0 8px;
+}
+.members-modal-content .member-nickname-input {
+  width: auto;
+  margin-bottom: 0;
+  background: var(--header-footer-bg) !important;
+  color: var(--text) !important;
+  -webkit-text-fill-color: var(--text) !important;
+  opacity: 1 !important;
+  font-size: 14px;
+  font-weight: 500;
+}
+.member-nickname-input::placeholder {
+  color: var(--muted);
 }
 .member-nickname-save,
 .member-nickname-clear {
