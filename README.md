@@ -1,43 +1,52 @@
 # Tavern
 
-> **Don't roll the dice on your data. Own it. Control it.**
+Self-hosted realtime chat with servers, channels, DMs, voice, roles, and rich client customization.
 
-Tavern is a self-hosted, real-time communication platform built for people who want full control over their conversations. Inspired by modern community platforms, Tavern gives you servers, channels, and live messaging — without surrendering your data.
+## Highlights
+- Server/channel chat with WebSocket realtime updates
+- Direct messages and direct calling
+- Voice channels (mute/deafen/per-user volume)
+- Reactions, replies, threads, editing, deleting
+- Role-based server permissions and admin panel
+- Presence + typing indicators
+- Theme system, Labs toggles, and client customization
 
----
+## Tech Stack
+- Backend: FastAPI, SQLAlchemy, WebSockets
+- Frontend: HTML/CSS/Vanilla JS
+- DB: SQLite by default (PostgreSQL can be added later)
 
-## 🔥 Features
+## Quick Start (Local Python)
+1. Create `.env` at repo root:
+   - `SECRET_KEY=<strong-random-secret>`
+   - `DATABASE_URL=sqlite:///./server/tavern.db`
+   - `COOKIE_SECURE=false`
+   - `CORS_ORIGINS=http://127.0.0.1:8000,http://localhost:8000`
+2. Install dependencies:
+   - `pip install -r requirements.txt`
+3. Run:
+   - `uvicorn server.app.main:app --host 0.0.0.0 --port 8000`
+4. Open:
+   - `http://localhost:8000`
 
-- 🏰 **Servers & Channels** — Organize communities however you want  
-- 💬 **Real-Time Messaging** — WebSocket-powered updates  
-- 🔐 **Secure Authentication** — Cookie-based session auth  
-- 🧑‍🤝‍🧑 **Per-User Access Control** — Role-based server membership  
-- 🛠 **Self-Hosted First** — You own your infrastructure  
-- 🎨 **Modern UI** — Custom Tavern theme with light/dark mode  
+## Docker and Portainer
+Production-oriented Docker files are included:
+- `Dockerfile`
+- `docker-compose.yml`
+- `.dockerignore`
 
----
+Full deployment instructions are in `HOWTO_DOCKER_PORTAINER.md`.
 
-## 🧱 Tech Stack
+## Security Notes
+- Do not commit `.env`.
+- Use a strong `SECRET_KEY`.
+- Set `COOKIE_SECURE=true` behind HTTPS.
+- Restrict `CORS_ORIGINS` to your real domain(s).
+- Persist volumes for DB/uploads/logs.
 
-**Backend**
-- Python
-- FastAPI
-- SQLAlchemy
-- WebSockets
-- SQLite (dev)
-- PostgreSQL (planned for production)
+## Default Bootstrap Admin
+- Username: `admin`
+- Password: `admin`
+- First login requires password reset.
 
-**Frontend**
-- Vanilla HTML / CSS / JS (currently)
-- Real-time WebSocket updates
-- Dynamic theme switching
-
----
-
-## 🚀 Getting Started
-
-### 1️⃣ Clone the Repo
-
-```bash
-git clone https://github.com/Hans-Hans-Hans/tavern.git
-cd tavern
+Change this immediately in production.

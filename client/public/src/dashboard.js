@@ -293,6 +293,7 @@ let switcherIndex = 0;
 let switcherItems = [];
 let konamiIndex = 0;
 let memberNicknameDrafts = new Map();
+const sendReceiptByContext = new Map();
 const REACTION_EMOJI_OPTIONS = ["👍", "❤️", "😂", "😮", "😢", "🔥", "🎉", "✅"];
 
 const THEME_PRESETS = [
@@ -596,6 +597,58 @@ function setSendStatus(text = "", kind = "muted") {
   if (!sendStatusText) return;
   sendStatusText.textContent = text;
   sendStatusText.dataset.kind = kind;
+}
+
+function getContextKey(mode, id) {
+  if (!mode || !id) return "";
+  return mode === "dm" ? `dm:${id}` : `ch:${id}`;
+}
+
+function getActiveContextKey() {
+  if (activeMode === "dm" && activeDmConversationId) return getContextKey("dm", activeDmConversationId);
+  if (activeMode === "server" && activeChannelId) return getContextKey("server", activeChannelId);
+  return "";
+}
+
+function refreshSendStatusForActiveContext() {
+  const key = getActiveContextKey();
+  if (!key) {
+    setSendStatus("", "muted");
+    return;
+  }
+  const receipt = sendReceiptByContext.get(key);
+  if (!receipt?.statusText) {
+    setSendStatus("", "muted");
+    return;
+  }
+  setSendStatus(receipt.statusText, receipt.kind || "ok");
+}
+
+function setDeliveredForContext(mode, id, payload = null) {
+  const key = getContextKey(mode, id);
+  if (!key) return;
+  sendReceiptByContext.set(key, {
+    statusText: "Delivered",
+    kind: "ok",
+    sentAt: Date.now(),
+    messagePublicId: payload?.public_id || null,
+  });
+  if (key === getActiveContextKey()) setSendStatus("Delivered", "ok");
+}
+
+function markSeenForContextIfPending(mode, id, incomingUserId) {
+  if (!incomingUserId || incomingUserId === currentUserId) return;
+  const key = getContextKey(mode, id);
+  if (!key) return;
+  const receipt = sendReceiptByContext.get(key);
+  if (!receipt || receipt.statusText !== "Delivered") return;
+  sendReceiptByContext.set(key, {
+    ...receipt,
+    statusText: "Seen",
+    kind: "ok",
+    seenAt: Date.now(),
+  });
+  if (key === getActiveContextKey()) setSendStatus("Seen", "ok");
 }
 
 function updateRetrySendUi() {
@@ -2095,7 +2148,13 @@ function openDmMessageSocket(conversationPublicId) {
   dmMessageSocket.onopen = () => {
     setRealtimeState("dm", true, 0);
   };
-  dmMessageSocket.onmessage = async () => {
+  dmMessageSocket.onmessage = async (event) => {
+    try {
+      const data = JSON.parse(event.data || "{}");
+      markSeenForContextIfPending("dm", conversationPublicId, data.user_id);
+    } catch {
+      // Ignore malformed payload
+    }
     if (activeMode === "dm" && activeDmConversationId === conversationPublicId) {
       await loadDmMessages(conversationPublicId, true);
     }
@@ -2844,6 +2903,7 @@ function connectChannelSocket(channelId) {
           ? (messagesPanel.scrollTop + messagesPanel.clientHeight >= messagesPanel.scrollHeight - 64)
           : true;
         if (isNewMessage) {
+          markSeenForContextIfPending("server", channelId, data.user_id);
           channelLastSeen.set(channelId, createdTs);
           markChannelRead(channelId);
           recalculateUnreadServers();
@@ -4157,7 +4217,7 @@ async function loadDmMessages(conversationPublicId, shouldScrollToBottom = false
   renderTypingIndicator();
   if (shouldScrollToBottom) setJumpUnreadVisible(false);
   else updateJumpUnreadState();
-  setSendStatus(messages.some((m) => m.user_id === currentUserId) ? "Seen in active chat" : "", "ok");
+  refreshSendStatusForActiveContext();
 }
 
 async function restoreLastActiveChat() {
@@ -4548,7 +4608,7 @@ async function loadMessages(channelPublicId, shouldScrollToBottom = false) {
     renderTypingIndicator();
     if (shouldScrollToBottom) setJumpUnreadVisible(false);
     else updateJumpUnreadState();
-    setSendStatus(messages.some((m) => m.user_id === currentUserId) ? "Seen in active channel" : "", "ok");
+    refreshSendStatusForActiveContext();
   } catch (err) {
     console.error("Error loading messages:", err);
   }
@@ -4964,15 +5024,17 @@ if (sendMessageBtn) {
         });
       }
       if (!res.ok) throw new Error("Failed to send message");
+      const createdMessage = await res.json().catch(() => null);
       messageInput.value = "";
       clearActiveDraft();
       if (activeMode === "dm") {
+        setDeliveredForContext("dm", activeDmConversationId, createdMessage);
         await loadDmMessages(activeDmConversationId, true);
       } else {
         setPendingReply(null);
+        setDeliveredForContext("server", activeChannelId, createdMessage);
         await loadMessages(activeChannelId, true);
       }
-      setSendStatus("Delivered", "ok");
     } catch (err) {
       failedSendQueue.push({
         mode: activeMode,

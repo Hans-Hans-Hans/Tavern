@@ -1,120 +1,55 @@
-######################################
 # Python
-######################################
-
 __pycache__/
 *.py[cod]
-*$py.class
 *.so
 
-######################################
-# Virtual Environments
-######################################
-
+# Virtual environments
 venv/
-env/
 .venv/
+env/
 ENV/
-env.bak/
-venv.bak/
 
-######################################
-# Environment Variables (CRITICAL)
-######################################
-
+# Environment/secrets
 .env
 .env.*
 !.env.example
-
-######################################
-# Django / App Logs
-######################################
-
-*.log
-logs/
-*.sqlite3
-db.sqlite3
-*.db
-
-######################################
-# Database Backups / Dumps
-######################################
-
-*.sql
-*.dump
-*.backup
-
-######################################
-# PostgreSQL Local Files (if ever used)
-######################################
-
-pgdata/
-postgres_data/
-
-######################################
-# Static / Media (if generated)
-######################################
-
-staticfiles/
-media/
-
-######################################
-# Node / Frontend (future-proofing)
-######################################
-
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-dist/
-build/
-
-######################################
-# Docker
-######################################
-
-docker-compose.override.yml
-*.pid
-
-######################################
-# Testing / Coverage
-######################################
-
-htmlcov/
-.coverage
-.pytest_cache/
-.tox/
-
-######################################
-# IDEs / Editors
-######################################
-
-.vscode/
-.idea/
-*.swp
-*.swo
-
-######################################
-# OS Files
-######################################
-
-.DS_Store
-Thumbs.db
-
-######################################
-# Secrets / Keys
-######################################
-
 *.pem
 *.key
 *.crt
 id_rsa
 id_rsa.pub
 
-######################################
-# Misc
-######################################
+# Logs/runtime
+*.log
+*.pid
+server/logs/
 
-*.tmp
-*.bak
-*.old
+# Databases and backups
+*.db
+*.sqlite3
+*.sql
+*.dump
+*.backup
+backups/
+server/uploads/
+
+# Test/cache
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# Frontend/build artifacts
+node_modules/
+dist/
+build/
+
+# Editors/OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

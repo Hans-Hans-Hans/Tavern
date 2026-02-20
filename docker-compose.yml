@@ -1,0 +1,36 @@
+services:
+  tavern:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: tavern:latest
+    container_name: tavern
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////data/tavern.db}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://tavern.hans-homelab.com}
+      APP_VERSION: ${APP_VERSION:-1.0.0}
+    ports:
+      - "8000:8000"
+    volumes:
+      - tavern_db:/data
+      - tavern_uploads:/app/server/uploads
+      - tavern_logs:/app/server/logs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  tavern_db:
+  tavern_uploads:
+  tavern_logs:
