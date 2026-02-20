@@ -8,6 +8,8 @@ from app.db.deps import get_db
 from app.features.users import service
 from app.features.users.schemas import UserCreate, UserOutPrivate
 from app.core.security import create_access_token
+from app.core.config import settings
+from app.features.auth import schemas as auth_schemas
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -35,6 +37,8 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     user = service.authenticate_user(db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(status_code=401, detail="Incorrect username or password")
+    if user.must_reset_password:
+        raise HTTPException(status_code=403, detail="PASSWORD_RESET_REQUIRED")
 
     access_token = create_access_token(data={"sub": user.public_id})
 
@@ -44,9 +48,31 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         key="access_token",
         value=f"Bearer {access_token}",
         httponly=True,
-        secure=False,      # Set True if HTTPS in prod
-        samesite="lax",    # "strict" if stricter cross-origin policy is desired
+        secure=settings.COOKIE_SECURE,
+        samesite="lax",
         max_age=3600       # 1 hour
+    )
+    return response
+
+
+@router.post("/first-use-reset")
+def first_use_reset(payload: auth_schemas.FirstUseResetRequest, db: Session = Depends(get_db)):
+    user = service.authenticate_user(db, payload.username, payload.current_password)
+    if not user:
+        raise HTTPException(status_code=401, detail="Incorrect username or password")
+    if not user.must_reset_password:
+        raise HTTPException(status_code=400, detail="Password reset not required")
+
+    service.set_user_password(db, user, payload.new_password, must_reset_password=False)
+    access_token = create_access_token(data={"sub": user.public_id})
+    response = JSONResponse(content={"message": "Password reset complete"})
+    response.set_cookie(
+        key="access_token",
+        value=f"Bearer {access_token}",
+        httponly=True,
+        secure=settings.COOKIE_SECURE,
+        samesite="lax",
+        max_age=3600,
     )
     return response
 

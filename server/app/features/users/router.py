@@ -19,6 +19,52 @@ def read_current_user(current_user: models.User = Depends(get_current_user)):
     """
     return current_user
 
+
+@router.get("/friends", response_model=list[schemas.FriendUserOut])
+def list_friends(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return service.list_friends(db, current_user.id)
+
+
+@router.get("/friend-requests")
+def list_friend_requests(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return service.list_friend_requests(db, current_user.id)
+
+
+@router.post("/friend-requests/{target_public_id}", response_model=schemas.FriendRequestOut)
+def send_friend_request(
+    target_public_id: str,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return service.send_friend_request(db, current_user.id, target_public_id)
+
+
+@router.post("/friend-requests/{request_public_id}/accept", response_model=schemas.FriendRequestOut)
+def accept_friend_request(
+    request_public_id: str,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return service.accept_friend_request(db, current_user.id, request_public_id)
+
+
+@router.delete("/friend-requests/{request_public_id}")
+def delete_friend_request(
+    request_public_id: str,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return service.decline_or_cancel_friend_request(db, current_user.id, request_public_id)
+
+
+@router.delete("/friends/{friend_public_id}")
+def remove_friend(
+    friend_public_id: str,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return service.remove_friend(db, current_user.id, friend_public_id)
+
 @router.get("/{public_id}", response_model=schemas.UserOutPublic)
 def read_user(public_id: str, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     """

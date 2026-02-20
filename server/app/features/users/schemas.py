@@ -55,6 +55,8 @@ class UserOutPrivate(BaseModel):
     email: EmailStr
     created_at: datetime
     updated_at: datetime
+    is_superadmin: bool = False
+    must_reset_password: bool = False
     
     class Config:
         # Allows returning SQLAlchemy model objects directly
@@ -90,4 +92,19 @@ class UserUpdate(BaseModel):
     """
     username: Optional[str] = None
     email: Optional[EmailStr] = None
+
+
+class FriendUserOut(BaseModel):
+    public_id: str
+    username: str
+
+
+class FriendRequestOut(BaseModel):
+    public_id: str
+    requester_public_id: str
+    requester_username: str
+    addressee_public_id: str
+    addressee_username: str
+    status: str
+    created_at: datetime
     

@@ -3,10 +3,12 @@ import asyncio
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
+from app.core.audit import write_audit_event
 from app.features.channels import models
 from app.features.channels.models import Channel
 from app.features.servers.models import ServerMember, Server
 from app.features.servers import service as server_service
+from app.features.users.models import User
 from app.features.websockets import channels_ws
 
 
@@ -18,10 +20,13 @@ def list_server_channels(db: Session, server_public_id: str, user_id: int):
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
 
-    membership = db.query(ServerMember).filter(
-        ServerMember.server_id == server.id,
-        ServerMember.user_id == user_id
-    ).first()
+    if not server_service.has_server_permission(db, server.id, user_id, "can_manage_channels"):
+        membership = db.query(ServerMember).filter(
+            ServerMember.server_id == server.id,
+            ServerMember.user_id == user_id
+        ).first()
+    else:
+        membership = True
 
     if not membership:
         raise HTTPException(status_code=403, detail="Not authorized")
@@ -32,19 +37,23 @@ def list_server_channels(db: Session, server_public_id: str, user_id: int):
 # -------------------------------
 # Create a new channel in a server
 # -------------------------------
-def create_channel(db: Session, server_public_id: str, name: str, user_id: int):
+def create_channel(db: Session, server_public_id: str, name: str, channel_type: str, user_id: int):
     server = server_service.get_server_by_public_id(db, server_public_id)
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
 
-    if server.owner_id != user_id:
-        raise HTTPException(status_code=403, detail="Only owner can create channels")
+    if not server_service.has_server_permission(db, server.id, user_id, "can_manage_channels"):
+        raise HTTPException(status_code=403, detail="Not authorized to create channels")
+
+    normalized_type = (channel_type or "text").strip().lower()
+    if normalized_type not in {"text", "voice"}:
+        raise HTTPException(status_code=400, detail="Invalid channel type")
 
     channel = models.Channel(
         public_id=str(uuid.uuid4()),
         name=name,
         server_id=server.id,
-        type="text"
+        type=normalized_type
     )
 
     db.add(channel)
@@ -92,15 +101,24 @@ def delete_channel(db: Session, channel_public_id: str, user_id: int):
         raise HTTPException(status_code=404, detail="Channel not found")
 
     server = channel.server
-    if server.owner_id != user_id:
+    if not server_service.has_server_permission(db, server.id, user_id, "can_manage_channels"):
         raise HTTPException(status_code=403, detail="Not authorized")
 
     channel_count = db.query(Channel).filter(Channel.server_id == server.id).count()
     if channel_count <= 1:
         raise HTTPException(status_code=400, detail="Cannot delete the last channel")
 
+    channel_name = channel.name
+    server_public_id = server.public_id
     db.delete(channel)
     db.commit()
+    actor = db.query(User).filter(User.id == user_id).first()
+    write_audit_event(
+        event_type="channel_deleted",
+        actor_user_id=user_id,
+        actor_public_id=actor.public_id if actor else None,
+        target={"channel_public_id": channel_public_id, "channel_name": channel_name, "server_public_id": server_public_id},
+    )
     return {"message": "Channel deleted"}
 
 
@@ -112,7 +130,7 @@ def update_channel(db: Session, public_id: str, name: str, user_id: int):
     if not channel:
         raise HTTPException(status_code=404, detail="Channel not found")
 
-    if channel.server.owner_id != user_id:
+    if not server_service.has_server_permission(db, channel.server_id, user_id, "can_manage_channels"):
         raise HTTPException(status_code=403, detail="Not authorized")
 
     channel.name = name

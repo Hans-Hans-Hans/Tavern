@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, UTC
-from sqlalchemy import String, Integer, DateTime
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import String, Integer, DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 class User(Base):
@@ -51,3 +51,33 @@ class User(Base):
         onupdate=datetime.utcnow,
         nullable=False
     )
+    is_superadmin: Mapped[bool] = mapped_column(default=False, nullable=False)
+    must_reset_password: Mapped[bool] = mapped_column(default=False, nullable=False)
+
+
+class FriendRequest(Base):
+    __tablename__ = "friend_requests"
+    __table_args__ = (
+        UniqueConstraint("requester_id", "addressee_id", name="uq_friend_request_pair"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    public_id: Mapped[str] = mapped_column(
+        String(36),
+        unique=True,
+        index=True,
+        default=lambda: str(uuid.uuid4())
+    )
+    requester_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    addressee_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(16), default="pending", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+    )
+
+    requester = relationship("User", foreign_keys=[requester_id])
+    addressee = relationship("User", foreign_keys=[addressee_id])

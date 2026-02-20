@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tavern Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+<header class="app-header">
+  <div class="logo">Tavern</div>
+  <div class="header-right">
+    <span id="user-email">Logged in as: User</span>
+    <button id="logout-btn">Logout</button>
+  </div>
+</header>
+
+<div class="dashboard">
+  <!-- Servers Panel -->
+  <aside class="servers-panel">
+    <h3>
+      Spaces 
+      <button id="open-create-server" class="add-btn"><i class="fas fa-plus"></i></button>
+    </h3>
+    <div id="home-dm-btn" class="home-dm-btn" title="Direct Messages">
+      <i class="fas fa-comments"></i>
+    </div>
+    <ul id="servers-list">
+      <!-- Server items will be populated dynamically -->
+    </ul>
+  </aside>
+
+  <!-- Channels Panel -->
+  <aside class="channels-panel">
+    <h3>
+      <span id="channels-panel-title">Channels</span>
+      <span class="channel-header-actions">
+        <button id="open-server-members" class="add-btn" title="Server Members"><i class="fas fa-users"></i></button>
+        <button id="open-friends" class="add-btn hidden" title="Friends"><i class="fas fa-user-friends"></i></button>
+        <button id="open-create-dm" class="add-btn hidden"><i class="fas fa-user-plus"></i></button>
+        <button id="open-add-separator" class="add-btn"><i class="fas fa-grip-lines"></i></button>
+        <button id="open-create-channel" class="add-btn"><i class="fas fa-plus"></i></button>
+      </span>
+    </h3>
+    <ul id="channels-list">
+      <!-- Channel items will be populated dynamically -->
+    </ul>
+  </aside>
+
+  <!-- Messages Panel -->
+  <main class="messages-panel">
+    <canvas id="d20-canvas"></canvas>
+    <div id="realtime-status-banner" class="realtime-status-banner hidden"></div>
+    <div id="messages-topbar" class="messages-topbar hidden">
+      <div id="messages-topbar-title" class="messages-topbar-title"></div>
+      <div class="messages-topbar-actions">
+        <button id="message-search-toggle-btn" type="button" class="topbar-btn"><i class="fas fa-search"></i> Search</button>
+        <button id="dm-call-btn" type="button" class="topbar-btn hidden"><i class="fas fa-phone"></i> Call</button>
+      </div>
+    </div>
+    <div id="message-search-bar" class="message-search-bar hidden">
+      <input id="message-search-input" type="text" placeholder="Search current chat...">
+      <span id="message-search-count">0</span>
+      <button id="message-search-clear-btn" type="button" class="topbar-btn">Clear</button>
+    </div>
+    <div id="messages-container">
+      <div class="message-placeholder">Select a channel to start chatting</div>
+    </div>
+    <button id="jump-unread-btn" class="jump-unread-btn hidden" type="button">Jump to newest unread</button>
+    <div id="voice-panel" class="voice-panel hidden">
+      <div class="voice-header">
+        <h4 id="voice-channel-title">Voice Channel</h4>
+        <span id="voice-status">Not connected</span>
+      </div>
+      <div id="voice-users-list" class="voice-users-list"></div>
+      <div class="voice-controls">
+        <button id="join-voice-btn" class="voice-btn">Join</button>
+        <button id="leave-voice-btn" class="voice-btn secondary">Leave</button>
+        <button id="mute-voice-btn" class="voice-btn secondary">Mute</button>
+        <button id="deafen-voice-btn" class="voice-btn secondary">Deafen</button>
+      </div>
+    </div>
+    <!-- Message input bar -->
+    <div class="message-bar">
+      <div id="reply-preview" class="reply-preview hidden">
+        <span id="reply-preview-text"></span>
+        <button id="reply-preview-cancel" type="button" title="Cancel reply">&times;</button>
+      </div>
+      <div id="typing-indicator" class="typing-indicator hidden"></div>
+      <div class="composer-status-row">
+        <span id="send-status-text" class="send-status-text"></span>
+        <button id="retry-send-btn" type="button" class="retry-send-btn hidden">Retry failed send</button>
+      </div>
+      <div class="message-controls-row">
+        <input type="file" id="image-upload-input" accept="image/*" hidden>
+        <button id="upload-image-btn" type="button" title="Upload image"><i class="fas fa-image"></i></button>
+        <button id="open-rich-editor-btn" type="button" title="Open MD/HTML/CSS editor"><i class="fas fa-code"></i></button>
+        <textarea id="message-input" rows="1" placeholder="Type a message..."></textarea>
+        <button id="send-message-btn"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Server Members Modal -->
+<div id="server-members-modal" class="modal">
+  <div class="modal-content members-modal-content">
+    <span class="close">&times;</span>
+    <h3>Members: <span id="members-server-name">Server</span></h3>
+    <div id="members-list" class="members-list"></div>
+  </div>
+</div>
+
+<!-- Friends Modal -->
+<div id="friends-modal" class="modal">
+  <div class="modal-content friends-modal-content">
+    <span class="close">&times;</span>
+    <h3>Friends</h3>
+    <div class="friends-add-row">
+      <input type="text" id="friend-public-id-input" placeholder="User public ID">
+      <button id="send-friend-request-btn" type="button">Send Request</button>
+    </div>
+    <div class="friends-columns">
+      <div class="friends-column">
+        <h4>Friends</h4>
+        <div id="friends-list" class="friends-list"></div>
+      </div>
+      <div class="friends-column">
+        <h4>Incoming</h4>
+        <div id="friend-requests-incoming" class="friends-list"></div>
+      </div>
+      <div class="friends-column">
+        <h4>Outgoing</h4>
+        <div id="friend-requests-outgoing" class="friends-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create DM Modal -->
+<div id="create-dm-modal" class="modal">
+  <div class="modal-content create-dm-modal-content">
+    <span class="close">&times;</span>
+    <h3>Create Direct Message</h3>
+    <input type="text" id="dm-friend-search-input" placeholder="Search friends...">
+    <div id="dm-friend-picker-list" class="friends-list"></div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="app-footer">
+  <i id="theme-toggle" class="fas fa-lightbulb"></i>
+  <i id="settings-btn" class="fas fa-cog"></i>
+  <i id="admin-btn" class="fas fa-shield-halved hidden"></i>
+  <span id="runtime-meta" class="runtime-meta">v1.0</span>
+</footer>
+
+<!-- Create Server Modal -->
+<div id="create-server-modal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h3>Create Server</h3>
+    <input type="text" id="new-server-name" placeholder="Server Name">
+    <button id="submit-server">Create</button>
+  </div>
+</div>
+
+<!-- Create Channel Modal -->
+<div id="create-channel-modal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h3>Create Channel</h3>
+    <input type="text" id="new-channel-name" placeholder="Channel Name">
+    <select id="new-channel-type">
+      <option value="text">Text</option>
+      <option value="voice">Voice</option>
+    </select>
+    <button id="submit-channel">Create</button>
+  </div>
+</div>
+
+<!-- Invite Member Modal -->
+<div id="invite-member-modal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h3>Invite to <span id="invite-server-name">Server</span></h3>
+    <input type="text" id="invite-user-public-id" placeholder="User Public ID">
+    <button id="submit-invite-member">Invite</button>
+  </div>
+</div>
+
+<!-- Delete Server Confirm Modal -->
+<div id="delete-server-modal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h3>Delete Server</h3>
+    <p class="confirm-text">
+      Type <strong id="delete-server-name-label"></strong> to confirm.
+    </p>
+    <input type="text" id="delete-server-confirm-input" placeholder="Server name">
+    <button id="confirm-delete-server">Delete Server</button>
+  </div>
+</div>
+
+<!-- Delete Channel Confirm Modal -->
+<div id="delete-channel-modal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h3>Delete Channel</h3>
+    <p class="confirm-text">
+      Type <strong id="delete-channel-name-label"></strong> to confirm.
+    </p>
+    <input type="text" id="delete-channel-confirm-input" placeholder="Channel name">
+    <button id="confirm-delete-channel">Delete Channel</button>
+  </div>
+</div>
+
+<!-- User Settings Modal -->
+<div id="user-settings-modal" class="modal">
+  <div class="modal-content settings-modal-content">
+    <span class="close">&times;</span>
+    <h3 id="settings-title">Settings <button id="settings-open-labs" type="button" class="settings-labs-link" title="Open Labs">Labs</button></h3>
+    <div class="settings-section">
+      <h4>Profile</h4>
+      <div class="settings-row settings-upload-row">
+        <strong>Avatar</strong>
+        <input type="file" id="settings-avatar-input" accept="image/*">
+        <button id="settings-avatar-upload-btn" type="button">Upload Avatar</button>
+      </div>
+      <div class="settings-row"><strong>Public ID:</strong> <span id="settings-public-id">-</span></div>
+      <div class="settings-row"><strong>Internal ID:</strong> <span id="settings-user-id">-</span></div>
+      <div class="settings-row"><strong>Username:</strong> <span id="settings-username">-</span></div>
+      <div class="settings-row"><strong>Email:</strong> <span id="settings-email">-</span></div>
+      <div class="settings-row"><strong>Created:</strong> <span id="settings-created-at">-</span></div>
+      <div class="settings-row"><strong>Updated:</strong> <span id="settings-updated-at">-</span></div>
+    </div>
+
+    <div class="settings-section">
+      <h4>Appearance</h4>
+      <div class="settings-subtitle">Theme Presets</div>
+      <div id="settings-theme-grid" class="theme-grid"></div>
+
+      <div class="settings-control-row">
+        <label for="settings-ui-scale">UI Scale</label>
+        <input id="settings-ui-scale" type="range" min="0.9" max="1.15" step="0.01">
+        <span id="settings-ui-scale-value">1.00x</span>
+      </div>
+      <div class="settings-control-row">
+        <label for="settings-panel-radius">Panel Radius</label>
+        <input id="settings-panel-radius" type="range" min="8" max="24" step="1">
+        <span id="settings-panel-radius-value">16px</span>
+      </div>
+      <div class="settings-control-row">
+        <label for="settings-message-density">Message Density</label>
+        <input id="settings-message-density" type="range" min="0.85" max="1.25" step="0.01">
+        <span id="settings-message-density-value">1.00x</span>
+      </div>
+      <div class="settings-control-row">
+        <label for="settings-font-family">Font Family</label>
+        <input id="settings-font-family" type="text" placeholder="'Inter', sans-serif">
+        <span>UI font</span>
+      </div>
+      <div class="settings-subtitle">Theme Template (JSON)</div>
+      <textarea id="settings-theme-template" rows="8" placeholder='{"name":"My Theme","mode":"dark","bg":"#111"...}'></textarea>
+      <div class="settings-action-row">
+        <button id="settings-template-load-btn" type="button">Load Current</button>
+        <button id="settings-template-apply-btn" type="button">Apply JSON</button>
+        <button id="settings-template-save-btn" type="button">Save Theme</button>
+        <button id="settings-template-delete-btn" type="button">Delete Theme</button>
+      </div>
+      <div class="settings-action-row">
+        <button id="settings-template-export-btn" type="button">Export Themes</button>
+        <label class="settings-import-label" for="settings-template-import-input">Import Themes</label>
+        <input id="settings-template-import-input" type="file" accept="application/json" hidden>
+      </div>
+      <div class="settings-subtitle">Custom CSS Overrides</div>
+      <textarea id="settings-custom-css" rows="8" placeholder="/* Advanced client-side CSS overrides */"></textarea>
+      <div class="settings-action-row">
+        <button id="settings-reset-appearance-btn" type="button" class="secondary-action">Reset Appearance</button>
+        <button id="settings-safe-mode-btn" type="button" class="secondary-action">Safe Mode: Off</button>
+        <button id="settings-reset-client-cache-btn" type="button" class="secondary-action">Reset Client Cache</button>
+      </div>
+      <div class="settings-action-row">
+        <button id="settings-export-bundle-btn" type="button">Export Settings Bundle</button>
+        <label class="settings-import-label" for="settings-import-bundle-input">Import Settings Bundle</label>
+        <input id="settings-import-bundle-input" type="file" accept="application/json" hidden>
+      </div>
+    </div>
+
+    <div id="settings-labs-section" class="settings-section settings-labs-section hidden">
+      <h4>Labs & Easter Eggs</h4>
+      <div class="settings-subtitle">Mostly client-side visual extras and secret commands.</div>
+      <div class="settings-labs-grid">
+        <label><input id="labs-fx-grain" type="checkbox"> Ambient grain</label>
+        <label><input id="labs-fx-glass" type="checkbox"> Glass panels</label>
+        <label><input id="labs-fx-gradient" type="checkbox"> Gradient drift</label>
+        <label><input id="labs-fx-bob" type="checkbox"> Server bob hover</label>
+        <label><input id="labs-fx-glow" type="checkbox"> Message glow</label>
+        <label><input id="labs-fx-compact" type="checkbox"> Compact sidebars</label>
+        <label><input id="labs-fx-neon" type="checkbox"> Neon accents</label>
+        <label><input id="labs-fx-retro" type="checkbox"> Retro font mode</label>
+        <label><input id="labs-fx-lanterns" type="checkbox"> Lantern drift</label>
+        <label><input id="labs-fx-d20turbo" type="checkbox"> D20 turbo spin</label>
+        <label><input id="labs-fx-d20bounce" type="checkbox"> Click D20 bounce</label>
+        <label><input id="labs-fx-roll-anim" type="checkbox"> Animate /roll dice</label>
+        <label><input id="labs-fx-rainbow-author" type="checkbox"> Rainbow usernames</label>
+        <label><input id="labs-fx-scanlines" type="checkbox"> CRT scanlines</label>
+        <label><input id="labs-fx-panel-tilt" type="checkbox"> Panel tilt hover</label>
+        <label><input id="labs-fx-unread-shimmer" type="checkbox"> Unread shimmer</label>
+        <label><input id="labs-fx-command-hints" type="checkbox"> Show slash command hints</label>
+      </div>
+      <div class="settings-subtitle">Slash commands: <code>/roll 2d20</code>, <code>/party</code>, <code>/shrug</code>, <code>/tableflip</code>, <code>/unflip</code>, <code>/lenny</code>, <code>/konami</code></div>
+      <div class="settings-action-row">
+        <button id="labs-trigger-party" type="button">Trigger Emoji Rain</button>
+        <button id="labs-trigger-konami" type="button">Toggle Konami Mode</button>
+        <button id="open-launch-checklist-btn" type="button">Launch Checklist</button>
+        <button id="labs-reset-btn" type="button" class="secondary-action">Reset Labs</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="launch-checklist-modal" class="modal">
+  <div class="modal-content checklist-modal-content">
+    <span class="close">&times;</span>
+    <h3>Launch Smoke Checklist</h3>
+    <div class="settings-subtitle">Quick pass before 1.0 launch.</div>
+    <div id="launch-checklist-list" class="checklist-list"></div>
+    <div class="settings-action-row">
+      <button id="launch-checklist-reset-btn" type="button" class="secondary-action">Reset Checklist</button>
+    </div>
+  </div>
+</div>
+
+<div id="quick-switcher-modal" class="modal">
+  <div class="modal-content create-dm-modal-content">
+    <span class="close">&times;</span>
+    <h3>Quick Switcher</h3>
+    <input id="quick-switcher-input" type="text" placeholder="Type to search servers/channels/dms/users...">
+    <div id="quick-switcher-list" class="friends-list"></div>
+  </div>
+</div>
+
+<div id="shortcuts-modal" class="modal">
+  <div class="modal-content checklist-modal-content">
+    <span class="close">&times;</span>
+    <h3>Keyboard Shortcuts</h3>
+    <div class="checklist-list">
+      <div class="checklist-item"><span><strong>Ctrl/Cmd + K</strong> Quick switcher</span></div>
+      <div class="checklist-item"><span><strong>?</strong> Open this shortcuts panel</span></div>
+      <div class="checklist-item"><span><strong>Enter</strong> Send message</span></div>
+      <div class="checklist-item"><span><strong>Shift + Enter</strong> New line</span></div>
+      <div class="checklist-item"><span><strong>Esc</strong> Close active modal/menu</span></div>
+    </div>
+  </div>
+</div>
+
+<div id="image-preprocess-modal" class="modal">
+  <div class="modal-content checklist-modal-content">
+    <span class="close">&times;</span>
+    <h3>Image Preview</h3>
+    <div class="settings-subtitle">Choose original or center-square crop.</div>
+    <img id="image-preprocess-preview" class="image-preprocess-preview" alt="Image preview">
+    <div class="settings-action-row">
+      <button id="image-preprocess-original-btn" type="button">Use Original</button>
+      <button id="image-preprocess-crop-btn" type="button">Use Square Crop</button>
+      <button id="image-preprocess-cancel-btn" type="button" class="secondary-action">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rich Message Editor Modal -->
+<div id="rich-editor-modal" class="modal">
+  <div class="modal-content editor-modal-content">
+    <span class="close">&times;</span>
+    <h3>Message Editor</h3>
+    <div class="editor-grid">
+      <div class="editor-column">
+        <label for="editor-md-input">Markdown</label>
+        <textarea id="editor-md-input" rows="6" placeholder="**bold**, _italic_, [link](https://...)"></textarea>
+      </div>
+      <div class="editor-column">
+        <label for="editor-html-input">HTML</label>
+        <textarea id="editor-html-input" rows="6" placeholder="<strong>Hello</strong>"></textarea>
+      </div>
+      <div class="editor-column">
+        <label for="editor-css-input">CSS (inline style declarations)</label>
+        <textarea id="editor-css-input" rows="6" placeholder="color:#9aa; font-weight:700;"></textarea>
+      </div>
+    </div>
+    <div class="editor-preview-wrap">
+      <label>Preview</label>
+      <div id="editor-preview" class="editor-preview"></div>
+    </div>
+    <div class="editor-actions">
+      <button id="editor-insert-btn" type="button">Insert Into Message</button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin Panel Modal -->
+<div id="admin-modal" class="modal">
+  <div class="modal-content admin-modal-content">
+    <span class="close">&times;</span>
+    <h3>Admin Panel</h3>
+    <div id="admin-overview" class="admin-overview-grid"></div>
+    <div class="admin-users-header">
+      <h4>Users</h4>
+      <button id="admin-refresh-btn" type="button">Refresh</button>
+    </div>
+    <div id="admin-users-list" class="admin-users-list"></div>
+    <div class="admin-users-header">
+      <h4>Recent Audit</h4>
+    </div>
+    <div id="admin-audit-list" class="admin-users-list"></div>
+  </div>
+</div>
+
+<!-- Message Thread Modal -->
+<div id="thread-modal" class="modal">
+  <div class="modal-content thread-modal-content">
+    <span class="close">&times;</span>
+    <h3 id="thread-modal-title">Thread</h3>
+    <div id="thread-messages-container" class="thread-messages-container"></div>
+    <div class="thread-compose">
+      <textarea id="thread-message-input" rows="2" placeholder="Reply in thread..."></textarea>
+      <button id="thread-send-btn" type="button">Send Reply</button>
+    </div>
+  </div>
+</div>
+
+<div id="dashboard-toast-container" class="toast-container"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+<script src="src/dashboard.js"></script>
+</body>
+</html>

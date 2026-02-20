@@ -1,136 +1,367 @@
-from sqlalchemy.orm import Session
+from datetime import UTC, datetime
 from typing import List
-from datetime import datetime, UTC
-from fastapi import HTTPException
-
-from app.features.servers import models, schemas
-from app.features.users.models import User
-from app.features.servers.models import Server
-from app.features.channels.models import Channel
 import uuid
 
-# ---------- Server Operations ----------
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
 
-def create_server(
-    db: Session,
-    server_in: schemas.ServerCreate,
-    owner_id: int
-) -> models.Server:
-    """
-    Create a new server and automatically add the creator as owner member.
-    """
+from app.core.audit import write_audit_event
+from app.features.channels.models import Channel
+from app.features.servers import models, schemas
+from app.features.servers.models import Server
+from app.features.users.models import User
 
-    # 1️⃣ Create server instance with name, owner, visibility
+
+ROLE_TEMPLATES = {
+    "owner": {
+        "can_manage_server": True,
+        "can_manage_channels": True,
+        "can_manage_members": True,
+        "can_manage_roles": True,
+        "can_moderate_messages": True,
+    },
+    "admin": {
+        "can_manage_server": True,
+        "can_manage_channels": True,
+        "can_manage_members": True,
+        "can_manage_roles": True,
+        "can_moderate_messages": True,
+    },
+    "mod": {
+        "can_manage_server": False,
+        "can_manage_channels": True,
+        "can_manage_members": False,
+        "can_manage_roles": False,
+        "can_moderate_messages": True,
+    },
+    "member": {
+        "can_manage_server": False,
+        "can_manage_channels": False,
+        "can_manage_members": False,
+        "can_manage_roles": False,
+        "can_moderate_messages": False,
+    },
+}
+
+
+def get_membership(db: Session, server_id: int, user_id: int) -> models.ServerMember | None:
+    return db.query(models.ServerMember).filter(
+        models.ServerMember.server_id == server_id,
+        models.ServerMember.user_id == user_id,
+    ).first()
+
+
+def ensure_default_roles(db: Session, server_id: int) -> dict[str, models.ServerRole]:
+    role_map: dict[str, models.ServerRole] = {}
+    changed = False
+    for name, template in ROLE_TEMPLATES.items():
+        role = db.query(models.ServerRole).filter(
+            models.ServerRole.server_id == server_id,
+            models.ServerRole.name == name,
+        ).first()
+        if not role:
+            role = models.ServerRole(server_id=server_id, name=name, **template)
+            db.add(role)
+            changed = True
+        role_map[name] = role
+    if changed:
+        db.commit()
+    for name in list(role_map.keys()):
+        role_map[name] = db.query(models.ServerRole).filter(
+            models.ServerRole.server_id == server_id,
+            models.ServerRole.name == name,
+        ).first()
+    return role_map
+
+
+def has_server_permission(db: Session, server_id: int, user_id: int, permission_field: str) -> bool:
+    user = db.query(User).filter(User.id == user_id).first()
+    if user and user.is_superadmin:
+        return True
+
+    membership = get_membership(db, server_id, user_id)
+    if not membership:
+        return False
+
+    if membership.role == "owner":
+        return True
+
+    role = membership.role_ref
+    if role is None and membership.role:
+        role = db.query(models.ServerRole).filter(
+            models.ServerRole.server_id == server_id,
+            models.ServerRole.name == membership.role.lower(),
+        ).first()
+    if role is None:
+        role = ensure_default_roles(db, server_id).get("member")
+    return bool(getattr(role, permission_field, False))
+
+
+def create_server(db: Session, server_in: schemas.ServerCreate, owner_id: int) -> models.Server:
     server = models.Server(
         name=server_in.name,
         owner_id=owner_id,
         is_public=server_in.is_public,
         created_at=datetime.now(UTC),
-        updated_at=datetime.now(UTC)
+        updated_at=datetime.now(UTC),
     )
 
     db.add(server)
     db.commit()
-    db.refresh(server)  # refresh to get DB-generated values (like ID)
+    db.refresh(server)
 
-    # 2️⃣ Add creator as a ServerMember with role "owner"
+    role_map = ensure_default_roles(db, server.id)
     membership = models.ServerMember(
         server_id=server.id,
         user_id=owner_id,
         role="owner",
-        joined_at=datetime.now(UTC)
+        role_id=role_map["owner"].id if role_map.get("owner") else None,
+        joined_at=datetime.now(UTC),
     )
-
     db.add(membership)
     db.commit()
-    
-    # 3️⃣ Create default "general" text channel for the server
+
     general_channel = Channel(
         public_id=str(uuid.uuid4()),
         name="general",
         server_id=server.id,
-        type="text"
+        type="text",
     )
-
     db.add(general_channel)
     db.commit()
-
     return server
 
+
 def list_user_servers(db: Session, user_id: int) -> List[models.Server]:
-    """
-    List all servers the user is a member of.
-    """
-    # Query memberships for the user
+    user = db.query(User).filter(User.id == user_id).first()
+    if user and user.is_superadmin:
+        return db.query(models.Server).order_by(models.Server.created_at.desc()).all()
     memberships = db.query(models.ServerMember).filter(models.ServerMember.user_id == user_id).all()
-    # Return the associated Server objects
     return [membership.server for membership in memberships]
 
+
 def get_server_by_public_id(db: Session, public_id: str) -> models.Server | None:
-    """
-    Retrieve a server by its public_id.
-    """
     return db.query(models.Server).filter(models.Server.public_id == public_id).first()
 
-def add_member_to_server(db: Session, server: models.Server, user: User, role: str = "member") -> models.ServerMember:
-    """
-    Add a user as a member of a server. Returns the new ServerMember.
-    """
-    # Prevent duplicate memberships
+
+def add_member_to_server(db: Session, server: models.Server, user: User, role: str = "member") -> models.ServerMember | None:
     existing_member = db.query(models.ServerMember).filter(
         models.ServerMember.server_id == server.id,
-        models.ServerMember.user_id == user.id
+        models.ServerMember.user_id == user.id,
     ).first()
     if existing_member:
-        return None  # Already a member
+        return None
 
-    # Create new membership
+    role_map = ensure_default_roles(db, server.id)
+    role_name = (role or "member").lower()
+    if role_name not in role_map:
+        role_name = "member"
+
     member = models.ServerMember(
         server_id=server.id,
         user_id=user.id,
-        role=role
+        role=role_name,
+        role_id=role_map[role_name].id if role_map.get(role_name) else None,
     )
     db.add(member)
     db.commit()
     db.refresh(member)
     return member
 
-def delete_server(db, public_id: str, user_id: int):
-    """
-    Delete a server. Only the owner can delete it.
-    Cascade deletes associated channels and memberships due to model configuration.
-    """
-    server = db.query(Server).filter(
-        Server.public_id == public_id
-    ).first()
 
+def list_server_members(db: Session, server_public_id: str, requester_id: int):
+    server = get_server_by_public_id(db, server_public_id)
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
-
-    if server.owner_id != user_id:
+    if not get_membership(db, server.id, requester_id) and not db.query(User).filter(User.id == requester_id, User.is_superadmin == True).first():
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    db.delete(server)  # Deletes server and cascades to channels & members
-    db.commit()
+    members = db.query(models.ServerMember).filter(models.ServerMember.server_id == server.id).all()
+    return [
+        {
+            "user_id": member.user_id,
+            "user_public_id": member.user.public_id,
+            "username": member.user.username,
+            "nickname": member.nickname,
+            "server_id": member.server_id,
+            "role": member.role,
+            "role_public_id": member.role_ref.public_id if member.role_ref else None,
+            "joined_at": member.joined_at,
+            "updated_at": member.updated_at,
+        }
+        for member in members
+    ]
 
+
+def delete_server(db: Session, public_id: str, user_id: int):
+    server = db.query(Server).filter(Server.public_id == public_id).first()
+    if not server:
+        raise HTTPException(status_code=404, detail="Server not found")
+    if not has_server_permission(db, server.id, user_id, "can_manage_server"):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    server_name = server.name
+    db.delete(server)
+    db.commit()
+    actor = db.query(User).filter(User.id == user_id).first()
+    write_audit_event(
+        event_type="server_deleted",
+        actor_user_id=user_id,
+        actor_public_id=actor.public_id if actor else None,
+        target={"server_public_id": public_id, "server_name": server_name},
+    )
     return {"detail": "Server deleted"}
 
-def update_server(db, public_id: str, name: str, user_id: int):
-    """
-    Update the server name. Only owner can update.
-    """
-    server = db.query(Server).filter(
-        Server.public_id == public_id
-    ).first()
 
+def update_server(db: Session, public_id: str, name: str, user_id: int):
+    server = db.query(Server).filter(Server.public_id == public_id).first()
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
-
-    if server.owner_id != user_id:
+    if not has_server_permission(db, server.id, user_id, "can_manage_server"):
         raise HTTPException(status_code=403, detail="Not authorized")
-
     server.name = name
     db.commit()
     db.refresh(server)
-
     return server
+
+
+def list_server_roles(db: Session, server_public_id: str, user_id: int):
+    server = get_server_by_public_id(db, server_public_id)
+    if not server:
+        raise HTTPException(status_code=404, detail="Server not found")
+    if not get_membership(db, server.id, user_id) and not db.query(User).filter(User.id == user_id, User.is_superadmin == True).first():
+        raise HTTPException(status_code=403, detail="Not authorized")
+    ensure_default_roles(db, server.id)
+    return db.query(models.ServerRole).filter(models.ServerRole.server_id == server.id).order_by(models.ServerRole.name.asc()).all()
+
+
+def create_server_role(db: Session, server_public_id: str, role_in: schemas.ServerRoleCreate, user_id: int):
+    server = get_server_by_public_id(db, server_public_id)
+    if not server:
+        raise HTTPException(status_code=404, detail="Server not found")
+    if not has_server_permission(db, server.id, user_id, "can_manage_roles"):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    existing = db.query(models.ServerRole).filter(
+        models.ServerRole.server_id == server.id,
+        models.ServerRole.name == role_in.name.lower(),
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Role already exists")
+    role = models.ServerRole(
+        server_id=server.id,
+        name=role_in.name.lower(),
+        can_manage_server=role_in.can_manage_server,
+        can_manage_channels=role_in.can_manage_channels,
+        can_manage_members=role_in.can_manage_members,
+        can_manage_roles=role_in.can_manage_roles,
+        can_moderate_messages=role_in.can_moderate_messages,
+    )
+    db.add(role)
+    db.commit()
+    db.refresh(role)
+    actor = db.query(User).filter(User.id == user_id).first()
+    write_audit_event(
+        event_type="server_role_created",
+        actor_user_id=user_id,
+        actor_public_id=actor.public_id if actor else None,
+        target={"server_public_id": server_public_id, "role_public_id": role.public_id, "role_name": role.name},
+    )
+    return role
+
+
+def update_server_role(db: Session, server_public_id: str, role_public_id: str, role_in: schemas.ServerRoleUpdate, user_id: int):
+    server = get_server_by_public_id(db, server_public_id)
+    if not server:
+        raise HTTPException(status_code=404, detail="Server not found")
+    if not has_server_permission(db, server.id, user_id, "can_manage_roles"):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    role = db.query(models.ServerRole).filter(
+        models.ServerRole.public_id == role_public_id,
+        models.ServerRole.server_id == server.id,
+    ).first()
+    if not role:
+        raise HTTPException(status_code=404, detail="Role not found")
+    if role.name == "owner":
+        raise HTTPException(status_code=400, detail="Owner role cannot be modified")
+    for field in ("name", "can_manage_server", "can_manage_channels", "can_manage_members", "can_manage_roles", "can_moderate_messages"):
+        value = getattr(role_in, field)
+        if value is not None:
+            setattr(role, field, value.lower() if field == "name" else value)
+    db.commit()
+    db.refresh(role)
+    actor = db.query(User).filter(User.id == user_id).first()
+    role_updates = role_in.dict(exclude_none=True) if hasattr(role_in, "dict") else {}
+    write_audit_event(
+        event_type="server_role_updated",
+        actor_user_id=user_id,
+        actor_public_id=actor.public_id if actor else None,
+        target={"server_public_id": server_public_id, "role_public_id": role_public_id, "role_name": role.name},
+        details={"updates": role_updates},
+    )
+    return role
+
+
+def assign_member_role(db: Session, server_public_id: str, member_user_public_id: str, role_public_id: str, user_id: int):
+    server = get_server_by_public_id(db, server_public_id)
+    if not server:
+        raise HTTPException(status_code=404, detail="Server not found")
+    if not has_server_permission(db, server.id, user_id, "can_manage_members"):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    member_user = db.query(User).filter(User.public_id == member_user_public_id).first()
+    if not member_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    membership = get_membership(db, server.id, member_user.id)
+    if not membership:
+        raise HTTPException(status_code=404, detail="Membership not found")
+    role = db.query(models.ServerRole).filter(
+        models.ServerRole.public_id == role_public_id,
+        models.ServerRole.server_id == server.id,
+    ).first()
+    if not role:
+        raise HTTPException(status_code=404, detail="Role not found")
+    membership.role = role.name
+    membership.role_id = role.id
+    db.commit()
+    db.refresh(membership)
+    actor = db.query(User).filter(User.id == user_id).first()
+    write_audit_event(
+        event_type="server_member_role_assigned",
+        actor_user_id=user_id,
+        actor_public_id=actor.public_id if actor else None,
+        target={"server_public_id": server_public_id, "member_user_public_id": member_user_public_id},
+        details={"role_public_id": role_public_id, "role_name": membership.role},
+    )
+    return membership
+
+
+def update_member_nickname(
+    db: Session,
+    server_public_id: str,
+    member_user_public_id: str,
+    nickname: str | None,
+    requester_id: int,
+):
+    server = get_server_by_public_id(db, server_public_id)
+    if not server:
+        raise HTTPException(status_code=404, detail="Server not found")
+
+    member_user = db.query(User).filter(User.public_id == member_user_public_id).first()
+    if not member_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    membership = get_membership(db, server.id, member_user.id)
+    if not membership:
+        raise HTTPException(status_code=404, detail="Membership not found")
+
+    can_manage_members = has_server_permission(db, server.id, requester_id, "can_manage_members")
+    is_self = requester_id == member_user.id
+    if not is_self and not can_manage_members:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    next_nickname = (nickname or "").strip() or None
+    if next_nickname and len(next_nickname) > 50:
+        raise HTTPException(status_code=400, detail="Nickname must be 50 characters or fewer")
+
+    membership.nickname = next_nickname
+    db.commit()
+    db.refresh(membership)
+    return membership

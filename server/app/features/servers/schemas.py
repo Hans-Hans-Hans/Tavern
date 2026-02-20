@@ -36,11 +36,64 @@ class ServerMemberOut(BaseModel):
     user_id: int             # ID of the user
     server_id: int           # ID of the server
     role: str                # Role in server (owner, member, etc.)
+    nickname: Optional[str] = None
     joined_at: datetime      # Timestamp when joined server
     updated_at: datetime     # Timestamp of last role update
 
     class Config:
         from_attributes = True
+
+
+class ServerMemberDetailOut(BaseModel):
+    user_id: int
+    user_public_id: str
+    username: str
+    nickname: Optional[str] = None
+    server_id: int
+    role: str
+    role_public_id: Optional[str] = None
+    joined_at: datetime
+    updated_at: datetime
+
+
+class ServerRoleBase(BaseModel):
+    name: str
+    can_manage_server: bool = False
+    can_manage_channels: bool = False
+    can_manage_members: bool = False
+    can_manage_roles: bool = False
+    can_moderate_messages: bool = False
+
+
+class ServerRoleCreate(ServerRoleBase):
+    pass
+
+
+class ServerRoleUpdate(BaseModel):
+    name: Optional[str] = None
+    can_manage_server: Optional[bool] = None
+    can_manage_channels: Optional[bool] = None
+    can_manage_members: Optional[bool] = None
+    can_manage_roles: Optional[bool] = None
+    can_moderate_messages: Optional[bool] = None
+
+
+class ServerRoleOut(ServerRoleBase):
+    public_id: str
+    server_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class MemberRoleAssign(BaseModel):
+    role_public_id: str
+
+
+class MemberNicknameUpdate(BaseModel):
+    nickname: Optional[str] = None
 
 # SCHEMA TO UPDATE SERVER INFO
 class ServerUpdate(BaseModel):

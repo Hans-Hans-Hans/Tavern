@@ -42,7 +42,7 @@ def get_server(
         models.ServerMember.server_id == server.id,
         models.ServerMember.user_id == current_user.id
     ).first()
-    if not membership:
+    if not membership and not current_user.is_superadmin:
         raise HTTPException(status_code=403, detail="Not authorized to view this server")
 
     return server
@@ -59,9 +59,8 @@ def add_member(
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
 
-    # Only the server owner can add members
-    if server.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Only server owner can add members")
+    if not service.has_server_permission(db, server.id, current_user.id, "can_manage_members"):
+        raise HTTPException(status_code=403, detail="Not authorized to add members")
 
     # Find the user to add by their public_id
     user = db.query(User).filter(User.public_id == user_public_id).first()
@@ -73,6 +72,15 @@ def add_member(
         raise HTTPException(status_code=400, detail="User is already a member")
 
     return member
+
+
+@router.get("/{public_id}/members", response_model=List[schemas.ServerMemberDetailOut])
+def list_members(
+    public_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return service.list_server_members(db, public_id, current_user.id)
 
 # Delete a server
 @router.delete("/{public_id}")
@@ -100,4 +108,68 @@ def update_server(
         public_id,
         server_in.name,
         current_user.id
+    )
+
+
+@router.get("/{public_id}/roles", response_model=List[schemas.ServerRoleOut])
+def list_roles(
+    public_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return service.list_server_roles(db, public_id, current_user.id)
+
+
+@router.post("/{public_id}/roles", response_model=schemas.ServerRoleOut)
+def create_role(
+    public_id: str,
+    role_in: schemas.ServerRoleCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return service.create_server_role(db, public_id, role_in, current_user.id)
+
+
+@router.patch("/{public_id}/roles/{role_public_id}", response_model=schemas.ServerRoleOut)
+def patch_role(
+    public_id: str,
+    role_public_id: str,
+    role_in: schemas.ServerRoleUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return service.update_server_role(db, public_id, role_public_id, role_in, current_user.id)
+
+
+@router.patch("/{public_id}/members/{member_user_public_id}/role", response_model=schemas.ServerMemberOut)
+def assign_member_role(
+    public_id: str,
+    member_user_public_id: str,
+    payload: schemas.MemberRoleAssign,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return service.assign_member_role(
+        db,
+        public_id,
+        member_user_public_id,
+        payload.role_public_id,
+        current_user.id,
+    )
+
+
+@router.patch("/{public_id}/members/{member_user_public_id}/nickname", response_model=schemas.ServerMemberOut)
+def patch_member_nickname(
+    public_id: str,
+    member_user_public_id: str,
+    payload: schemas.MemberNicknameUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return service.update_member_nickname(
+        db,
+        public_id,
+        member_user_public_id,
+        payload.nickname,
+        current_user.id,
     )

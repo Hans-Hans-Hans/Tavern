@@ -30,7 +30,7 @@ def create_channel(server_public_id: str,
     Create a new channel in the specified server.
     Requires the name of the channel and authenticated user.
     """
-    return service.create_channel(db, server_public_id, channel_in.name, current_user.id)
+    return service.create_channel(db, server_public_id, channel_in.name, channel_in.type, current_user.id)
 
 
 @router.delete("/{channel_public_id}")
