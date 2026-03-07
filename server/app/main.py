@@ -48,6 +48,8 @@ from app.features.channels import models as channels_models
 from app.features.messages import models as messages_models
 from app.features.dms import models as dms_models
 from app.features.push import models as push_models
+from app.features.auth import models as auth_models
+from app.core import models as core_models
 
 # THEN create tables
 Base.metadata.create_all(bind=engine)

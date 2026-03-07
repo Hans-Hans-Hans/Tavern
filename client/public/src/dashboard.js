@@ -446,6 +446,8 @@ const adminOverviewEl = document.getElementById("admin-overview");
 const adminUsersListEl = document.getElementById("admin-users-list");
 const adminAuditListEl = document.getElementById("admin-audit-list");
 const adminRefreshBtn = document.getElementById("admin-refresh-btn");
+const adminRequireEmailVerificationInput = document.getElementById("admin-require-email-verification");
+const adminSaveSettingsBtn = document.getElementById("admin-save-settings-btn");
 const serverMembersModal = document.getElementById("server-members-modal");
 const membersServerName = document.getElementById("members-server-name");
 const membersListEl = document.getElementById("members-list");
@@ -766,7 +768,7 @@ const FRIEND_REQUEST_TOAST_POLL_MS = 30000;
 let notificationPollInFlight = false;
 let lastNotificationPollAt = 0;
 let lastFriendRequestToastPollAt = 0;
-const SERVICE_WORKER_URL = "/sw.js?v=20260307-hotfix71";
+const SERVICE_WORKER_URL = "/sw.js?v=20260307-hotfix72";
 const PUSH_HEALTHCHECK_MS = 2 * 60 * 1000;
 let pushHealthTimer = null;
 let pushSelfHealInFlight = false;
@@ -11160,6 +11162,26 @@ async function fetchAdminAudit() {
   return res.json();
 }
 
+async function fetchAdminSettings() {
+  const res = await fetch("/admin/settings", { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to load admin settings");
+  return res.json();
+}
+
+async function patchAdminSettings(payload) {
+  const res = await fetch("/admin/settings", {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload || {}),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.detail || "Failed to save admin settings");
+  }
+  return res.json();
+}
+
 async function patchAdminUserFlags(userPublicId, payload) {
   const res = await fetch(`/admin/users/${userPublicId}`, {
     method: "PATCH",
@@ -11346,11 +11368,23 @@ function renderAdminUsers(users) {
   });
 }
 
+function renderAdminSettings(settings) {
+  if (adminRequireEmailVerificationInput) {
+    adminRequireEmailVerificationInput.checked = Boolean(settings?.require_email_verification);
+  }
+}
+
 async function loadAdminPanel() {
-  const [overview, users, audit] = await Promise.all([fetchAdminOverview(), fetchAdminUsers(), fetchAdminAudit()]);
+  const [overview, users, audit, settings] = await Promise.all([
+    fetchAdminOverview(),
+    fetchAdminUsers(),
+    fetchAdminAudit(),
+    fetchAdminSettings(),
+  ]);
   renderAdminOverview(overview);
   renderAdminUsers(users);
   renderAdminAudit(audit);
+  renderAdminSettings(settings);
 }
 
 async function loadDmMessages(conversationPublicId, shouldScrollToBottom = false, options = {}) {
@@ -13004,6 +13038,24 @@ if (adminRefreshBtn) {
   });
 }
 
+if (adminSaveSettingsBtn) {
+  adminSaveSettingsBtn.addEventListener("click", async () => {
+    try {
+      adminSaveSettingsBtn.disabled = true;
+      const requireEmailVerification = Boolean(adminRequireEmailVerificationInput?.checked);
+      const updated = await patchAdminSettings({
+        require_email_verification: requireEmailVerification,
+      });
+      renderAdminSettings(updated);
+      showToast("Admin settings saved");
+    } catch (err) {
+      alert(err.message || "Failed to save admin settings");
+    } finally {
+      adminSaveSettingsBtn.disabled = false;
+    }
+  });
+}
+
 if (dmCallBtn) {
   dmCallBtn.addEventListener("click", async () => {
     if (activeMode !== "dm" || !activeDmConversationId) return;
@@ -13741,4 +13793,5 @@ window.setTimeout(() => {
 window.setTimeout(() => {
   maybeCheckDesktopWrapperUpdate().catch(() => {});
 }, 1500);
+
 

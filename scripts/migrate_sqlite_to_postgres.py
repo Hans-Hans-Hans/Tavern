@@ -25,6 +25,8 @@ def _load_app_models() -> None:
     from app.features.messages import models as _messages_models  # noqa: F401
     from app.features.dms import models as _dms_models  # noqa: F401
     from app.features.push import models as _push_models  # noqa: F401
+    from app.features.auth import models as _auth_models  # noqa: F401
+    from app.core import models as _core_models  # noqa: F401
 
 
 def _table_row_count(conn, table) -> int:

@@ -5,6 +5,11 @@ from datetime import UTC, datetime, timedelta
 
 from app.core.security import get_current_user
 from app.core.audit import read_recent_audit_events, write_audit_event
+from app.core.app_settings import (
+    REQUIRE_EMAIL_VERIFICATION_KEY,
+    get_bool_setting,
+    set_bool_setting,
+)
 from app.core.runtime_metrics import count_voice_joins
 from app.db.deps import get_db
 from app.features.users.models import User, FriendRequest
@@ -56,6 +61,43 @@ def admin_overview(
         "active_users_24h": len(message_users | dm_users),
         "voice_joins_24h": count_voice_joins(24),
     }
+
+
+@router.get("/settings")
+def admin_get_settings(
+    current_user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db),
+):
+    _ = current_user
+    return {
+        "require_email_verification": get_bool_setting(
+            db,
+            REQUIRE_EMAIL_VERIFICATION_KEY,
+            default=False,
+        ),
+    }
+
+
+@router.patch("/settings")
+def admin_patch_settings(
+    payload: dict,
+    current_user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db),
+):
+    require_email_verification = bool(payload.get("require_email_verification", False))
+    applied_value = set_bool_setting(
+        db,
+        REQUIRE_EMAIL_VERIFICATION_KEY,
+        require_email_verification,
+    )
+    write_audit_event(
+        event_type="admin_settings_updated",
+        actor_user_id=current_user.id,
+        actor_public_id=current_user.public_id,
+        target={"settings": "global"},
+        details={"require_email_verification": applied_value},
+    )
+    return {"require_email_verification": applied_value}
 
 
 @router.get("/users")
