@@ -19,6 +19,7 @@ from app.features.servers import service as servers_service
 from app.features.channels.models import Channel
 from app.features.messages.models import Message, MessageReaction
 from app.features.dms.models import DirectConversation, DirectMessage
+from app.features.push.models import PushSubscription
 
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
@@ -216,6 +217,7 @@ def admin_delete_user(
         synchronize_session=False,
     )
     db.query(Message).filter(Message.user_id == target.id).delete(synchronize_session=False)
+    db.query(PushSubscription).filter(PushSubscription.user_id == target.id).delete(synchronize_session=False)
 
     write_audit_event(
         event_type="admin_delete_user",
