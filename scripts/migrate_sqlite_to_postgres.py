@@ -115,30 +115,40 @@ def migrate(sqlite_url: str, postgres_url: str, truncate_target: bool, chunk_siz
         raise RuntimeError(f"Target is missing tables present in source: {names}")
 
     with source_engine.connect() as source_conn, target_engine.begin() as target_conn:
-        if truncate_target:
-            _truncate_target_tables(target_conn, target_md)
-        else:
-            non_empty = [
-                t.name
-                for t in source_tables
-                if _table_row_count(source_conn, t) > 0 and _table_row_count(target_conn, target_by_name[t.name]) > 0
-            ]
-            if non_empty:
-                raise RuntimeError(
-                    "Target has existing rows for source tables. "
-                    "Re-run with --truncate-target if this is intentional. "
-                    f"Tables: {', '.join(non_empty)}"
-                )
+        replication_role_swapped = False
+        if target_conn.dialect.name == "postgresql":
+            # Preserve legacy SQLite datasets that may contain FK-orphan rows.
+            target_conn.execute(text("SET session_replication_role = replica"))
+            replication_role_swapped = True
 
-        total_rows = 0
-        for source_table in source_tables:
-            target_table = target_by_name[source_table.name]
-            copied = _copy_table_rows(source_conn, target_conn, source_table, target_table, chunk_size)
-            total_rows += copied
-            print(f"[migrate] {source_table.name}: copied {copied} rows")
+        try:
+            if truncate_target:
+                _truncate_target_tables(target_conn, target_md)
+            else:
+                non_empty = [
+                    t.name
+                    for t in source_tables
+                    if _table_row_count(source_conn, t) > 0 and _table_row_count(target_conn, target_by_name[t.name]) > 0
+                ]
+                if non_empty:
+                    raise RuntimeError(
+                        "Target has existing rows for source tables. "
+                        "Re-run with --truncate-target if this is intentional. "
+                        f"Tables: {', '.join(non_empty)}"
+                    )
 
-        _reset_postgres_sequences(target_conn, target_md)
-        print(f"[migrate] done: copied {total_rows} total rows")
+            total_rows = 0
+            for source_table in source_tables:
+                target_table = target_by_name[source_table.name]
+                copied = _copy_table_rows(source_conn, target_conn, source_table, target_table, chunk_size)
+                total_rows += copied
+                print(f"[migrate] {source_table.name}: copied {copied} rows")
+
+            _reset_postgres_sequences(target_conn, target_md)
+            print(f"[migrate] done: copied {total_rows} total rows")
+        finally:
+            if replication_role_swapped:
+                target_conn.execute(text("SET session_replication_role = origin"))
 
 
 def main() -> None:
