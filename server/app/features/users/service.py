@@ -1,8 +1,38 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
 from fastapi import HTTPException
+import secrets
+import json
 from app.features.users import models, schemas
 from app.core.security import hash_password, verify_password
+from app.core.announcements import CURRENT_ANNOUNCEMENT_VERSION, build_announcement_message
+from app.core.text_sanitize import normalize_username, normalize_custom_status
+
+MAX_APPEARANCE_SETTINGS_BYTES = 120_000
+
+
+def _resolve_friend_target_user(db: Session, target_identifier: str):
+    raw = str(target_identifier or "").strip()
+    if not raw:
+        raise HTTPException(status_code=400, detail="User identifier is required")
+
+    # Full public ID remains the primary lookup path.
+    by_public_id = db.query(models.User).filter(models.User.public_id == raw).first()
+    if by_public_id:
+        return by_public_id
+
+    # Alternative format: username:abcd (last 4 chars of public_id, case-insensitive)
+    if ":" in raw:
+        username_part, suffix_part = raw.rsplit(":", 1)
+        username = username_part.strip()
+        suffix = suffix_part.strip().lower()
+        if username and len(suffix) == 4 and suffix.isalnum():
+            by_username = db.query(models.User).filter(models.User.username == username).first()
+            public_id_compact = str(by_username.public_id or "").replace("-", "").lower() if by_username else ""
+            if by_username and (public_id_compact.startswith(suffix) or public_id_compact.endswith(suffix)):
+                return by_username
+
+    raise HTTPException(status_code=404, detail="User not found")
 
 # Creates a new user and persists to database
 # Responsibility:
@@ -18,6 +48,8 @@ def create_user(
     is_superadmin: bool = False,
     must_reset_password: bool = False,
 ):
+    username = normalize_username(username)
+    email = str(email or "").strip().lower()
     # Hash plain-text password before storing
     hashed_pw = hash_password(password)
     
@@ -76,14 +108,45 @@ def update_user(db: Session, public_id: str, user_in: schemas.UserUpdate):
     if not user:
         return None
     # Only update fields if provided (partial update behavior)
-    if user_in.username is not None:
-        user.username = user_in.username
+    provided = getattr(user_in, "model_fields_set", set())
+    if "username" in provided and user_in.username is not None:
+        user.username = normalize_username(user_in.username)
         
-    if user_in.email is not None:
+    if "email" in provided and user_in.email is not None:
         user.email = user_in.email
+    if "username_color" in provided:
+        user.username_color = user_in.username_color
+    if "name_emoji" in provided:
+        user.name_emoji = user_in.name_emoji
+    if "custom_status" in provided:
+        user.custom_status = normalize_custom_status(user_in.custom_status) if user_in.custom_status else None
+    if "strip_upload_metadata" in provided:
+        user.strip_upload_metadata = bool(user_in.strip_upload_metadata)
         
     db.commit()         # Persist changes
     db.refresh(user)    # Refresh to reflect updated state
+    return user
+
+
+def get_user_appearance_settings(user: models.User) -> dict | None:
+    raw = str(user.appearance_settings or "").strip()
+    if not raw:
+        return None
+    try:
+        parsed = json.loads(raw)
+    except Exception:
+        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
+def update_user_appearance_settings(db: Session, user: models.User, appearance_settings: dict) -> models.User:
+    payload = appearance_settings if isinstance(appearance_settings, dict) else {}
+    encoded = json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
+    if len(encoded.encode("utf-8")) > MAX_APPEARANCE_SETTINGS_BYTES:
+        raise HTTPException(status_code=413, detail="Appearance settings payload is too large")
+    user.appearance_settings = encoded
+    db.commit()
+    db.refresh(user)
     return user
 
 
@@ -130,6 +193,7 @@ def list_friends(db: Session, user_id: int):
             {
                 "public_id": other.public_id,
                 "username": other.username,
+                "custom_status": other.custom_status,
             }
         )
     return friends
@@ -159,10 +223,40 @@ def list_friend_requests(db: Session, user_id: int):
     return {"incoming": incoming, "outgoing": outgoing}
 
 
+def list_friend_request_history(db: Session, user_id: int, limit: int = 120):
+    safe_limit = max(1, min(500, int(limit)))
+    rows = (
+        db.query(models.FriendRequest)
+        .filter(
+            or_(
+                models.FriendRequest.requester_id == user_id,
+                models.FriendRequest.addressee_id == user_id,
+            ),
+        )
+        .order_by(models.FriendRequest.updated_at.desc())
+        .limit(safe_limit)
+        .all()
+    )
+    result = []
+    for row in rows:
+        is_outgoing = int(row.requester_id) == int(user_id)
+        other = row.addressee if is_outgoing else row.requester
+        result.append(
+            {
+                "public_id": row.public_id,
+                "direction": "outgoing" if is_outgoing else "incoming",
+                "other_public_id": other.public_id,
+                "other_username": other.username,
+                "status": row.status,
+                "created_at": row.created_at,
+                "updated_at": row.updated_at,
+            }
+        )
+    return result
+
+
 def send_friend_request(db: Session, requester_id: int, target_public_id: str):
-    target = db.query(models.User).filter(models.User.public_id == target_public_id).first()
-    if not target:
-        raise HTTPException(status_code=404, detail="User not found")
+    target = _resolve_friend_target_user(db, target_public_id)
     if target.id == requester_id:
         raise HTTPException(status_code=400, detail="Cannot friend yourself")
 
@@ -273,3 +367,135 @@ def _friend_request_out(row: models.FriendRequest):
         "status": row.status,
         "created_at": row.created_at,
     }
+
+
+def _ordered_pair(user_a_id: int, user_b_id: int) -> tuple[int, int]:
+    return (user_a_id, user_b_id) if user_a_id < user_b_id else (user_b_id, user_a_id)
+
+
+def _ensure_system_guide_user(db: Session):
+    guide = db.query(models.User).filter(models.User.email == "tavern-guide@tavern.local").first()
+    if guide:
+        return guide
+
+    username = "tavern_guide"
+    if db.query(models.User).filter(models.User.username == username).first():
+        username = "tavern_guide_system"
+
+    guide = models.User(
+        username=username,
+        email="tavern-guide@tavern.local",
+        hashed_password=hash_password(secrets.token_urlsafe(48)),
+        is_superadmin=False,
+        must_reset_password=False,
+        last_announcement_version=CURRENT_ANNOUNCEMENT_VERSION,
+    )
+    db.add(guide)
+    db.flush()
+    return guide
+
+
+def _ensure_friendship(db: Session, user_a_id: int, user_b_id: int):
+    existing = (
+        db.query(models.FriendRequest)
+        .filter(
+            models.FriendRequest.status == "accepted",
+            or_(
+                and_(
+                    models.FriendRequest.requester_id == user_a_id,
+                    models.FriendRequest.addressee_id == user_b_id,
+                ),
+                and_(
+                    models.FriendRequest.requester_id == user_b_id,
+                    models.FriendRequest.addressee_id == user_a_id,
+                ),
+            ),
+        )
+        .first()
+    )
+    if existing:
+        return
+
+    pending = (
+        db.query(models.FriendRequest)
+        .filter(
+            or_(
+                and_(
+                    models.FriendRequest.requester_id == user_a_id,
+                    models.FriendRequest.addressee_id == user_b_id,
+                ),
+                and_(
+                    models.FriendRequest.requester_id == user_b_id,
+                    models.FriendRequest.addressee_id == user_a_id,
+                ),
+            ),
+        )
+        .first()
+    )
+    if pending:
+        pending.status = "accepted"
+        return
+
+    db.add(
+        models.FriendRequest(
+            requester_id=user_a_id,
+            addressee_id=user_b_id,
+            status="accepted",
+        )
+    )
+
+
+def send_system_announcement_if_needed(db: Session, user: models.User, force: bool = False) -> bool:
+    if not force and user.last_announcement_version >= CURRENT_ANNOUNCEMENT_VERSION:
+        return False
+
+    guide_user = _ensure_system_guide_user(db)
+    if guide_user.id == user.id:
+        return False
+
+    _ensure_friendship(db, guide_user.id, user.id)
+
+    from app.features.dms.models import DirectConversation, DirectMessage
+
+    user_one_id, user_two_id = _ordered_pair(guide_user.id, user.id)
+    convo = (
+        db.query(DirectConversation)
+        .filter(
+            DirectConversation.user_one_id == user_one_id,
+            DirectConversation.user_two_id == user_two_id,
+        )
+        .first()
+    )
+    if not convo:
+        convo = DirectConversation(user_one_id=user_one_id, user_two_id=user_two_id)
+        db.add(convo)
+        db.flush()
+
+    version_marker = f"Update version: v{CURRENT_ANNOUNCEMENT_VERSION}"
+    if not force:
+        existing = (
+            db.query(DirectMessage.id)
+            .filter(
+                DirectMessage.conversation_id == convo.id,
+                DirectMessage.user_id == guide_user.id,
+                DirectMessage.content.like(f"%{version_marker}%"),
+            )
+            .first()
+        )
+        if existing:
+            user.last_announcement_version = CURRENT_ANNOUNCEMENT_VERSION
+            db.commit()
+            db.refresh(user)
+            return False
+
+    db.add(
+        DirectMessage(
+            conversation_id=convo.id,
+            user_id=guide_user.id,
+            content=build_announcement_message(),
+        )
+    )
+    user.last_announcement_version = CURRENT_ANNOUNCEMENT_VERSION
+    db.commit()
+    db.refresh(user)
+    return True

@@ -6,7 +6,7 @@ from datetime import UTC, datetime, timedelta
 
 _voice_join_events: deque[datetime] = deque()
 APP_STARTED_AT = datetime.now(UTC)
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
 
 
 def record_voice_join() -> None:

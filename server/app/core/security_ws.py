@@ -1,5 +1,5 @@
 from fastapi import WebSocket, WebSocketDisconnect, status, Depends
-from app.core.security import decode_access_token
+from app.core.security import decode_access_token, extract_access_token_from_cookie
 from sqlalchemy.orm import Session
 from app.db.deps import get_db
 from app.features.users.models import User
@@ -9,14 +9,10 @@ async def get_current_user_ws(websocket: WebSocket, db: Session = Depends(get_db
     Auth for WebSocket connections using JWT in cookie.
     Raises WebSocketDisconnect if auth fails.
     """
-    token = websocket.cookies.get("access_token")
+    token = extract_access_token_from_cookie(websocket.cookies.get("access_token"))
     if not token:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         raise WebSocketDisconnect()
-    
-    # Strip "Bearer " if present
-    if token.startswith("Bearer "):
-        token = token[7:]
 
     try:
         payload = decode_access_token(token)

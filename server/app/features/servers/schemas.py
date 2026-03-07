@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-from typing import Optional
+from pydantic import Field
+from typing import Any, Optional
 from datetime import datetime
 
 # SCHEMA TO CREATE A SERVER
@@ -21,6 +22,15 @@ class ServerOut(BaseModel):
     name: str                # Server name
     owner_id: int            # ID of the server owner
     is_public: bool          # Whether server is public or private
+    max_upload_size_mb: Optional[int] = None
+    log_retention_days: Optional[int] = None
+    message_retention_days: Optional[int] = None
+    strip_upload_metadata: bool = False
+    automod_enabled: bool = False
+    automod_block_external_links: bool = False
+    automod_block_invite_links: bool = False
+    automod_blocked_terms: Optional[str] = None
+    automod_blocked_extensions: Optional[str] = None
     created_at: datetime     # Timestamp when server was created
     updated_at: datetime     # Timestamp of last update
 
@@ -99,6 +109,30 @@ class MemberNicknameUpdate(BaseModel):
 class ServerUpdate(BaseModel):
     """
     Input schema for updating server info.
-    Currently only allows updating the name.
     """
-    name: str
+    name: Optional[str] = None
+    max_upload_size_mb: Optional[int] = Field(default=None, ge=0, le=102400)
+    log_retention_days: Optional[int] = Field(default=None, ge=0, le=3650)
+    message_retention_days: Optional[int] = Field(default=None, ge=-1, le=3650)
+    strip_upload_metadata: Optional[bool] = None
+    automod_enabled: Optional[bool] = None
+    automod_block_external_links: Optional[bool] = None
+    automod_block_invite_links: Optional[bool] = None
+    automod_blocked_terms: Optional[str] = Field(default=None, max_length=4000)
+    automod_blocked_extensions: Optional[str] = Field(default=None, max_length=1000)
+
+
+class ServerUploadDiagnosticsOut(BaseModel):
+    max_upload_size_mb: Optional[int] = None
+    active_upload_sessions: int = 0
+    pending_upload_bytes: int = 0
+    uploads_24h_count: int = 0
+    uploads_24h_bytes: int = 0
+
+
+class ServerActivityEventOut(BaseModel):
+    ts: str
+    event_type: str
+    actor_public_id: Optional[str] = None
+    target: dict[str, Any] = Field(default_factory=dict)
+    details: dict[str, Any] = Field(default_factory=dict)

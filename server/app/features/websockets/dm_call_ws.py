@@ -74,7 +74,10 @@ async def websocket_dm_calls(
     conversation_public_id: str,
     db: Session = Depends(get_db),
 ):
-    user = await get_current_user_ws(websocket, db)
+    try:
+        user = await get_current_user_ws(websocket, db)
+    except WebSocketDisconnect:
+        return
     convo = dm_service.get_conversation_or_404(db, conversation_public_id)
     if user.id not in (convo.user_one_id, convo.user_two_id):
         await websocket.close(code=1008)

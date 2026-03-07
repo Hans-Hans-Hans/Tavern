@@ -1,8 +1,8 @@
 // --------------------
 // DOM Elements
 // --------------------
-const serversPanel = document.querySelector(".servers-panel ul");
-const channelsPanel = document.querySelector(".channels-panel ul");
+const serversPanel = document.getElementById("servers-list");
+const channelsPanel = document.getElementById("channels-list");
 const serversPanelContainer = document.querySelector(".servers-panel");
 const channelsPanelContainer = document.querySelector(".channels-panel");
 const messagesPanel = document.getElementById("messages-container");
@@ -26,8 +26,14 @@ const dmFriendPickerList = document.getElementById("dm-friend-picker-list");
 const openFriendsBtn = document.getElementById("open-friends");
 const openAddSeparatorBtn = document.getElementById("open-add-separator");
 const openServerMembersBtn = document.getElementById("open-server-members");
+const openServerSettingsBtn = document.getElementById("open-server-settings");
 const homeDmBtn = document.getElementById("home-dm-btn");
 const channelsPanelTitle = document.getElementById("channels-panel-title");
+const currentServerNameEl = document.getElementById("current-server-name");
+const openServerSwitcherBtn = document.getElementById("open-server-switcher");
+const serverSwitcherOverlay = document.getElementById("server-switcher-overlay");
+const closeServerSwitcherBtn = document.getElementById("close-server-switcher");
+const openCreateItemBtn = document.getElementById("open-create-item");
 const createChannelModal = document.getElementById("create-channel-modal");
 const submitChannelBtn = document.getElementById("submit-channel");
 const channelNameInput = document.getElementById("new-channel-name");
@@ -35,6 +41,9 @@ const channelTypeInput = document.getElementById("new-channel-type");
 const inviteMemberModal = document.getElementById("invite-member-modal");
 const inviteServerName = document.getElementById("invite-server-name");
 const inviteUserPublicIdInput = document.getElementById("invite-user-public-id");
+let inviteFriendPickerEl = document.getElementById("invite-friend-picker");
+let inviteFriendSearchInput = document.getElementById("invite-friend-search-input");
+let inviteFriendListEl = document.getElementById("invite-friend-list");
 const submitInviteMemberBtn = document.getElementById("submit-invite-member");
 const deleteServerModal = document.getElementById("delete-server-modal");
 const deleteServerNameLabel = document.getElementById("delete-server-name-label");
@@ -62,12 +71,18 @@ const imageUploadInput = document.getElementById("image-upload-input");
 const messageBar = document.querySelector(".message-bar");
 const messagesTopbar = document.getElementById("messages-topbar");
 const messagesTopbarTitle = document.getElementById("messages-topbar-title");
+const messagesTopbarTypeBadge = document.getElementById("messages-topbar-type-badge");
+const messagesTopbarTitleWrap = document.querySelector(".messages-topbar-title-wrap");
 const messageSearchToggleBtn = document.getElementById("message-search-toggle-btn");
+const channelPinsBtn = document.getElementById("channel-pins-btn");
 const messageSearchBar = document.getElementById("message-search-bar");
 const messageSearchInput = document.getElementById("message-search-input");
 const messageSearchCount = document.getElementById("message-search-count");
 const messageSearchClearBtn = document.getElementById("message-search-clear-btn");
 const jumpUnreadBtn = document.getElementById("jump-unread-btn");
+const uploadProgressRow = document.getElementById("upload-progress-row");
+const uploadProgressFill = document.getElementById("upload-progress-fill");
+const uploadProgressText = document.getElementById("upload-progress-text");
 const dmCallBtn = document.getElementById("dm-call-btn");
 const realtimeStatusBanner = document.getElementById("realtime-status-banner");
 const voicePanel = document.getElementById("voice-panel");
@@ -78,22 +93,78 @@ const joinVoiceBtn = document.getElementById("join-voice-btn");
 const leaveVoiceBtn = document.getElementById("leave-voice-btn");
 const muteVoiceBtn = document.getElementById("mute-voice-btn");
 const deafenVoiceBtn = document.getElementById("deafen-voice-btn");
+const cameraVoiceBtn = document.getElementById("camera-voice-btn");
+const screenVoiceBtn = document.getElementById("screen-voice-btn");
+const linkStreamVoiceBtn = document.getElementById("link-stream-voice-btn");
+const watchSharesVoiceBtn = document.getElementById("watch-shares-voice-btn");
+const voiceVideoGrid = document.getElementById("voice-video-grid");
 const userSettingsModal = document.getElementById("user-settings-modal");
+const publicUserProfileModal = document.getElementById("public-user-profile-modal");
+const publicUserProfileAvatar = document.getElementById("public-user-profile-avatar");
+const publicUserProfileName = document.getElementById("public-user-profile-name");
+const publicUserProfileStatus = document.getElementById("public-user-profile-status");
+const publicUserProfilePublicId = document.getElementById("public-user-profile-public-id");
+const publicUserProfileCreatedAt = document.getElementById("public-user-profile-created-at");
+const publicUserProfileUpdatedAt = document.getElementById("public-user-profile-updated-at");
+const publicUserProfileDmBtn = document.getElementById("public-user-profile-dm-btn");
 const settingsPublicId = document.getElementById("settings-public-id");
+const settingsFriendInviteCode = document.getElementById("settings-friend-invite-code");
+const settingsCopyFriendInviteBtn = document.getElementById("settings-copy-friend-invite-btn");
 const settingsUsername = document.getElementById("settings-username");
+const settingsUsernameColorInput = document.getElementById("settings-username-color-input");
+const settingsClearUsernameColorBtn = document.getElementById("settings-clear-username-color-btn");
+const settingsNameEmojiInput = document.getElementById("settings-name-emoji-input");
+const settingsSaveNameStyleBtn = document.getElementById("settings-save-name-style-btn");
+const settingsCustomStatusInput = document.getElementById("settings-custom-status-input");
+const settingsSaveCustomStatusBtn = document.getElementById("settings-save-custom-status-btn");
+const settingsStripUploadMetadataInput = document.getElementById("settings-strip-upload-metadata");
+const settingsSaveUploadPrivacyBtn = document.getElementById("settings-save-upload-privacy-btn");
 const settingsEmail = document.getElementById("settings-email");
 const settingsUserId = document.getElementById("settings-user-id");
 const settingsCreatedAt = document.getElementById("settings-created-at");
 const settingsUpdatedAt = document.getElementById("settings-updated-at");
+const settingsAvatarPreview = document.getElementById("settings-avatar-preview");
 const settingsAvatarInput = document.getElementById("settings-avatar-input");
 const settingsAvatarUploadBtn = document.getElementById("settings-avatar-upload-btn");
 const settingsThemeGrid = document.getElementById("settings-theme-grid");
+const settingsUiStyleInput = document.getElementById("settings-ui-style");
+const settingsModernUiInput = document.getElementById("settings-modern-ui");
 const settingsUiScaleInput = document.getElementById("settings-ui-scale");
 const settingsUiScaleValue = document.getElementById("settings-ui-scale-value");
 const settingsPanelRadiusInput = document.getElementById("settings-panel-radius");
 const settingsPanelRadiusValue = document.getElementById("settings-panel-radius-value");
 const settingsMessageDensityInput = document.getElementById("settings-message-density");
 const settingsMessageDensityValue = document.getElementById("settings-message-density-value");
+const settingsCenterWireframeShapeInput = document.getElementById("settings-center-wireframe-shape");
+const settingsCenterGlowCoolColorInput = document.getElementById("settings-center-glow-cool-color");
+const settingsCenterGlowVioletColorInput = document.getElementById("settings-center-glow-violet-color");
+const settingsCenterGlowWarmColorInput = document.getElementById("settings-center-glow-warm-color");
+const settingsCenterGlowCoolColorValue = document.getElementById("settings-center-glow-cool-color-value");
+const settingsCenterGlowVioletColorValue = document.getElementById("settings-center-glow-violet-color-value");
+const settingsCenterGlowWarmColorValue = document.getElementById("settings-center-glow-warm-color-value");
+const settingsChannelRowHighlightInput = document.getElementById("settings-channel-row-highlight");
+const settingsNotificationPingVolumeInput = document.getElementById("settings-notification-ping-volume");
+const settingsNotificationPingVolumeValue = document.getElementById("settings-notification-ping-volume-value");
+const settingsThemeAccentColorInput = document.getElementById("settings-theme-accent-color");
+const settingsThemeAccentColorValue = document.getElementById("settings-theme-accent-color-value");
+const settingsPureDarkAccentRow = document.getElementById("settings-pure-dark-accent-row");
+const settingsPureDarkBgColorInput = document.getElementById("settings-pure-dark-bg-color");
+const settingsPureDarkPanelStartColorInput = document.getElementById("settings-pure-dark-panel-start-color");
+const settingsPureDarkPanelEndColorInput = document.getElementById("settings-pure-dark-panel-end-color");
+const settingsPureDarkHeaderColorInput = document.getElementById("settings-pure-dark-header-color");
+const settingsPureDarkTextColorInput = document.getElementById("settings-pure-dark-text-color");
+const settingsPureDarkMutedColorInput = document.getElementById("settings-pure-dark-muted-color");
+const settingsPureDarkAccentColorInput = document.getElementById("settings-pure-dark-accent-color");
+const settingsPureDarkAccentStrongColorInput = document.getElementById("settings-pure-dark-accent-strong-color");
+const settingsPureDarkBgColorValue = document.getElementById("settings-pure-dark-bg-color-value");
+const settingsPureDarkPanelStartColorValue = document.getElementById("settings-pure-dark-panel-start-color-value");
+const settingsPureDarkPanelEndColorValue = document.getElementById("settings-pure-dark-panel-end-color-value");
+const settingsPureDarkHeaderColorValue = document.getElementById("settings-pure-dark-header-color-value");
+const settingsPureDarkTextColorValue = document.getElementById("settings-pure-dark-text-color-value");
+const settingsPureDarkMutedColorValue = document.getElementById("settings-pure-dark-muted-color-value");
+const settingsPureDarkAccentColorValue = document.getElementById("settings-pure-dark-accent-color-value");
+const settingsPureDarkAccentStrongColorValue = document.getElementById("settings-pure-dark-accent-strong-color-value");
+const settingsPureDarkResetBtn = document.getElementById("settings-pure-dark-reset-btn");
 const settingsResetAppearanceBtn = document.getElementById("settings-reset-appearance-btn");
 const settingsFontFamilyInput = document.getElementById("settings-font-family");
 const settingsThemeTemplateInput = document.getElementById("settings-theme-template");
@@ -105,8 +176,8 @@ const settingsTemplateExportBtn = document.getElementById("settings-template-exp
 const settingsTemplateImportInput = document.getElementById("settings-template-import-input");
 const settingsCustomCssInput = document.getElementById("settings-custom-css");
 const settingsResetClientCacheBtn = document.getElementById("settings-reset-client-cache-btn");
+const settingsForceRefreshBtn = document.getElementById("settings-force-refresh-btn");
 const settingsTitle = document.getElementById("settings-title");
-const settingsOpenLabsBtn = document.getElementById("settings-open-labs");
 const settingsLabsSection = document.getElementById("settings-labs-section");
 const labsTriggerPartyBtn = document.getElementById("labs-trigger-party");
 const labsTriggerKonamiBtn = document.getElementById("labs-trigger-konami");
@@ -119,6 +190,14 @@ const quickSwitcherModal = document.getElementById("quick-switcher-modal");
 const quickSwitcherInput = document.getElementById("quick-switcher-input");
 const quickSwitcherList = document.getElementById("quick-switcher-list");
 const shortcutsModal = document.getElementById("shortcuts-modal");
+const onboardingTutorialModal = document.getElementById("onboarding-tutorial-modal");
+const tutorialTitleEl = document.getElementById("tutorial-title");
+const tutorialBodyEl = document.getElementById("tutorial-body");
+const tutorialProgressEl = document.getElementById("tutorial-progress");
+const tutorialSkipBtn = document.getElementById("tutorial-skip-btn");
+const tutorialPrevBtn = document.getElementById("tutorial-prev-btn");
+const tutorialNextBtn = document.getElementById("tutorial-next-btn");
+const tutorialFinishBtn = document.getElementById("tutorial-finish-btn");
 const imagePreprocessModal = document.getElementById("image-preprocess-modal");
 const imagePreprocessPreview = document.getElementById("image-preprocess-preview");
 const imagePreprocessOriginalBtn = document.getElementById("image-preprocess-original-btn");
@@ -127,8 +206,54 @@ const imagePreprocessCancelBtn = document.getElementById("image-preprocess-cance
 const settingsSafeModeBtn = document.getElementById("settings-safe-mode-btn");
 const settingsExportBundleBtn = document.getElementById("settings-export-bundle-btn");
 const settingsImportBundleInput = document.getElementById("settings-import-bundle-input");
+const settingsOpenTutorialBtn = document.getElementById("settings-open-tutorial-btn");
+const settingsTestNotificationBtn = document.getElementById("settings-test-notification-btn");
+const settingsEnablePushBtn = document.getElementById("settings-enable-push-btn");
+const settingsOpenDiagnosticsBtn = document.getElementById("settings-open-diagnostics-btn");
+const settingsRefreshConnectionsBtn = document.getElementById("settings-refresh-connections-btn");
+const settingsRunNotificationPollBtn = document.getElementById("settings-run-notification-poll-btn");
+const settingsResyncRealtimeBtn = document.getElementById("settings-resync-realtime-btn");
+const settingsConnectionsOnline = document.getElementById("settings-connections-online");
+const settingsConnectionsVisibility = document.getElementById("settings-connections-visibility");
+const settingsConnectionsChannelSockets = document.getElementById("settings-connections-channel-sockets");
+const settingsConnectionsPollStatus = document.getElementById("settings-connections-poll-status");
+const settingsConnectionsLastPoll = document.getElementById("settings-connections-last-poll");
+const settingsConnectionsAssetVersions = document.getElementById("settings-connections-asset-versions");
+const settingsConnectionsSwState = document.getElementById("settings-connections-sw-state");
+const settingsConnectionsHealthJson = document.getElementById("settings-connections-health-json");
+const settingsVoiceEchoCancellationInput = document.getElementById("settings-voice-echo-cancellation");
+const settingsVoiceNoiseSuppressionInput = document.getElementById("settings-voice-noise-suppression");
+const settingsVoiceEqEnabledInput = document.getElementById("settings-voice-eq-enabled");
+const settingsVoiceEqLowInput = document.getElementById("settings-voice-eq-low");
+const settingsVoiceEqLowValue = document.getElementById("settings-voice-eq-low-value");
+const settingsVoiceEqMidInput = document.getElementById("settings-voice-eq-mid");
+const settingsVoiceEqMidValue = document.getElementById("settings-voice-eq-mid-value");
+const settingsVoiceEqHighInput = document.getElementById("settings-voice-eq-high");
+const settingsVoiceEqHighValue = document.getElementById("settings-voice-eq-high-value");
+const settingsVoiceSelfTestBtn = document.getElementById("settings-voice-self-test-btn");
+const settingsVoiceSelfTestStatus = document.getElementById("settings-voice-self-test-status");
+const settingsVoiceCompactVideoTilesInput = document.getElementById("settings-voice-compact-video-tiles");
+const settingsVoiceVideoTileScaleInput = document.getElementById("settings-voice-video-tile-scale");
+const settingsVoiceVideoTileScaleValue = document.getElementById("settings-voice-video-tile-scale-value");
+const settingsVoiceScreenShareQualityInput = document.getElementById("settings-voice-screen-share-quality");
+const settingsMenuButtons = Array.from(document.querySelectorAll(".settings-menu-btn[data-settings-tab]"));
+const settingsPanels = Array.from(document.querySelectorAll(".settings-section[data-settings-panel]"));
 const toastContainer = document.getElementById("dashboard-toast-container");
 const runtimeMetaEl = document.getElementById("runtime-meta");
+const cacheMetaEl = document.getElementById("cache-meta");
+const labsLanternColorAInput = document.getElementById("labs-lantern-color-a");
+const labsLanternColorAValue = document.getElementById("labs-lantern-color-a-value");
+const labsLanternColorBInput = document.getElementById("labs-lantern-color-b");
+const labsLanternColorBValue = document.getElementById("labs-lantern-color-b-value");
+const labsBokehColorAInput = document.getElementById("labs-bokeh-color-a");
+const labsBokehColorAValue = document.getElementById("labs-bokeh-color-a-value");
+const labsBokehColorBInput = document.getElementById("labs-bokeh-color-b");
+const labsBokehColorBValue = document.getElementById("labs-bokeh-color-b-value");
+const labsMessageBarGlowStyleInput = document.getElementById("labs-messagebar-glow-style");
+const labsMessageBarGlowColorAInput = document.getElementById("labs-messagebar-glow-color-a");
+const labsMessageBarGlowColorAValue = document.getElementById("labs-messagebar-glow-color-a-value");
+const labsMessageBarGlowColorBInput = document.getElementById("labs-messagebar-glow-color-b");
+const labsMessageBarGlowColorBValue = document.getElementById("labs-messagebar-glow-color-b-value");
 const labsControlInputs = {
   fxGrain: document.getElementById("labs-fx-grain"),
   fxGlass: document.getElementById("labs-fx-glass"),
@@ -139,8 +264,11 @@ const labsControlInputs = {
   fxNeon: document.getElementById("labs-fx-neon"),
   fxRetro: document.getElementById("labs-fx-retro"),
   fxLanterns: document.getElementById("labs-fx-lanterns"),
+  fxBokeh: document.getElementById("labs-fx-bokeh"),
   fxD20Turbo: document.getElementById("labs-fx-d20turbo"),
   fxD20Bounce: document.getElementById("labs-fx-d20bounce"),
+  fxCosmicD20: document.getElementById("labs-fx-cosmic-d20"),
+  fxSpaceCore: document.getElementById("labs-fx-space-core"),
   fxRollAnim: document.getElementById("labs-fx-roll-anim"),
   fxRainbowAuthor: document.getElementById("labs-fx-rainbow-author"),
   fxScanlines: document.getElementById("labs-fx-scanlines"),
@@ -148,11 +276,161 @@ const labsControlInputs = {
   fxUnreadShimmer: document.getElementById("labs-fx-unread-shimmer"),
   fxCommandHints: document.getElementById("labs-fx-command-hints"),
 };
+
+const originalWindowFetch = window.fetch.bind(window);
+let authRedirectInProgress = false;
+let authRefreshRecoveryPromise = null;
+let mobileChannelBackBtn = null;
+const TAVERN_DESKTOP_SERVER_URL_KEY = "tavern.desktopServerUrl";
+
+function getConfiguredServerOrigin() {
+  let candidate = "";
+  try {
+    candidate = String(window.__TAVERN_SERVER_URL__ || "").trim();
+  } catch {
+    candidate = "";
+  }
+  if (!candidate) {
+    try {
+      candidate = String(localStorage.getItem(TAVERN_DESKTOP_SERVER_URL_KEY) || "").trim();
+    } catch {
+      candidate = "";
+    }
+  }
+  if (!candidate) {
+    try {
+      const param = new URLSearchParams(window.location.search).get("server");
+      candidate = String(param || "").trim();
+      if (candidate) localStorage.setItem(TAVERN_DESKTOP_SERVER_URL_KEY, candidate);
+    } catch {
+      candidate = "";
+    }
+  }
+  if (!candidate) return "";
+  try {
+    const url = new URL(candidate);
+    if (!/^https?:$/i.test(url.protocol)) return "";
+    return url.origin;
+  } catch {
+    return "";
+  }
+}
+
+function resolveApiUrl(input) {
+  if (typeof input !== "string") return input;
+  if (!input.startsWith("/")) return input;
+  const origin = getConfiguredServerOrigin();
+  return origin ? `${origin}${input}` : input;
+}
+
+function resolveMediaUrl(input) {
+  return resolveApiUrl(input);
+}
+
+function buildWsUrl(path) {
+  const cleanPath = String(path || "").startsWith("/") ? String(path) : `/${String(path || "")}`;
+  const origin = getConfiguredServerOrigin();
+  if (origin) {
+    const wsOrigin = origin.replace(/^http/i, "ws");
+    return `${wsOrigin}${cleanPath}`;
+  }
+  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+  return `${protocol}://${window.location.host}${cleanPath}`;
+}
+
+function getDashboardPageHref() {
+  return getConfiguredServerOrigin() ? "dashboard.html" : "/dashboard";
+}
+
+function getLoginPageHref() {
+  return getConfiguredServerOrigin() ? "index.html" : "/";
+}
+
+function redirectToLoginForDeauth() {
+  if (authRedirectInProgress) return;
+  authRedirectInProgress = true;
+  try {
+    stopMicSelfTest?.();
+  } catch {
+    // Ignore cleanup failures during auth redirect.
+  }
+  const next = encodeURIComponent(`${window.location.pathname}${window.location.search}${window.location.hash}`);
+  window.location.replace(`${getLoginPageHref()}?reason=deauth&next=${next}`);
+}
+
+async function isAuthFailureResponse(response) {
+  if (!response) return false;
+  if (response.status === 401 || response.status === 419) return true;
+  if (response.status !== 403) return false;
+
+  const contentType = String(response.headers?.get?.("content-type") || "").toLowerCase();
+  if (!contentType.includes("application/json")) return false;
+  try {
+    const body = await response.clone().json();
+    const detail = String(body?.detail || body?.message || "").toLowerCase();
+    if (!detail) return false;
+    return (
+      detail.includes("not authenticated")
+      || detail.includes("could not validate credentials")
+      || detail.includes("invalid token")
+      || detail.includes("token expired")
+    );
+  } catch {
+    return false;
+  }
+}
+
+function getFetchRequestUrl(args) {
+  const input = args?.[0];
+  if (typeof input === "string") return input;
+  if (input && typeof input.url === "string") return input.url;
+  return "";
+}
+
+function isAuthEndpointRequest(url) {
+  const normalized = String(url || "");
+  return normalized.includes("/auth/session") || normalized.includes("/auth/refresh") || normalized.includes("/auth/login");
+}
+
+async function tryAuthRefreshRecovery() {
+  if (authRefreshRecoveryPromise) return authRefreshRecoveryPromise;
+  authRefreshRecoveryPromise = (async () => {
+    try {
+      const res = await originalWindowFetch(resolveApiUrl("/auth/refresh"), { method: "POST", credentials: "include" });
+      return res.ok;
+    } catch {
+      return false;
+    } finally {
+      authRefreshRecoveryPromise = null;
+    }
+  })();
+  return authRefreshRecoveryPromise;
+}
+
+window.fetch = async (...args) => {
+  const resolvedArgs = [...args];
+  if (resolvedArgs.length > 0) resolvedArgs[0] = resolveApiUrl(resolvedArgs[0]);
+  let response = await originalWindowFetch(...resolvedArgs);
+  if (await isAuthFailureResponse(response)) {
+    const reqUrl = getFetchRequestUrl(resolvedArgs);
+    if (!isAuthEndpointRequest(reqUrl)) {
+      const recovered = await tryAuthRefreshRecovery();
+      if (recovered) {
+        response = await originalWindowFetch(...resolvedArgs);
+        if (!(await isAuthFailureResponse(response))) return response;
+      }
+    }
+    redirectToLoginForDeauth();
+  }
+  return response;
+};
 const threadModal = document.getElementById("thread-modal");
 const threadModalTitle = document.getElementById("thread-modal-title");
 const threadMessagesContainer = document.getElementById("thread-messages-container");
 const threadMessageInput = document.getElementById("thread-message-input");
 const threadSendBtn = document.getElementById("thread-send-btn");
+const pinsModal = document.getElementById("pins-modal");
+const pinsModalList = document.getElementById("pins-modal-list");
 const typingIndicator = document.getElementById("typing-indicator");
 const sendStatusText = document.getElementById("send-status-text");
 const retrySendBtn = document.getElementById("retry-send-btn");
@@ -162,6 +440,7 @@ const sendFriendRequestBtn = document.getElementById("send-friend-request-btn");
 const friendsListEl = document.getElementById("friends-list");
 const friendRequestsIncomingEl = document.getElementById("friend-requests-incoming");
 const friendRequestsOutgoingEl = document.getElementById("friend-requests-outgoing");
+const friendRequestsHistoryEl = document.getElementById("friend-requests-history");
 const adminModal = document.getElementById("admin-modal");
 const adminOverviewEl = document.getElementById("admin-overview");
 const adminUsersListEl = document.getElementById("admin-users-list");
@@ -170,6 +449,26 @@ const adminRefreshBtn = document.getElementById("admin-refresh-btn");
 const serverMembersModal = document.getElementById("server-members-modal");
 const membersServerName = document.getElementById("members-server-name");
 const membersListEl = document.getElementById("members-list");
+const serverSettingsModal = document.getElementById("server-settings-modal");
+const serverSettingsNameLabel = document.getElementById("server-settings-name-label");
+const serverSettingsPublicId = document.getElementById("server-settings-public-id");
+const serverSettingsMemberCount = document.getElementById("server-settings-member-count");
+const serverSettingsNameInput = document.getElementById("server-settings-name-input");
+const serverSettingsUploadLimitInput = document.getElementById("server-settings-upload-limit-input");
+const serverSettingsLogRetentionInput = document.getElementById("server-settings-log-retention-input");
+const serverSettingsMessageRetentionInput = document.getElementById("server-settings-message-retention-input");
+const serverSettingsStripMetadataInput = document.getElementById("server-settings-strip-metadata");
+const serverSettingsSaveBtn = document.getElementById("server-settings-save-btn");
+const serverSettingsRolesList = document.getElementById("server-settings-roles-list");
+const serverSettingsNewRoleName = document.getElementById("server-settings-new-role-name");
+const serverSettingsCreateRoleBtn = document.getElementById("server-settings-create-role-btn");
+const serverUploadDiagnosticsList = document.getElementById("server-upload-diagnostics-list");
+const serverSettingsActivityList = document.getElementById("server-settings-activity-list");
+const serverSettingsAutomodEnabled = document.getElementById("server-settings-automod-enabled");
+const serverSettingsAutomodBlockLinks = document.getElementById("server-settings-automod-block-links");
+const serverSettingsAutomodBlockInvites = document.getElementById("server-settings-automod-block-invites");
+const serverSettingsAutomodTerms = document.getElementById("server-settings-automod-terms");
+const serverSettingsAutomodExtensions = document.getElementById("server-settings-automod-extensions");
 
 // Track active server/channel
 let activeServerId = null;
@@ -178,8 +477,22 @@ let activeChannelType = "text";
 let activeMode = "server";
 let activeDmConversationId = null;
 let d20Material = null;
+let d20Mesh = null;
+const centerGlowVisualRefs = {
+  cosmicRingMaterial: null,
+  cosmicAccretionRingMaterial: null,
+  cosmicAccretionGlowMaterial: null,
+  cosmicHaloMaterial: null,
+  cosmicInnerGlowMaterial: null,
+  cosmicNebulaMaterial: null,
+  cosmicDustMaterials: [],
+};
 let currentUserId = null;
 let currentUser = null;
+const publicUserProfileCache = new Map();
+const publicUserProfileInflight = new Map();
+let inviteFriendSearchQuery = "";
+let inviteSelectedFriendPublicId = "";
 const unreadChannels = new Set();
 const unreadServers = new Set();
 const channelLastSeen = new Map();
@@ -187,8 +500,11 @@ const channelToServer = new Map();
 const channelTypeById = new Map();
 const channelNameById = new Map();
 const serverNicknamesByServer = new Map();
+const serverRolesByServer = new Map();
 const channelSockets = new Map();
 const channelReconnectTimers = new Map();
+const channelSocketFailureCounts = new Map();
+const blockedChannelSocketIds = new Set();
 const channelPresence = new Map();
 const serverOnlineUsers = new Map();
 const typingUsersByChannel = new Map();
@@ -198,13 +514,34 @@ let typingLastStartSentAt = 0;
 let presenceSocket = null;
 let presenceReconnectTimer = null;
 let dmReconnectTimer = null;
+let presenceSocketFailureCount = 0;
+let presenceSocketBlocked = false;
+let dmSocketFailureCount = 0;
+let dmSocketBlocked = false;
+let tutorialStepIndex = 0;
+let tutorialCompletionPending = false;
+let tutorialHighlightedEl = null;
 const onlineUserPublicIds = new Set();
 let voiceSocket = null;
 let voiceSocketChannelId = null;
 let voiceSelfPeerId = null;
 let localVoiceStream = null;
+let rawLocalVoiceStream = null;
+let localVoiceProcessor = null;
+let localCameraStream = null;
+let localScreenStream = null;
+let voiceSettingsApplyTimer = null;
+let micSelfTestAudioEl = null;
+let micSelfTestRawStream = null;
+let micSelfTestProcessedStream = null;
+let micSelfTestNodes = [];
 const peerConnections = new Map();
 const peerAudioElements = new Map();
+const peerVideoElements = new Map();
+const voiceVideoTileSizeOverrides = new Map();
+const peerRemoteVideoTrackSlots = new Map();
+const pendingRemoteVideoStreams = new Map();
+const watchedPeerStreamIds = new Set();
 const peerMeta = new Map();
 const peerVolumeLevels = new Map();
 const peerAudioSources = new Map();
@@ -212,17 +549,64 @@ let voiceAudioContext = null;
 let voiceMeterAnimation = null;
 let isMuted = false;
 let isDeafened = false;
+let isCameraEnabled = false;
+let isScreenSharing = false;
+let watchRemoteScreenShares = true;
+let sharedLinkStreamUrl = null;
+let focusedVoiceVideoTileKey = null;
+let activeSettingsTab = "profile";
 let inviteServerPublicId = null;
 let deleteServerTarget = null;
 let deleteChannelTarget = null;
+let notesEditorShell = null;
+let notesEditorTextarea = null;
+let notesEditorHost = null;
+let notesPreviewFrame = null;
+let notesSaveBtn = null;
+let notesEditModeBtn = null;
+let notesStatusEl = null;
+let activeNoteMessageId = null;
+let activeNoteLoadedContent = "";
+let notesSaveTimer = null;
+let notesSaveInFlight = false;
+let notesPreviewVisible = false;
+let notesOverlayEditing = false;
+let notesIsEditMode = true;
+let battlemapShell = null;
+let battlemapCanvasEl = null;
+let battlemapGridOverlayEl = null;
+let battlemapPawnsLayerEl = null;
+let battlemapInitiativeListEl = null;
+let battlemapHealthListEl = null;
+let battlemapSelectedPawnId = null;
+let battlemapState = null;
+let battlemapBackgroundInput = null;
+let battlemapGridToggleInput = null;
+let battlemapGridSizeInput = null;
+let battlemapGridSizeValue = null;
+let battlemapAddPawnBtn = null;
+let battlemapNextTurnBtn = null;
+let battlemapRoundLabelEl = null;
+let battlemapResetRoundBtn = null;
+let battlemapDragState = null;
+const battlemapServerSaveTimers = new Map();
+const battlemapServerSaveQueuedStates = new Map();
+const battlemapServerSaveInFlight = new Map();
+const battlemapServerSavePendingFlush = new Set();
+const battlemapServerLoadPromises = new Map();
+const BATTLEMAP_SERVER_SAVE_DEBOUNCE_MS = 350;
 const SERVER_ORDER_STORAGE_KEY = "tavern.serverOrder";
 const CHANNEL_ORDER_STORAGE_PREFIX = "tavern.channelOrder.";
 const CHANNEL_LAYOUT_STORAGE_PREFIX = "tavern.channelLayout.";
 const CHANNEL_SEPARATORS_STORAGE_PREFIX = "tavern.channelSeparators.";
+const CHANNEL_SEPARATOR_COLLAPSE_STORAGE_PREFIX = "tavern.channelSeparatorCollapse.";
 const CHANNEL_ICON_STORAGE_PREFIX = "tavern.channelIcons.";
+const BATTLEMAP_STATE_STORAGE_PREFIX = "tavern.battlemapState.";
 const LEGACY_THEME_STORAGE_KEY = "tavern.theme";
 const APPEARANCE_STORAGE_KEY = "tavern.appearance";
 const CUSTOM_THEMES_STORAGE_KEY = "tavern.customThemes";
+const UI_SCALE_MIN = 0.7;
+const UI_SCALE_MAX = 1.15;
 const PANEL_SIZES_STORAGE_KEY = "tavern.panelSizes";
 const LABS_STORAGE_KEY = "tavern.labs";
 const LAUNCH_CHECKLIST_STORAGE_KEY = "tavern.launchChecklist";
@@ -230,6 +614,22 @@ const DRAFTS_STORAGE_KEY = "tavern.drafts";
 const CHANNEL_NOTIFICATION_STORAGE_KEY = "tavern.channelNotifications";
 const SAFE_MODE_STORAGE_KEY = "tavern.safeMode";
 const LAST_ACTIVE_CHAT_STORAGE_KEY = "tavern.lastActiveChat";
+const TUTORIAL_DISMISSED_STORAGE_PREFIX = "tavern.tutorialDismissed.";
+const VOICE_SETTINGS_STORAGE_KEY = "tavern.voiceSettings";
+const DEFAULT_VOICE_SETTINGS = {
+  echoCancellation: true,
+  noiseSuppression: true,
+  eqEnabled: true,
+  eqLowGain: 0,
+  eqMidGain: 0,
+  eqHighGain: 0,
+  compactVideoTiles: true,
+  videoTileScale: 0.85,
+  screenShareQuality: "medium",
+};
+let voiceSettings = { ...DEFAULT_VOICE_SETTINGS };
+let realtimeSubscriptionSyncPromise = null;
+let lastRealtimeSubscriptionSyncAt = 0;
 const DEFAULT_LABS_SETTINGS = {
   unlocked: false,
   fxGrain: true,
@@ -241,14 +641,24 @@ const DEFAULT_LABS_SETTINGS = {
   fxNeon: false,
   fxRetro: false,
   fxLanterns: false,
+  fxBokeh: false,
   fxD20Turbo: false,
   fxD20Bounce: true,
+  fxCosmicD20: false,
+  fxSpaceCore: false,
   fxRollAnim: true,
   fxRainbowAuthor: false,
   fxScanlines: false,
   fxPanelTilt: false,
   fxUnreadShimmer: false,
   fxCommandHints: true,
+  lanternColorA: "#ffd48f",
+  lanternColorB: "#ff9f4d",
+  bokehColorA: "#7cc6ff",
+  bokehColorB: "#ffc28a",
+  messageBarGlowStyle: "water",
+  messageBarGlowColorA: "#5ebcff",
+  messageBarGlowColorB: "#8ed9ff",
   konamiMode: false,
 };
 const KONAMI_SEQUENCE = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
@@ -264,6 +674,38 @@ const LAUNCH_CHECKLIST_ITEMS = [
   { id: "backup", label: "Backup snapshot created." },
   { id: "admin", label: "Admin panel actions and audit log load." },
 ];
+const ONBOARDING_TUTORIAL_STEPS = [
+  {
+    title: "Welcome to Tavern",
+    body: "This quick tour covers the basics: spaces, channels, messaging, DMs, and settings.",
+    targetSelector: ".dashboard",
+  },
+  {
+    title: "Spaces",
+    body: "Use the stack button in the sidebar header to switch spaces. The + menu lets you create a new one.",
+    targetSelector: "#open-server-switcher",
+  },
+  {
+    title: "Channels and DMs",
+    body: "This panel lists channels. Click the chat bubble icon to switch into Direct Messages.",
+    targetSelector: ".channels-panel",
+  },
+  {
+    title: "Messages",
+    body: "Main panel shows the conversation. Use the composer at the bottom to send messages or images.",
+    targetSelector: ".messages-panel",
+  },
+  {
+    title: "Friends",
+    body: "In DM mode, open Friends to add contacts and start one-to-one conversations.",
+    targetSelector: "#open-friends",
+  },
+  {
+    title: "Settings",
+    body: "Use the gear icon for profile, avatar, themes, and advanced client options.",
+    targetSelector: "#settings-btn",
+  },
+];
 let contextMenuEl = null;
 let panelSizes = { servers: 100, channels: 220 };
 let dmConversations = [];
@@ -273,11 +715,21 @@ let pendingReplyTo = null;
 let activeThreadParentMessageId = null;
 let friendsCache = [];
 let activeReactionPicker = null;
+let suppressNextMessageUiAutoClose = false;
 let labsSettings = { ...DEFAULT_LABS_SETTINGS };
 let labsUnlockClicks = 0;
 let d20SpinMultiplier = 1;
 let d20BounceEnabled = false;
 let rollAnimationsEnabled = true;
+let bokehAnimationFrame = null;
+let bokehPointerTargetX = 0;
+let bokehPointerTargetY = 0;
+let bokehPointerX = 0;
+let bokehPointerY = 0;
+let bokehPointerClientX = 0;
+let bokehPointerClientY = 0;
+let bokehPointerActive = false;
+let bokehLastTickMs = 0;
 let launchChecklistState = {};
 let wsConnectionState = {
   presence: { connected: false, retryAt: 0 },
@@ -288,40 +740,233 @@ let draftsState = {};
 let channelNotificationState = {};
 let safeModeEnabled = false;
 let failedSendQueue = [];
+let sendMessageInFlight = false;
 let imagePreprocessState = null;
 let switcherIndex = 0;
 let switcherItems = [];
 let konamiIndex = 0;
 let memberNicknameDrafts = new Map();
+let browserNotificationPrompted = false;
+const recentNotificationMessageIds = [];
+const MAX_RECENT_NOTIFICATION_IDS = 300;
+const latestKnownChannelMessageIds = new Map();
+const latestKnownDmMessageIds = new Map();
+const knownIncomingFriendRequestIds = new Set();
+const knownOutgoingFriendRequestTargetIds = new Set();
+const knownFriendIdsForRequestToasts = new Set();
+let notificationPollTimer = null;
+let notificationBaselineReady = false;
+let friendRequestNotificationBaselineReady = false;
+const NOTIFICATION_POLL_VISIBLE_MS = 10000;
+// Keep background refresh frequent enough for timely notifications when tab is unfocused.
+const NOTIFICATION_POLL_HIDDEN_MS = 30000;
+const FRIEND_REQUEST_TOAST_POLL_MS = 30000;
+let notificationPollInFlight = false;
+let lastNotificationPollAt = 0;
+let lastFriendRequestToastPollAt = 0;
+const SERVICE_WORKER_URL = "/sw.js?v=20260306-hotfix70";
+const PUSH_HEALTHCHECK_MS = 2 * 60 * 1000;
+let pushHealthTimer = null;
+let pushSelfHealInFlight = false;
+let lastPushSelfHealNoticeAt = 0;
+let notificationAudioContext = null;
+let sessionLifecycleController = null;
+const SESSION_WARNING_MS = 5 * 60 * 1000;
+const SESSION_FINAL_WARNING_MS = 60 * 1000;
+const SESSION_RESUME_REFRESH_THROTTLE_MS = 30 * 1000;
+let lastSessionResumeRefreshAt = 0;
+const REALTIME_SUBSCRIPTION_SYNC_COOLDOWN_MS = 5000;
+const networkGatesApi = window.TavernNetworkGates || null;
+const notificationPollGate = networkGatesApi?.createPollGate
+  ? networkGatesApi.createPollGate({ minIntervalMs: 3000 })
+  : null;
+const realtimeSubscriptionSyncGate = networkGatesApi?.createCooldownTaskGate
+  ? networkGatesApi.createCooldownTaskGate({ cooldownMs: REALTIME_SUBSCRIPTION_SYNC_COOLDOWN_MS })
+  : null;
 const sendReceiptByContext = new Map();
-const REACTION_EMOJI_OPTIONS = ["👍", "❤️", "😂", "😮", "😢", "🔥", "🎉", "✅"];
+const REACTION_EMOJI_OPTIONS = ["\u{1F44D}", "\u2764\uFE0F", "\u{1F602}", "\u{1F62E}", "\u{1F622}", "\u{1F525}", "\u{1F389}", "\u2705"];
+
+function getVersionFromUrl(urlLike) {
+  if (!urlLike) return "";
+  try {
+    const url = new URL(urlLike, window.location.origin);
+    return String(url.searchParams.get("v") || "").trim();
+  } catch {
+    return "";
+  }
+}
+
+function detectDashboardCacheVersion() {
+  const swVersion = getVersionFromUrl(SERVICE_WORKER_URL);
+  if (swVersion) return swVersion;
+  const scriptVersion = getVersionFromUrl(
+    document.querySelector('script[src*="src/dashboard.js"]')?.getAttribute("src") || ""
+  );
+  if (scriptVersion) return scriptVersion;
+  const manifestVersion = getVersionFromUrl(
+    document.querySelector('link[rel="manifest"]')?.getAttribute("href") || ""
+  );
+  return manifestVersion || "";
+}
+
+function renderDashboardCacheMeta() {
+  if (!cacheMetaEl) return;
+  const version = detectDashboardCacheVersion();
+  cacheMetaEl.textContent = version ? `cache ${version}` : "cache -";
+  cacheMetaEl.title = version ? `Client cache version: ${version}` : "Client cache version unavailable";
+}
+
+const AURORA_SLATE_THEME_ID = "aurora-slate";
 
 const THEME_PRESETS = [
   { id: "linen-light", name: "Linen Light", mode: "light", bg: "#f7f3ec", panelBg: "linear-gradient(145deg, #fffdf8, #f2ece2)", headerFooterBg: "#fffdf8", text: "#2f2a24", muted: "#72665b", accent: "#b78a56", accentStrong: "#8f6130", border: "rgba(60,45,30,0.12)", shadow: "rgba(60,45,30,0.11)" },
-  { id: "sage-light", name: "Sage Light", mode: "light", bg: "#edf3ed", panelBg: "linear-gradient(145deg, #f8fcf8, #e7efe7)", headerFooterBg: "#f7fbf7", text: "#233126", muted: "#5b6f5e", accent: "#6ea285", accentStrong: "#44745a", border: "rgba(25,60,38,0.12)", shadow: "rgba(25,60,38,0.1)" },
-  { id: "ocean-light", name: "Ocean Light", mode: "light", bg: "#eaf3fb", panelBg: "linear-gradient(145deg, #f7fbff, #e5eff9)", headerFooterBg: "#f7fbff", text: "#1f2f3d", muted: "#58708a", accent: "#4f8fcf", accentStrong: "#2d6ea9", border: "rgba(29,71,109,0.12)", shadow: "rgba(29,71,109,0.12)" },
-  { id: "sunset-light", name: "Sunset Light", mode: "light", bg: "#fff1ea", panelBg: "linear-gradient(145deg, #fff9f5, #ffece0)", headerFooterBg: "#fff9f5", text: "#3b2a24", muted: "#8c6356", accent: "#df7e5a", accentStrong: "#b45737", border: "rgba(99,48,32,0.12)", shadow: "rgba(99,48,32,0.12)" },
-  { id: "lavender-light", name: "Lavender Light", mode: "light", bg: "#f2effc", panelBg: "linear-gradient(145deg, #faf8ff, #ede8fb)", headerFooterBg: "#faf8ff", text: "#2f2a3f", muted: "#6d6691", accent: "#8573c9", accentStrong: "#5f4ea2", border: "rgba(59,47,102,0.12)", shadow: "rgba(59,47,102,0.11)" },
-  { id: "obsidian-dark", name: "Dark Linen", mode: "dark", bg: "#1f1a15", panelBg: "linear-gradient(145deg, #2a241d, #1f1a15)", headerFooterBg: "#28221b", text: "#f4ede3", muted: "#b5a696", accent: "#b78a56", accentStrong: "#d6af82", border: "rgba(223,193,160,0.16)", shadow: "rgba(0,0,0,0.36)" },
-  { id: "forest-dark", name: "Forest Dark", mode: "dark", bg: "#131d18", panelBg: "linear-gradient(145deg, #1a2921, #132019)", headerFooterBg: "#1a251f", text: "#e8f3ec", muted: "#96ab9e", accent: "#5fa47d", accentStrong: "#9fd9b9", border: "rgba(172,218,193,0.14)", shadow: "rgba(0,0,0,0.35)" },
-  { id: "midnight-dark", name: "Midnight Dark", mode: "dark", bg: "#121727", panelBg: "linear-gradient(145deg, #1a2237, #12192a)", headerFooterBg: "#192134", text: "#ebf0ff", muted: "#98a7c9", accent: "#5f79cf", accentStrong: "#a9b9ef", border: "rgba(181,196,239,0.14)", shadow: "rgba(0,0,0,0.35)" },
-  { id: "ember-dark", name: "Ember Dark", mode: "dark", bg: "#211716", panelBg: "linear-gradient(145deg, #30201d, #211715)", headerFooterBg: "#2a1d1b", text: "#f7ece9", muted: "#c09f95", accent: "#cd6c53", accentStrong: "#f0a28e", border: "rgba(242,180,161,0.16)", shadow: "rgba(0,0,0,0.36)" },
-  { id: "violet-dark", name: "Violet Dark", mode: "dark", bg: "#1b1524", panelBg: "linear-gradient(145deg, #271f34, #1b1626)", headerFooterBg: "#221b2f", text: "#f0ecf8", muted: "#af9fc6", accent: "#8e69c8", accentStrong: "#c5a8ef", border: "rgba(198,174,237,0.15)", shadow: "rgba(0,0,0,0.36)" },
+  { id: "graphite-light", name: "Graphite Light", mode: "light", bg: "#e7eaef", panelBg: "linear-gradient(145deg, #f4f6f9, #dde2e9)", headerFooterBg: "#edf1f6", text: "#20262f", muted: "#5f6b79", accent: "#4f8fcf", accentStrong: "#2f6fae", border: "rgba(36,52,72,0.12)", shadow: "rgba(25,39,57,0.12)" },
+  { id: "dusk-medium", name: "Dusk Medium", mode: "medium", bg: "#39332e", panelBg: "linear-gradient(145deg, #4a423b, #3a332e)", headerFooterBg: "#443c36", text: "#f6efe7", muted: "#c5b7a7", accent: "#d49b6a", accentStrong: "#e9bd96", border: "rgba(235,209,181,0.16)", shadow: "rgba(0,0,0,0.26)" },
+  { id: "graphite-dark", name: "Graphite Dark", mode: "dark", bg: "#0f1318", panelBg: "#151b22", headerFooterBg: "#121820", text: "#e9eef5", muted: "#9aa8b8", accent: "#4da3ff", accentStrong: "#88c4ff", border: "rgba(151,185,224,0.14)", shadow: "rgba(0,0,0,0.22)" },
 ];
 
 const DEFAULT_APPEARANCE = {
   themeId: "linen-light",
   lastLightThemeId: "linen-light",
-  lastDarkThemeId: "obsidian-dark",
+  lastMediumThemeId: "dusk-medium",
+  lastDarkThemeId: "graphite-dark",
+  modernUi: true,
+  uiStyle: "classic",
   uiScale: 1,
   panelRadius: 16,
   messageDensity: 1,
+  centerWireframeShape: "d20",
+  centerGlowCoolColor: "#5ebcff",
+  centerGlowVioletColor: "#7c56ff",
+  centerGlowWarmColor: "#ffb56a",
+  highlightChannelRows: true,
+  notificationPingVolume: 1,
+  pureDarkBgColor: "#0b1014",
+  pureDarkPanelStartColor: "#121a22",
+  pureDarkPanelEndColor: "#0d141b",
+  pureDarkHeaderColor: "#101820",
+  pureDarkTextColor: "#e7f0f7",
+  pureDarkMutedColor: "#8ea2b3",
+  pureDarkAccentColor: "#2eb8a6",
+  pureDarkAccentStrongColor: "#66e0d0",
+  themeAccentColor: "",
   fontFamily: "'Inter', sans-serif",
   customCss: "",
 };
 
 let appearanceSettings = { ...DEFAULT_APPEARANCE };
 let customThemes = [];
+let appearanceSyncTimer = null;
+let appearanceSyncInFlight = false;
+let appearanceSyncPending = false;
+let lastAppearanceSavedSnapshot = "";
+let lastAppearanceSyncedSnapshot = "";
+
+function getAppearanceSettingsSnapshot() {
+  try {
+    return JSON.stringify(appearanceSettings);
+  } catch {
+    return "";
+  }
+}
+
+function normalizeUiStyle(value) {
+  return value === "boxy" ? "boxy" : "classic";
+}
+
+function normalizeThemeMode(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "dark") return "dark";
+  if (normalized === "medium") return "medium";
+  return "light";
+}
+
+function isDarkLikeThemeMode(mode) {
+  const normalized = normalizeThemeMode(mode);
+  return normalized === "dark" || normalized === "medium";
+}
+
+const CENTER_WIREFRAME_SHAPES = new Set(["d4", "d6", "d8", "d10", "d12", "d20", "sphere", "torus", "capsule", "tesseract"]);
+function normalizeCenterWireframeShape(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return CENTER_WIREFRAME_SHAPES.has(normalized) ? normalized : "d20";
+}
+
+const MESSAGE_BAR_GLOW_STYLES = new Set(["water", "fire", "bubbles", "acid"]);
+function normalizeMessageBarGlowStyle(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return MESSAGE_BAR_GLOW_STYLES.has(normalized) ? normalized : "water";
+}
+
+function normalizeHexColor(value, fallback = "#3ea6ff") {
+  const raw = String(value || "").trim();
+  const short = /^#([0-9a-fA-F]{3})$/;
+  const full = /^#([0-9a-fA-F]{6})$/;
+  if (full.test(raw)) return `#${raw.slice(1).toLowerCase()}`;
+  const shortMatch = raw.match(short);
+  if (shortMatch) {
+    const [r, g, b] = shortMatch[1].split("");
+    return `#${(r + r + g + g + b + b).toLowerCase()}`;
+  }
+  return normalizeHexColor(fallback, "#3ea6ff");
+}
+
+function hexToRgbCsv(hex, fallback = "94, 188, 255") {
+  const normalized = normalizeHexColor(hex, "#5ebcff");
+  const r = Number.parseInt(normalized.slice(1, 3), 16);
+  const g = Number.parseInt(normalized.slice(3, 5), 16);
+  const b = Number.parseInt(normalized.slice(5, 7), 16);
+  if ([r, g, b].some((n) => Number.isNaN(n))) return fallback;
+  return `${r}, ${g}, ${b}`;
+}
+
+function normalizeOptionalHexColor(value, fallback = "") {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  return normalizeHexColor(raw, fallback || "#4f8fcf");
+}
+
+function blendHexColors(hexA, hexB, mix = 0.5) {
+  const a = normalizeHexColor(hexA, "#4f8fcf");
+  const b = normalizeHexColor(hexB, "#ffffff");
+  const t = clamp(Number(mix), 0, 1);
+  const ar = Number.parseInt(a.slice(1, 3), 16);
+  const ag = Number.parseInt(a.slice(3, 5), 16);
+  const ab = Number.parseInt(a.slice(5, 7), 16);
+  const br = Number.parseInt(b.slice(1, 3), 16);
+  const bg = Number.parseInt(b.slice(3, 5), 16);
+  const bb = Number.parseInt(b.slice(5, 7), 16);
+  const rr = Math.round(ar + ((br - ar) * t));
+  const rg = Math.round(ag + ((bg - ag) * t));
+  const rb = Math.round(ab + ((bb - ab) * t));
+  const toHex = (n) => n.toString(16).padStart(2, "0");
+  return `#${toHex(rr)}${toHex(rg)}${toHex(rb)}`;
+}
+
+function getPureDarkDefaultColors() {
+  return {
+    bg: "#0b1014",
+    panelStart: "#121a22",
+    panelEnd: "#0d141b",
+    header: "#101820",
+    text: "#e7f0f7",
+    muted: "#8ea2b3",
+    accent: "#2eb8a6",
+    accentStrong: "#66e0d0",
+  };
+}
+
+function resetPureDarkColors() {
+  const d = getPureDarkDefaultColors();
+  appearanceSettings.pureDarkBgColor = d.bg;
+  appearanceSettings.pureDarkPanelStartColor = d.panelStart;
+  appearanceSettings.pureDarkPanelEndColor = d.panelEnd;
+  appearanceSettings.pureDarkHeaderColor = d.header;
+  appearanceSettings.pureDarkTextColor = d.text;
+  appearanceSettings.pureDarkMutedColor = d.muted;
+  appearanceSettings.pureDarkAccentColor = d.accent;
+  appearanceSettings.pureDarkAccentStrongColor = d.accentStrong;
+}
 
 function escapeHtml(value) {
   return value
@@ -336,13 +981,33 @@ function escapeRegExp(value) {
   return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function renderMarkdown(rawText) {
+function buildFriendInviteCode(user) {
+  const username = String(user?.username || "").trim();
+  const publicId = String(user?.public_id || "").trim();
+  if (!username || !publicId) return "-";
+  const compact = publicId.replace(/-/g, "");
+  const first4 = compact.slice(0, 4);
+  if (!first4) return "-";
+  return `${username}:${first4}`;
+}
+
+function injectWikiLinks(rawText) {
+  return String(rawText || "").replace(/\[\[([^[\]\n]+)\]\]/g, (_full, inner) => {
+    const noteName = String(inner || "").trim();
+    if (!noteName) return _full;
+    return `[\\[\\[${noteName}\\]\\]](#note:${encodeURIComponent(noteName)})`;
+  });
+}
+
+function renderMarkdown(rawText, options = {}) {
+  const enableWikiLinks = Boolean(options.enableWikiLinks);
   const text = typeof rawText === "string" ? rawText : "";
+  const prepared = enableWikiLinks ? injectWikiLinks(text) : text;
   if (window.marked && window.DOMPurify) {
-    const markdownHtml = window.marked.parse(text, { gfm: true, breaks: true });
+    const markdownHtml = window.marked.parse(prepared, { gfm: true, breaks: true });
     return window.DOMPurify.sanitize(markdownHtml);
   }
-  return escapeHtml(text).replaceAll("\n", "<br>");
+  return escapeHtml(prepared).replaceAll("\n", "<br>");
 }
 
 function getMentionHighlightState(rawText) {
@@ -412,6 +1077,14 @@ function refreshEditorPreview() {
 
 function showToast(message, kind = "info") {
   if (!toastContainer || !message) return;
+  const toastKey = `${kind}:${message}`;
+  const now = Date.now();
+  if (showToast._lastKey === toastKey && now - (showToast._lastAt || 0) < 1200) return;
+  showToast._lastKey = toastKey;
+  showToast._lastAt = now;
+  while (toastContainer.childElementCount >= 5) {
+    toastContainer.firstElementChild?.remove();
+  }
   const toast = document.createElement("div");
   toast.className = `toast ${kind}`;
   toast.textContent = message;
@@ -528,7 +1201,7 @@ async function runPreflightChecks() {
   }
   if (!warnings.length) return;
   if (realtimeStatusBanner) {
-    realtimeStatusBanner.textContent = `Preflight warning: ${warnings.join(" · ")}`;
+    realtimeStatusBanner.textContent = `Preflight warning: ${warnings.join(" \u00B7 ")}`;
     realtimeStatusBanner.classList.remove("hidden");
     setTimeout(() => updateRealtimeStatusBanner(), 6000);
   }
@@ -541,7 +1214,7 @@ async function refreshRuntimeMeta() {
     if (!res.ok) return;
     const data = await res.json();
     const uptimeMinutes = Math.max(0, Math.floor(Number(data.uptime_seconds || 0) / 60));
-    runtimeMetaEl.textContent = `v${data.version || "1.0"} · up ${uptimeMinutes}m`;
+    runtimeMetaEl.textContent = `v${data.version || "1.0"} \u00B7 up ${uptimeMinutes}m`;
   } catch {
     // Ignore metadata refresh failures
   }
@@ -695,6 +1368,905 @@ function shouldNotifyForMessage(channelId, payload) {
   return true;
 }
 
+function canUseBrowserNotifications() {
+  if (window.TavernNotificationHelpers?.canUseBrowserNotifications) {
+    return window.TavernNotificationHelpers.canUseBrowserNotifications();
+  }
+  return typeof window !== "undefined" && "Notification" in window;
+}
+
+function isIosWebKitDevice() {
+  const ua = String(navigator.userAgent || "");
+  const isClassicIosUa = /iPad|iPhone|iPod/i.test(ua);
+  const isIpadDesktopMode = navigator.platform === "MacIntel" && Number(navigator.maxTouchPoints || 0) > 1;
+  return isClassicIosUa || isIpadDesktopMode;
+}
+
+function isStandaloneDisplayMode() {
+  const standaloneMedia = typeof window.matchMedia === "function"
+    ? window.matchMedia("(display-mode: standalone)").matches
+    : false;
+  const iosStandalone = window.navigator?.standalone === true;
+  return Boolean(standaloneMedia || iosStandalone);
+}
+
+function urlBase64ToUint8Array(base64String) {
+  if (window.TavernNotificationHelpers?.urlBase64ToUint8Array) {
+    return window.TavernNotificationHelpers.urlBase64ToUint8Array(base64String);
+  }
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i += 1) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+async function registerPushServiceWorker() {
+  return navigator.serviceWorker.register(SERVICE_WORKER_URL, { scope: "/" });
+}
+
+async function subscribePushNotifications({ promptPermission = false } = {}) {
+  if (!("serviceWorker" in navigator)) {
+    throw new Error("Service Worker is not supported on this browser.");
+  }
+  if (!window.isSecureContext) {
+    throw new Error("Push requires HTTPS (or localhost).");
+  }
+  if (!canUseBrowserNotifications()) {
+    throw new Error("Browser notifications are not supported.");
+  }
+  if (isIosWebKitDevice() && !isStandaloneDisplayMode()) {
+    throw new Error("On iPhone/iPad, install Tavern to Home Screen first, then enable push from the installed app.");
+  }
+
+  await registerPushServiceWorker();
+  const registration = await navigator.serviceWorker.ready;
+
+  if (promptPermission && Notification.permission === "default") {
+    await Notification.requestPermission();
+  }
+  if (Notification.permission !== "granted") {
+    throw new Error("Notification permission is not granted.");
+  }
+
+  const keyRes = await fetch("/push/vapid-public-key", { credentials: "include" });
+  if (!keyRes.ok) {
+    const data = await keyRes.json().catch(() => ({}));
+    throw new Error(data?.detail || "Push key endpoint unavailable.");
+  }
+  const keyData = await keyRes.json();
+  const vapidPublicKey = String(keyData?.public_key || "");
+  if (!vapidPublicKey) {
+    throw new Error("Push public key is missing.");
+  }
+
+  let subscription = await registration.pushManager.getSubscription();
+  if (!subscription) {
+    subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+    });
+  }
+  let encoding = "aes128gcm";
+  try {
+    const supported = registration.pushManager?.supportedContentEncodings;
+    if (Array.isArray(supported) && supported.length > 0) {
+      if (supported.includes("aes128gcm")) encoding = "aes128gcm";
+      else encoding = String(supported[0] || "aes128gcm");
+    }
+  } catch {
+    // Keep default encoding.
+  }
+  const subscriptionPayload = { ...subscription.toJSON(), encoding };
+
+  const subscribeRes = await fetch("/push/subscribe", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(subscriptionPayload),
+  });
+  if (!subscribeRes.ok) {
+    const data = await subscribeRes.json().catch(() => ({}));
+    throw new Error(data?.detail || "Push subscription failed.");
+  }
+}
+
+function getClientDiagnosticsSnapshot() {
+  const dashboardScriptSrc = document.querySelector('script[src*="src/dashboard.js"]')?.getAttribute("src") || "";
+  const appScriptSrc = document.querySelector('script[src*="src/app.js"]')?.getAttribute("src") || "";
+  const manifestHref = document.querySelector('link[rel="manifest"]')?.getAttribute("href") || "";
+  const assetVersions = {
+    dashboard: getVersionFromUrl(dashboardScriptSrc) || null,
+    app: getVersionFromUrl(appScriptSrc) || null,
+    manifest: getVersionFromUrl(manifestHref) || null,
+    service_worker: getVersionFromUrl(SERVICE_WORKER_URL) || null,
+  };
+  const channelSocketConnected = [...wsConnectionState.channels.values()].filter((entry) => entry?.connected).length;
+  const channelSocketTracked = wsConnectionState.channels.size;
+  const channelSocketSummary = `${channelSockets.size} open / ${channelSocketConnected} connected / ${channelSocketTracked} tracked`;
+  const notificationGateSnapshot = notificationPollGate?.getSnapshot?.() || null;
+  const realtimeSyncGateSnapshot = realtimeSubscriptionSyncGate?.getSnapshot?.() || null;
+  const baseSnapshot = {
+    generated_at: new Date().toISOString(),
+    user_agent: navigator.userAgent,
+    pwa_mode: isPwaMode(),
+    online: navigator.onLine,
+    visibility: document.visibilityState,
+    active_mode: activeMode,
+    active_server_id: activeServerId || null,
+    active_channel_id: activeChannelId || null,
+    active_channel_type: activeChannelType || null,
+    active_dm_conversation_id: activeDmConversationId || null,
+    ws: {
+      presence: wsConnectionState.presence,
+      dm: wsConnectionState.dm,
+      channel_socket_count: channelSockets.size,
+      tracked_channel_states: wsConnectionState.channels.size,
+      channel_socket_connected: channelSocketConnected,
+      channel_socket_summary: channelSocketSummary,
+    },
+    notifications: {
+      permission: typeof Notification !== "undefined" ? Notification.permission : "unsupported",
+      poll_in_flight: notificationGateSnapshot ? !!notificationGateSnapshot.in_flight : notificationPollInFlight,
+      last_poll_at: (notificationGateSnapshot?.last_run_at || lastNotificationPollAt)
+        ? new Date(notificationGateSnapshot?.last_run_at || lastNotificationPollAt).toISOString()
+        : null,
+    },
+    realtime_sync: realtimeSyncGateSnapshot ? {
+      in_flight: !!realtimeSyncGateSnapshot.in_flight,
+      last_run_at: realtimeSyncGateSnapshot.last_run_at ? new Date(realtimeSyncGateSnapshot.last_run_at).toISOString() : null,
+      cooldown_ms: realtimeSyncGateSnapshot.cooldown_ms || REALTIME_SUBSCRIPTION_SYNC_COOLDOWN_MS,
+    } : {
+      in_flight: !!realtimeSubscriptionSyncPromise,
+      last_run_at: lastRealtimeSubscriptionSyncAt ? new Date(lastRealtimeSubscriptionSyncAt).toISOString() : null,
+      cooldown_ms: REALTIME_SUBSCRIPTION_SYNC_COOLDOWN_MS,
+    },
+    storage: {
+      local_storage_supported: (() => {
+        try {
+          localStorage.getItem("tavern.diag.probe");
+          return true;
+        } catch {
+          return false;
+        }
+      })(),
+    },
+    asset_versions: assetVersions,
+  };
+  if (!("serviceWorker" in navigator)) {
+    return Promise.resolve({
+      ...baseSnapshot,
+      service_worker: {
+        supported: false,
+      },
+    });
+  }
+  return navigator.serviceWorker.getRegistration().then((registration) => ({
+    ...baseSnapshot,
+    service_worker: {
+      supported: true,
+      controller_present: !!navigator.serviceWorker.controller,
+      script_url: registration?.active?.scriptURL || null,
+      scope: registration?.scope || null,
+      state:
+        registration?.active?.state
+        || registration?.installing?.state
+        || registration?.waiting?.state
+        || "none",
+      waiting: !!registration?.waiting,
+      update_via_cache: registration?.updateViaCache || null,
+    },
+  })).catch(() => ({
+    ...baseSnapshot,
+    service_worker: {
+      supported: true,
+      error: "registration_lookup_failed",
+    },
+  }));
+}
+
+async function toggleRuntimeDiagnosticsPanel() {
+  if (!window.TavernRuntimeDiagnostics?.toggle) {
+    showToast("Diagnostics panel module not loaded");
+    return;
+  }
+  await window.TavernRuntimeDiagnostics.toggle({
+    getSnapshot: getClientDiagnosticsSnapshot,
+    loadServerHealth: async () => {
+      const [healthRes, versionRes] = await Promise.all([
+        fetch("/health", { credentials: "include" }),
+        fetch("/api/version", { credentials: "include" }),
+      ]);
+      if (!healthRes.ok) throw new Error(`Health request failed (${healthRes.status})`);
+      const health = await healthRes.json();
+      const version = versionRes.ok ? await versionRes.json() : { error: `HTTP ${versionRes.status}` };
+      return { health, version };
+    },
+  });
+}
+
+async function refreshConnectionsSettingsPanel() {
+  const snapshot = await getClientDiagnosticsSnapshot();
+  if (settingsConnectionsOnline) settingsConnectionsOnline.textContent = snapshot.online ? "Yes" : "No";
+  if (settingsConnectionsVisibility) settingsConnectionsVisibility.textContent = snapshot.visibility || "-";
+  if (settingsConnectionsChannelSockets) settingsConnectionsChannelSockets.textContent = snapshot.ws?.channel_socket_summary || String(snapshot.ws?.channel_socket_count ?? "-");
+  if (settingsConnectionsPollStatus) {
+    settingsConnectionsPollStatus.textContent = snapshot.notifications?.poll_in_flight ? "Running" : "Idle";
+  }
+  if (settingsConnectionsLastPoll) {
+    settingsConnectionsLastPoll.textContent = snapshot.notifications?.last_poll_at
+      ? formatTimestamp(snapshot.notifications.last_poll_at)
+      : "Never";
+  }
+  if (settingsConnectionsAssetVersions) {
+    const versions = snapshot.asset_versions || {};
+    settingsConnectionsAssetVersions.textContent = `dash:${versions.dashboard || "-"} app:${versions.app || "-"} manifest:${versions.manifest || "-"} sw:${versions.service_worker || "-"}`;
+  }
+  if (settingsConnectionsSwState) {
+    const sw = snapshot.service_worker || {};
+    if (!sw.supported) settingsConnectionsSwState.textContent = "Unsupported";
+    else if (sw.error) settingsConnectionsSwState.textContent = `Error (${sw.error})`;
+    else settingsConnectionsSwState.textContent = `${sw.state || "none"}${sw.waiting ? " (update waiting)" : ""}`;
+  }
+  if (settingsConnectionsHealthJson) settingsConnectionsHealthJson.textContent = "Loading /health...";
+  try {
+    const [healthRes, versionRes] = await Promise.all([
+      fetch("/health", { credentials: "include" }),
+      fetch("/api/version", { credentials: "include" }),
+    ]);
+    if (!healthRes.ok) throw new Error(`HTTP ${healthRes.status}`);
+    const health = await healthRes.json();
+    const version = versionRes.ok ? await versionRes.json() : { error: `HTTP ${versionRes.status}` };
+    if (settingsConnectionsHealthJson) settingsConnectionsHealthJson.textContent = JSON.stringify({ health, version }, null, 2);
+  } catch (err) {
+    if (settingsConnectionsHealthJson) {
+      settingsConnectionsHealthJson.textContent = `Failed to load /health: ${err?.message || "Unknown error"}`;
+    }
+  }
+}
+
+async function refreshPushButtonState() {
+  if (!settingsEnablePushBtn) return;
+  if (!("serviceWorker" in navigator) || !canUseBrowserNotifications()) {
+    settingsEnablePushBtn.disabled = true;
+    settingsEnablePushBtn.textContent = "Push Unsupported";
+    return;
+  }
+  if (!window.isSecureContext) {
+    settingsEnablePushBtn.disabled = true;
+    settingsEnablePushBtn.textContent = "Push Needs HTTPS";
+    return;
+  }
+  if (isIosWebKitDevice() && !isStandaloneDisplayMode()) {
+    settingsEnablePushBtn.disabled = true;
+    settingsEnablePushBtn.textContent = "Install PWA For iOS Push";
+    settingsEnablePushBtn.title = "iOS only allows web push from Home Screen installed web apps.";
+    return;
+  }
+  settingsEnablePushBtn.title = "";
+  settingsEnablePushBtn.disabled = false;
+  if (Notification.permission === "denied") {
+    settingsEnablePushBtn.textContent = "Push Blocked (Browser Settings)";
+    return;
+  }
+  if (Notification.permission !== "granted") {
+    settingsEnablePushBtn.textContent = "Enable Push Notifications";
+    return;
+  }
+  try {
+    const registration = await navigator.serviceWorker.getRegistration();
+    const subscription = registration ? await registration.pushManager.getSubscription() : null;
+    settingsEnablePushBtn.textContent = subscription ? "Push Enabled" : "Enable Push Notifications";
+  } catch {
+    settingsEnablePushBtn.textContent = "Enable Push Notifications";
+  }
+}
+
+async function ensurePushSubscriptionHealthy({ silent = true } = {}) {
+  if (pushSelfHealInFlight) return false;
+  if (!("serviceWorker" in navigator) || !canUseBrowserNotifications() || !window.isSecureContext) {
+    return false;
+  }
+  if (Notification.permission !== "granted") {
+    return false;
+  }
+  pushSelfHealInFlight = true;
+  try {
+    await subscribePushNotifications({ promptPermission: false });
+    refreshPushButtonState();
+    return true;
+  } catch {
+    if (!silent) {
+      showToast("Push health check failed. Re-enable push in Settings.");
+    }
+    return false;
+  } finally {
+    pushSelfHealInFlight = false;
+  }
+}
+
+function startPushHealthChecks() {
+  if (pushHealthTimer) clearInterval(pushHealthTimer);
+  pushHealthTimer = setInterval(() => {
+    if (document.hidden) return;
+    ensurePushSubscriptionHealthy({ silent: true }).catch(() => {});
+  }, PUSH_HEALTHCHECK_MS);
+}
+
+function maybeNotifyPushPermissionRevoked() {
+  return;
+}
+
+function requestBrowserNotificationPermission() {
+  if (!canUseBrowserNotifications()) return;
+  if (browserNotificationPrompted) return;
+  browserNotificationPrompted = true;
+  if (Notification.permission === "default") {
+    Notification.requestPermission().catch(() => {
+      // Ignore permission API failures
+    });
+  }
+}
+
+function getNotificationPreviewText(rawText) {
+  const text = String(rawText || "").replace(/\s+/g, " ").trim();
+  if (!text) return "(no text)";
+  return text.length > 140 ? `${text.slice(0, 140)}...` : text;
+}
+
+function wasMessageNotified(publicId) {
+  if (!publicId) return false;
+  return recentNotificationMessageIds.includes(publicId);
+}
+
+function markMessageNotified(publicId) {
+  if (!publicId) return;
+  if (wasMessageNotified(publicId)) return;
+  recentNotificationMessageIds.push(publicId);
+  if (recentNotificationMessageIds.length > MAX_RECENT_NOTIFICATION_IDS) {
+    recentNotificationMessageIds.splice(0, recentNotificationMessageIds.length - MAX_RECENT_NOTIFICATION_IDS);
+  }
+}
+
+function navigateToNotificationContext(mode, contextId) {
+  if (mode === "server" && contextId) {
+    const channelEl = channelsPanel?.querySelector(`.channel-item[data-channel-id="${contextId}"]`);
+    if (channelEl) channelEl.click();
+    return;
+  }
+  if (mode === "dm" && contextId) {
+    const dmEl = channelsPanel?.querySelector(`.dm-item[data-dm-conversation-id="${contextId}"]`);
+    if (dmEl) dmEl.click();
+  }
+}
+
+function isBrowserFocusedForNotifications() {
+  if (window.TavernNotificationHelpers?.isBrowserFocusedForNotifications) {
+    return window.TavernNotificationHelpers.isBrowserFocusedForNotifications();
+  }
+  if (isDesktopTauriRuntime()) {
+    return desktopWindowLikelyFocused;
+  }
+  const visible = !document.hidden && document.visibilityState === "visible";
+  if (!visible) return false;
+  return document.hasFocus();
+}
+
+function isPwaMode() {
+  if (window.TavernSessionHelpers?.isPwaMode) {
+    return window.TavernSessionHelpers.isPwaMode();
+  }
+  const isStandaloneDisplay =
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(display-mode: standalone)").matches;
+  const isIosStandalone = window.navigator?.standalone === true;
+  return Boolean(isStandaloneDisplay || isIosStandalone);
+}
+
+function applyDesktopRuntimeUiTweaks() {
+  if (!isDesktopTauriRuntime()) return;
+  if (settingsEnablePushBtn) {
+    settingsEnablePushBtn.hidden = true;
+    settingsEnablePushBtn.disabled = true;
+    settingsEnablePushBtn.title = "Web Push is disabled in the desktop client. Use desktop notifications instead.";
+  }
+}
+
+function setupDesktopExternalLinkGuard() {
+  if (!isDesktopTauriRuntime()) return;
+  document.addEventListener("click", async (event) => {
+    if (event.defaultPrevented) return;
+    if (event.button !== 0) return;
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const link = event.target?.closest?.("a[href]");
+    if (!link) return;
+    const rawHref = link.getAttribute("href") || "";
+    if (!/^https?:/i.test(rawHref)) return;
+    let url;
+    try {
+      url = new URL(rawHref, window.location.href);
+    } catch {
+      return;
+    }
+    if (url.origin === window.location.origin) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const opened = await invokeDesktopCommand("desktop_open_external_url", { url: url.href });
+    if (opened?.ok && opened.value === true) return;
+    try {
+      window.open(url.href, "_blank", "noopener,noreferrer");
+    } catch {
+      showToast("Could not open external link");
+    }
+  }, true);
+}
+
+function playNotificationPing() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    if (!notificationAudioContext) {
+      notificationAudioContext = new AudioCtx();
+    }
+    if (notificationAudioContext.state === "suspended") {
+      notificationAudioContext.resume().catch(() => {});
+    }
+    const ctx = notificationAudioContext;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const volumeScale = clamp(Number(appearanceSettings.notificationPingVolume), 0, 2);
+    const peakGain = Math.max(0.0001, 0.09 * volumeScale);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(880, now);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(peakGain, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.18);
+  } catch {
+    // Best-effort notification sound.
+  }
+}
+
+async function showBrowserNotification(title, body, tag, contextUrl) {
+  if (await showDesktopNativeNotification(title, body)) {
+    return true;
+  }
+  if (!canUseBrowserNotifications() || !window.isSecureContext || Notification.permission !== "granted") {
+    return false;
+  }
+
+  // Prefer Service Worker notifications for better PWA behavior.
+  if ("serviceWorker" in navigator) {
+    try {
+      let registration = await navigator.serviceWorker.getRegistration();
+      if (!registration) {
+        registration = await registerPushServiceWorker();
+      }
+      if (registration && typeof registration.showNotification === "function") {
+        await registration.showNotification(title, {
+          body,
+          tag,
+          data: { url: contextUrl || "/dashboard" },
+          icon: "/favicon.svg",
+          badge: "/favicon.svg",
+        });
+        return true;
+      }
+    } catch {
+      // Fallback to window Notification below.
+    }
+  }
+
+  try {
+    const note = new Notification(title, { body, tag });
+    note.onclick = () => {
+      window.focus();
+      if (contextUrl) {
+        window.location.hash = contextUrl.includes("#") ? contextUrl.split("#")[1] || "" : "";
+      }
+      note.close();
+    };
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function getTauriCoreInvoke() {
+  try {
+    const direct = window?.__TAURI__?.core?.invoke;
+    if (typeof direct === "function") return direct;
+    const internals = window?.__TAURI_INTERNALS__?.invoke;
+    if (typeof internals === "function") {
+      return (command, payload) => internals(command, payload);
+    }
+    const legacy = window?.__TAURI_INVOKE__;
+    if (typeof legacy === "function") {
+      return (command, payload) => legacy(command, payload);
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function isDesktopTauriRuntime() {
+  return Boolean(getTauriCoreInvoke());
+}
+
+async function invokeDesktopCommand(command, payload) {
+  const invoke = getTauriCoreInvoke();
+  if (!invoke) return { ok: false, value: null };
+  try {
+    return { ok: true, value: await invoke(command, payload || {}) };
+  } catch (err) {
+    try {
+      console.warn("[Tavern desktop] invoke failed", command, err);
+    } catch {}
+    return { ok: false, value: null };
+  }
+}
+
+async function showDesktopNativeNotification(title, body) {
+  if (!isDesktopTauriRuntime()) return false;
+  const safeTitle = String(title || "Tavern");
+  const safeBody = String(body || "");
+  await primeDesktopNotificationBridge();
+  const pluginShown = await invokeDesktopCommand("plugin:notification|notify", {
+    options: {
+      title: safeTitle,
+      body: safeBody,
+    },
+  });
+  if (pluginShown?.ok) return true;
+
+  const result = await invokeDesktopCommand("desktop_notify", {
+    title: safeTitle,
+    body: safeBody,
+  });
+  return result?.ok && result.value === true;
+}
+
+let desktopUpdateCheckStarted = false;
+let desktopUpdateCheckNotifiedVersion = null;
+let desktopNotificationBridgePrimed = false;
+let desktopWindowLikelyFocused = true;
+async function primeDesktopNotificationBridge() {
+  if (desktopNotificationBridgePrimed) return true;
+  if (!isDesktopTauriRuntime()) return false;
+  const perm = await invokeDesktopCommand("plugin:notification|is_permission_granted", {});
+  if (!perm?.ok) return false;
+  if (perm.value == null) {
+    await invokeDesktopCommand("plugin:notification|request_permission", {});
+  }
+  desktopNotificationBridgePrimed = true;
+  return true;
+}
+
+async function maybeCheckDesktopWrapperUpdate() {
+  if (desktopUpdateCheckStarted) return;
+  desktopUpdateCheckStarted = true;
+  if (!isDesktopTauriRuntime()) return;
+  const result = await invokeDesktopCommand("desktop_check_for_updates", {});
+  if (!result?.ok || !result.value || result.value.supported !== true || result.value.available !== true) return;
+  const version = String(result.value.version || "").trim();
+  if (!version || desktopUpdateCheckNotifiedVersion === version) return;
+  desktopUpdateCheckNotifiedVersion = version;
+  showToast(`Desktop app update available: ${version}`);
+  showDesktopNativeNotification("Tavern Client Update Available", `Version ${version} is available. Install the updated client when convenient.`).catch(() => {});
+}
+
+function emitIncomingMessageNotification(mode, contextId, payload) {
+  if (!payload || payload.user_id === currentUserId) return;
+  if (wasMessageNotified(payload.public_id)) return;
+
+  let title = "New message";
+  if (mode === "server") {
+    const channelName = channelNameById.get(contextId) || "channel";
+    title = `#${channelName} \u00B7 ${payload.username || "Someone"}`;
+  } else {
+    title = `DM \u00B7 ${payload.username || "Someone"}`;
+  }
+  const body = getNotificationPreviewText(payload.content);
+  const contextUrl =
+    mode === "server"
+      ? `/dashboard#channel=${contextId}&message=${payload.public_id || ""}`
+      : `/dashboard#dm=${contextId}&message=${payload.public_id || ""}`;
+
+  const isFocused = isBrowserFocusedForNotifications();
+  if (isFocused) {
+    showToast(`${title}: ${body}`);
+    playNotificationPing();
+  } else {
+    showBrowserNotification(
+      title,
+      body,
+      `tavern-msg-${payload.public_id || Date.now()}`,
+      contextUrl
+    ).then((shown) => {
+      if (!shown) {
+        showToast(`${title}: ${body}`);
+        playNotificationPing();
+      }
+    }).catch(() => {
+      showToast(`${title}: ${body}`);
+      playNotificationPing();
+    });
+  }
+
+  markMessageNotified(payload.public_id);
+}
+
+function cacheLatestMessageId(mode, contextId, payload) {
+  if (!contextId || !payload?.public_id) return;
+  if (mode === "server") {
+    latestKnownChannelMessageIds.set(contextId, payload.public_id);
+    return;
+  }
+  latestKnownDmMessageIds.set(contextId, payload.public_id);
+}
+
+async function pollNotificationFallback({ force = false } = {}) {
+  if (!currentUserId) return;
+  if (notificationPollGate) {
+    if (!notificationPollGate.start({ force })) return;
+    const snap = notificationPollGate.getSnapshot();
+    notificationPollInFlight = !!snap.in_flight;
+    lastNotificationPollAt = snap.last_run_at || lastNotificationPollAt;
+  } else {
+    if (notificationPollInFlight) return;
+    const now = Date.now();
+    if (!force && now - lastNotificationPollAt < 3000) return;
+    notificationPollInFlight = true;
+    lastNotificationPollAt = now;
+  }
+  try {
+    const channelIds = [...channelToServer.keys()];
+    const channelResults = await Promise.allSettled(
+      channelIds.map(async (channelId) => {
+        const res = await fetch(`/messages/${channelId}?limit=1`, { credentials: "include" });
+        if (!res.ok) return null;
+        const rows = await res.json();
+        const latest = rows?.[rows.length - 1];
+        return latest?.public_id ? { channelId, latest } : null;
+      })
+    );
+    for (const result of channelResults) {
+      if (result.status !== "fulfilled" || !result.value) continue;
+      const { channelId, latest } = result.value;
+      const previousId = latestKnownChannelMessageIds.get(channelId);
+      cacheLatestMessageId("server", channelId, latest);
+      if (!notificationBaselineReady) continue;
+      if (!previousId || previousId === latest.public_id) continue;
+      if (latest.user_id === currentUserId) continue;
+      if (!shouldNotifyForMessage(channelId, latest)) continue;
+      emitIncomingMessageNotification("server", channelId, latest);
+      if (channelId !== activeChannelId) {
+        unreadChannels.add(channelId);
+        const serverId = channelToServer.get(channelId);
+        if (serverId) unreadServers.add(serverId);
+        applyUnreadStyles();
+      }
+    }
+
+    const dmRes = await fetch("/dms/", { credentials: "include" });
+    if (dmRes.ok) {
+      const conversations = await dmRes.json();
+      const dmResults = await Promise.allSettled(
+        (conversations || [])
+          .filter((convo) => !!convo?.public_id)
+          .map(async (convo) => {
+            const conversationId = convo.public_id;
+            const msgRes = await fetch(`/dms/${conversationId}/messages?limit=1`, { credentials: "include" });
+            if (!msgRes.ok) return null;
+            const rows = await msgRes.json();
+            const latest = rows?.[rows.length - 1];
+            return latest?.public_id ? { conversationId, latest } : null;
+          })
+      );
+      for (const result of dmResults) {
+        if (result.status !== "fulfilled" || !result.value) continue;
+        const { conversationId, latest } = result.value;
+        const previousId = latestKnownDmMessageIds.get(conversationId);
+        cacheLatestMessageId("dm", conversationId, latest);
+        if (!notificationBaselineReady) continue;
+        if (!previousId || previousId === latest.public_id) continue;
+        if (latest.user_id === currentUserId) continue;
+        emitIncomingMessageNotification("dm", conversationId, latest);
+      }
+    }
+
+    const friendPollNow = Date.now();
+    if (force || friendPollNow - lastFriendRequestToastPollAt >= FRIEND_REQUEST_TOAST_POLL_MS) {
+      lastFriendRequestToastPollAt = friendPollNow;
+      const [friendReqRes, friendsRes] = await Promise.all([
+        fetch("/users/friend-requests", { credentials: "include" }),
+        fetch("/users/friends", { credentials: "include" }),
+      ]);
+      if (friendReqRes.ok) {
+        const friendReqData = await friendReqRes.json();
+        const incomingRequests = Array.isArray(friendReqData?.incoming) ? friendReqData.incoming : [];
+        const outgoingRequests = Array.isArray(friendReqData?.outgoing) ? friendReqData.outgoing : [];
+        const nextIncomingIds = new Set();
+        const nextOutgoingTargetIds = new Set();
+        for (const req of incomingRequests) {
+          const reqId = String(req?.public_id || "");
+          if (!reqId) continue;
+          nextIncomingIds.add(reqId);
+          if (!friendRequestNotificationBaselineReady) continue;
+          if (knownIncomingFriendRequestIds.has(reqId)) continue;
+          const fromUser = String(req?.requester_username || "Someone");
+          showToast(`Friend request from ${fromUser}`);
+          playNotificationPing();
+        }
+        for (const req of outgoingRequests) {
+          const targetId = String(req?.addressee_public_id || "");
+          if (targetId) nextOutgoingTargetIds.add(targetId);
+        }
+
+        let currentFriends = [];
+        if (friendsRes.ok) {
+          try {
+            currentFriends = await friendsRes.json();
+          } catch {
+            currentFriends = [];
+          }
+        }
+        const nextFriendIds = new Set();
+        const safeFriends = Array.isArray(currentFriends) ? currentFriends : [];
+        for (const friend of safeFriends) {
+          const friendId = String(friend?.public_id || "");
+          if (!friendId) continue;
+          nextFriendIds.add(friendId);
+          if (!friendRequestNotificationBaselineReady) continue;
+          if (knownFriendIdsForRequestToasts.has(friendId)) continue;
+          if (!knownOutgoingFriendRequestTargetIds.has(friendId)) continue;
+          showToast(`Friend request accepted by ${friend?.username || "friend"}`);
+          playNotificationPing();
+        }
+
+        knownIncomingFriendRequestIds.clear();
+        nextIncomingIds.forEach((id) => knownIncomingFriendRequestIds.add(id));
+        knownOutgoingFriendRequestTargetIds.clear();
+        nextOutgoingTargetIds.forEach((id) => knownOutgoingFriendRequestTargetIds.add(id));
+        knownFriendIdsForRequestToasts.clear();
+        nextFriendIds.forEach((id) => knownFriendIdsForRequestToasts.add(id));
+      }
+    }
+  } catch {
+    // Best-effort fallback; websocket path remains primary.
+  } finally {
+    notificationBaselineReady = true;
+    friendRequestNotificationBaselineReady = true;
+    if (notificationPollGate) {
+      notificationPollGate.end();
+      const snap = notificationPollGate.getSnapshot();
+      notificationPollInFlight = !!snap.in_flight;
+      lastNotificationPollAt = snap.last_run_at || lastNotificationPollAt;
+    } else {
+      notificationPollInFlight = false;
+    }
+  }
+}
+
+function startNotificationFallbackPolling({ resetBaseline = false } = {}) {
+  if (notificationPollTimer) clearInterval(notificationPollTimer);
+  if (resetBaseline) {
+    notificationBaselineReady = false;
+    friendRequestNotificationBaselineReady = false;
+    knownIncomingFriendRequestIds.clear();
+    knownOutgoingFriendRequestTargetIds.clear();
+    knownFriendIdsForRequestToasts.clear();
+    lastFriendRequestToastPollAt = 0;
+  }
+  pollNotificationFallback({ force: true }).catch(() => {});
+  const interval = document.hidden ? NOTIFICATION_POLL_HIDDEN_MS : NOTIFICATION_POLL_VISIBLE_MS;
+  notificationPollTimer = setInterval(() => {
+    pollNotificationFallback().catch(() => {});
+  }, interval);
+}
+
+function getSessionLifecycleController() {
+  if (sessionLifecycleController) return sessionLifecycleController;
+
+  if (window.TavernSessionLifecycle?.createSessionLifecycleController) {
+    sessionLifecycleController = window.TavernSessionLifecycle.createSessionLifecycleController({
+      showToast,
+      isPwaMode,
+      fetchSessionStatus: async () => {
+        const res = await fetch("/auth/session", { credentials: "include" });
+        if (!res.ok) throw new Error("Session check failed");
+        return res.json();
+      },
+      refreshSessionStatus: async () => {
+        const res = await fetch("/auth/refresh", { method: "POST", credentials: "include" });
+        if (!res.ok) throw new Error("Session refresh failed");
+        return res.json();
+      },
+      warningMs: SESSION_WARNING_MS,
+      finalWarningMs: SESSION_FINAL_WARNING_MS,
+    });
+    return sessionLifecycleController;
+  }
+
+  // Fallback no-op controller when module cannot be loaded.
+  sessionLifecycleController = {
+    clear() {},
+    schedule() {},
+    async start() {},
+  };
+  return sessionLifecycleController;
+}
+
+function clearSessionLifecycleTimers() {
+  getSessionLifecycleController().clear();
+}
+
+async function fetchSessionStatus() {
+  const res = await originalWindowFetch(resolveApiUrl("/auth/session"), {
+    credentials: "include",
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error("Session check failed");
+  return res.json();
+}
+
+async function refreshSessionStatus() {
+  const res = await originalWindowFetch(resolveApiUrl("/auth/refresh"), {
+    method: "POST",
+    credentials: "include",
+    cache: "no-store",
+    keepalive: true,
+  });
+  if (!res.ok) throw new Error("Session refresh failed");
+  return res.json();
+}
+
+function scheduleSessionLifecycle(expiresInSeconds) {
+  getSessionLifecycleController().schedule(expiresInSeconds);
+}
+
+async function startSessionLifecycle() {
+  await getSessionLifecycleController().start();
+}
+
+async function refreshSessionOnAppResume({ force = false } = {}) {
+  const now = Date.now();
+  if (!force && (now - lastSessionResumeRefreshAt) < SESSION_RESUME_REFRESH_THROTTLE_MS) return;
+  lastSessionResumeRefreshAt = now;
+  try {
+    const session = await refreshSessionStatus();
+    if (session?.expires_in_seconds != null) scheduleSessionLifecycle(session.expires_in_seconds);
+  } catch {
+    // Best-effort only. Auth redirect stays owned by regular API flow.
+  }
+}
+
+function handleServiceWorkerPushMessage(event) {
+  const msgType = event?.data?.type;
+  const payload = event?.data?.payload;
+  if (msgType !== "push_message" || !payload || payload.type !== "message_created") return;
+
+  const mode = payload.mode === "dm" ? "dm" : "server";
+  const contextId = mode === "dm" ? payload.conversation_public_id : payload.channel_public_id;
+  if (!contextId) return;
+
+  emitIncomingMessageNotification(mode, contextId, {
+    public_id: payload.message_public_id || payload.public_id || "",
+    content: payload.content || payload.body || "",
+    username: payload.username || "Someone",
+    // Push is sent only to recipients, so use a non-self marker.
+    user_id: -1,
+  });
+}
+
 function loadSafeModeState() {
   try {
     safeModeEnabled = localStorage.getItem(SAFE_MODE_STORAGE_KEY) === "1";
@@ -749,6 +2321,55 @@ function persistActiveChatState() {
   });
 }
 
+function getFirstThemeByMode(mode, fallbackId = "") {
+  const targetMode = normalizeThemeMode(mode);
+  return getAllThemes().find((preset) => normalizeThemeMode(preset.mode) === targetMode)?.id || fallbackId;
+}
+
+function cycleThemeMode() {
+  const currentId = String(appearanceSettings.themeId || "");
+  const currentPreset = getThemeById(currentId);
+  const mode = normalizeThemeMode(currentPreset.mode);
+  let nextId = "";
+  if (mode === "light") {
+    nextId = String(
+      appearanceSettings.lastMediumThemeId
+      || getFirstThemeByMode("medium", DEFAULT_APPEARANCE.lastMediumThemeId)
+      || DEFAULT_APPEARANCE.lastMediumThemeId
+    );
+  } else if (mode === "medium") {
+    nextId = String(
+      appearanceSettings.lastDarkThemeId
+      || getFirstThemeByMode("dark", DEFAULT_APPEARANCE.lastDarkThemeId)
+      || DEFAULT_APPEARANCE.lastDarkThemeId
+    );
+  } else {
+    nextId = String(
+      appearanceSettings.lastLightThemeId
+      || getFirstThemeByMode("light", DEFAULT_APPEARANCE.lastLightThemeId)
+      || DEFAULT_APPEARANCE.lastLightThemeId
+    );
+  }
+
+  if (!getAllThemes().some((preset) => preset.id === nextId) || nextId === currentId) {
+    const order = ["linen-light", "dusk-medium", "graphite-dark"];
+    const idx = order.indexOf(currentId);
+    nextId = order[(idx >= 0 ? idx + 1 : 0) % order.length];
+  }
+
+  appearanceSettings.themeId = nextId;
+  const appliedPreset = getThemeById(nextId);
+  const appliedMode = normalizeThemeMode(appliedPreset.mode);
+  if (appliedMode === "medium") appearanceSettings.lastMediumThemeId = appliedPreset.id;
+  else if (appliedMode === "dark") appearanceSettings.lastDarkThemeId = appliedPreset.id;
+  else appearanceSettings.lastLightThemeId = appliedPreset.id;
+
+  applyAppearanceSettings();
+  saveAppearanceSettings();
+  renderThemePresetGrid();
+  updateAppearanceControlValues();
+}
+
 function serializeSettingsBundle() {
   return {
     version: 1,
@@ -757,6 +2378,7 @@ function serializeSettingsBundle() {
     customThemes,
     panelSizes,
     labs: labsSettings,
+    voice: voiceSettings,
     drafts: draftsState,
     channelNotifications: channelNotificationState,
     safeModeEnabled,
@@ -767,6 +2389,22 @@ function applySettingsBundle(bundle) {
   if (!bundle || typeof bundle !== "object") throw new Error("Invalid settings bundle.");
   if (bundle.appearance && typeof bundle.appearance === "object") {
     appearanceSettings = { ...DEFAULT_APPEARANCE, ...bundle.appearance };
+    if (appearanceSettings.themeId === "pure-dark-modern") {
+      appearanceSettings.themeId = DEFAULT_APPEARANCE.lastDarkThemeId;
+    }
+    if (appearanceSettings.lastDarkThemeId === "pure-dark-modern") {
+      appearanceSettings.lastDarkThemeId = DEFAULT_APPEARANCE.lastDarkThemeId;
+    }
+    appearanceSettings.uiScale = clamp(Number(appearanceSettings.uiScale), UI_SCALE_MIN, UI_SCALE_MAX);
+    appearanceSettings.notificationPingVolume = clamp(
+      Number(appearanceSettings.notificationPingVolume),
+      0,
+      2
+    );
+    appearanceSettings.themeAccentColor = normalizeOptionalHexColor(appearanceSettings.themeAccentColor);
+    if (!getAllThemes().some((preset) => preset.id === appearanceSettings.lastMediumThemeId)) {
+      appearanceSettings.lastMediumThemeId = DEFAULT_APPEARANCE.lastMediumThemeId;
+    }
   }
   if (Array.isArray(bundle.customThemes)) {
     customThemes = bundle.customThemes;
@@ -784,6 +2422,10 @@ function applySettingsBundle(bundle) {
     labsSettings = { ...DEFAULT_LABS_SETTINGS, ...bundle.labs };
     saveLabsSettings();
   }
+  if (bundle.voice && typeof bundle.voice === "object") {
+    voiceSettings = normalizeVoiceSettings(bundle.voice);
+    saveVoiceSettings();
+  }
   if (bundle.drafts && typeof bundle.drafts === "object") {
     draftsState = bundle.drafts;
     saveDraftsState();
@@ -798,8 +2440,25 @@ function applySettingsBundle(bundle) {
   renderThemePresetGrid();
   updateAppearanceControlValues();
   updateLabsControlValues();
+  updateVoiceControlValues();
   applySafeModeState();
   applyDraftToComposer();
+}
+
+function setupNotificationPermissionPrompt() {
+  if (isIosWebKitDevice() && !isStandaloneDisplayMode()) {
+    return;
+  }
+  const handleFirstInteraction = async () => {
+    requestBrowserNotificationPermission();
+    try {
+      await subscribePushNotifications({ promptPermission: false });
+    } catch {
+      // Best-effort on first interaction; explicit settings button can retry.
+    }
+  };
+  document.addEventListener("click", handleFirstInteraction, { once: true });
+  document.addEventListener("keydown", handleFirstInteraction, { once: true });
 }
 
 function buildQuickSwitcherItems(query = "") {
@@ -808,19 +2467,19 @@ function buildQuickSwitcherItems(query = "") {
   document.querySelectorAll(".server-item").forEach((el) => {
     const label = el.dataset.serverName || "Server";
     if (q && !label.toLowerCase().includes(q)) return;
-    items.push({ type: "server", label: `Server · ${label}`, onSelect: () => el.click() });
+    items.push({ type: "server", label: `Server \u00B7 ${label}`, onSelect: () => el.click() });
   });
   document.querySelectorAll(".channel-item").forEach((el) => {
     const label = el.dataset.channelName || el.textContent || "Channel";
     if (q && !label.toLowerCase().includes(q)) return;
-    items.push({ type: "channel", label: `Channel · ${label}`, onSelect: () => el.click() });
+    items.push({ type: "channel", label: `Channel \u00B7 ${label}`, onSelect: () => el.click() });
   });
   friendsCache.forEach((friend) => {
     const label = `${friend.username} (${friend.public_id})`;
     if (q && !label.toLowerCase().includes(q)) return;
     items.push({
       type: "user",
-      label: `User · ${label}`,
+      label: `User \u00B7 ${label}`,
       onSelect: async () => {
         try {
           const convo = await createOrOpenDmConversation(friend.public_id);
@@ -921,6 +2580,44 @@ async function buildCenterSquareFile(file) {
   return new File([blob], `${file.name.replace(/\.[^.]+$/, "")}_square.png`, { type: "image/png" });
 }
 
+async function optimizeAvatarFile(file) {
+  if (!file) return file;
+  const maxSide = 512;
+  const targetBytes = 900 * 1024;
+  const dataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+    reader.onerror = () => reject(new Error("Image read failed"));
+    reader.readAsDataURL(file);
+  });
+  const img = await new Promise((resolve, reject) => {
+    const el = new Image();
+    el.onload = () => resolve(el);
+    el.onerror = () => reject(new Error("Image decode failed"));
+    el.src = dataUrl;
+  });
+  const sourceW = Math.max(1, Number(img.width) || 1);
+  const sourceH = Math.max(1, Number(img.height) || 1);
+  const scale = Math.min(1, maxSide / Math.max(sourceW, sourceH));
+  const width = Math.max(1, Math.round(sourceW * scale));
+  const height = Math.max(1, Math.round(sourceH * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return file;
+  ctx.drawImage(img, 0, 0, width, height);
+
+  let quality = 0.9;
+  let blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+  while (blob && blob.size > targetBytes && quality > 0.55) {
+    quality -= 0.1;
+    blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+  }
+  if (!blob) return file;
+  return new File([blob], `${file.name.replace(/\.[^.]+$/, "")}_avatar.jpg`, { type: "image/jpeg" });
+}
+
 function setJumpUnreadVisible(visible) {
   if (!jumpUnreadBtn) return;
   jumpUnreadBtn.classList.toggle("hidden", !visible);
@@ -974,6 +2671,19 @@ function loadLabsSettings() {
   } catch {
     labsSettings = { ...DEFAULT_LABS_SETTINGS };
   }
+  labsSettings.lanternColorA = normalizeHexColor(labsSettings.lanternColorA, DEFAULT_LABS_SETTINGS.lanternColorA);
+  labsSettings.lanternColorB = normalizeHexColor(labsSettings.lanternColorB, DEFAULT_LABS_SETTINGS.lanternColorB);
+  labsSettings.bokehColorA = normalizeHexColor(labsSettings.bokehColorA, DEFAULT_LABS_SETTINGS.bokehColorA);
+  labsSettings.bokehColorB = normalizeHexColor(labsSettings.bokehColorB, DEFAULT_LABS_SETTINGS.bokehColorB);
+  labsSettings.messageBarGlowStyle = normalizeMessageBarGlowStyle(labsSettings.messageBarGlowStyle);
+  labsSettings.messageBarGlowColorA = normalizeHexColor(
+    labsSettings.messageBarGlowColorA,
+    DEFAULT_LABS_SETTINGS.messageBarGlowColorA
+  );
+  labsSettings.messageBarGlowColorB = normalizeHexColor(
+    labsSettings.messageBarGlowColorB,
+    DEFAULT_LABS_SETTINGS.messageBarGlowColorB
+  );
 }
 
 function saveLabsSettings() {
@@ -984,12 +2694,228 @@ function saveLabsSettings() {
   }
 }
 
+function normalizeVoiceSettings(rawSettings) {
+  const raw = rawSettings && typeof rawSettings === "object" ? rawSettings : {};
+  return {
+    echoCancellation: Boolean(raw.echoCancellation ?? DEFAULT_VOICE_SETTINGS.echoCancellation),
+    noiseSuppression: Boolean(raw.noiseSuppression ?? DEFAULT_VOICE_SETTINGS.noiseSuppression),
+    eqEnabled: Boolean(raw.eqEnabled ?? DEFAULT_VOICE_SETTINGS.eqEnabled),
+    eqLowGain: clamp(Number(raw.eqLowGain ?? DEFAULT_VOICE_SETTINGS.eqLowGain), -12, 12),
+    eqMidGain: clamp(Number(raw.eqMidGain ?? DEFAULT_VOICE_SETTINGS.eqMidGain), -12, 12),
+    eqHighGain: clamp(Number(raw.eqHighGain ?? DEFAULT_VOICE_SETTINGS.eqHighGain), -12, 12),
+    compactVideoTiles: Boolean(raw.compactVideoTiles ?? DEFAULT_VOICE_SETTINGS.compactVideoTiles),
+    videoTileScale: clamp(Number(raw.videoTileScale ?? DEFAULT_VOICE_SETTINGS.videoTileScale), 0.7, 1.4),
+    screenShareQuality: getNormalizedScreenShareQuality(raw.screenShareQuality ?? DEFAULT_VOICE_SETTINGS.screenShareQuality),
+  };
+}
+
+function getNormalizedScreenShareQuality(value) {
+  const quality = String(value || "").toLowerCase();
+  if (quality === "low" || quality === "high" || quality === "ultra") return quality;
+  return "medium";
+}
+
+function getScreenShareVideoConstraints() {
+  const quality = getNormalizedScreenShareQuality(voiceSettings.screenShareQuality);
+  if (quality === "low") {
+    return {
+      width: { ideal: 960, max: 960 },
+      height: { ideal: 540, max: 540 },
+      frameRate: { ideal: 10, max: 12 },
+    };
+  }
+  if (quality === "high") {
+    return {
+      width: { ideal: 1920, max: 1920 },
+      height: { ideal: 1080, max: 1080 },
+      frameRate: { ideal: 24, max: 30 },
+    };
+  }
+  if (quality === "ultra") {
+    return {
+      width: { ideal: 1920, max: 1920 },
+      height: { ideal: 1080, max: 1080 },
+      frameRate: { ideal: 60, max: 60 },
+    };
+  }
+  return {
+    width: { ideal: 1280, max: 1280 },
+    height: { ideal: 720, max: 720 },
+    frameRate: { ideal: 15, max: 20 },
+  };
+}
+
+function loadVoiceSettings() {
+  try {
+    const raw = localStorage.getItem(VOICE_SETTINGS_STORAGE_KEY);
+    voiceSettings = normalizeVoiceSettings(JSON.parse(raw || "{}"));
+  } catch {
+    voiceSettings = { ...DEFAULT_VOICE_SETTINGS };
+  }
+}
+
+function saveVoiceSettings() {
+  try {
+    localStorage.setItem(VOICE_SETTINGS_STORAGE_KEY, JSON.stringify(voiceSettings));
+  } catch {
+    // Ignore storage failures
+  }
+}
+
+function applyVoiceVideoTileLayoutSettings() {
+  if (!voicePanel) return;
+  const scale = clamp(Number(voiceSettings.videoTileScale ?? 1), 0.7, 1.4);
+  const compact = !!voiceSettings.compactVideoTiles;
+  const minColBase = compact ? 112 : 140;
+  const minHeightBase = compact ? 70 : 90;
+  const maxWidthBase = compact ? 180 : 240;
+  const gridMaxHeight = compact ? "min(20vh, 160px)" : "min(26vh, 220px)";
+  voicePanel.style.setProperty("--voice-video-grid-min-col", `${Math.round(minColBase * scale)}px`);
+  voicePanel.style.setProperty("--voice-video-tile-min-height", `${Math.round(minHeightBase * scale)}px`);
+  voicePanel.style.setProperty("--voice-video-tile-max-width", `${Math.round(maxWidthBase * scale)}px`);
+  voicePanel.style.setProperty("--voice-video-grid-max-height", gridMaxHeight);
+}
+
+function updateVoiceControlValues() {
+  if (settingsVoiceEchoCancellationInput) settingsVoiceEchoCancellationInput.checked = !!voiceSettings.echoCancellation;
+  if (settingsVoiceNoiseSuppressionInput) settingsVoiceNoiseSuppressionInput.checked = !!voiceSettings.noiseSuppression;
+  if (settingsVoiceEqEnabledInput) settingsVoiceEqEnabledInput.checked = !!voiceSettings.eqEnabled;
+  if (settingsVoiceEqLowInput) settingsVoiceEqLowInput.value = String(voiceSettings.eqLowGain);
+  if (settingsVoiceEqMidInput) settingsVoiceEqMidInput.value = String(voiceSettings.eqMidGain);
+  if (settingsVoiceEqHighInput) settingsVoiceEqHighInput.value = String(voiceSettings.eqHighGain);
+  if (settingsVoiceEqLowValue) settingsVoiceEqLowValue.textContent = `${Math.round(voiceSettings.eqLowGain)} dB`;
+  if (settingsVoiceEqMidValue) settingsVoiceEqMidValue.textContent = `${Math.round(voiceSettings.eqMidGain)} dB`;
+  if (settingsVoiceEqHighValue) settingsVoiceEqHighValue.textContent = `${Math.round(voiceSettings.eqHighGain)} dB`;
+  if (settingsVoiceCompactVideoTilesInput) settingsVoiceCompactVideoTilesInput.checked = !!voiceSettings.compactVideoTiles;
+  if (settingsVoiceVideoTileScaleInput) settingsVoiceVideoTileScaleInput.value = String(clamp(Number(voiceSettings.videoTileScale ?? 1), 0.7, 1.4));
+  if (settingsVoiceVideoTileScaleValue) settingsVoiceVideoTileScaleValue.textContent = `${clamp(Number(voiceSettings.videoTileScale ?? 1), 0.7, 1.4).toFixed(2)}x`;
+  if (settingsVoiceScreenShareQualityInput) settingsVoiceScreenShareQualityInput.value = getNormalizedScreenShareQuality(voiceSettings.screenShareQuality);
+  syncCustomSelects(userSettingsModal || document);
+  applyVoiceVideoTileLayoutSettings();
+}
+
+function getAllowedSettingsTabs() {
+  const tabs = ["profile", "voice", "appearance", "connections"];
+  if (labsSettings.unlocked) tabs.push("labs");
+  return tabs;
+}
+
+function setActiveSettingsTab(nextTab) {
+  const allowedTabs = getAllowedSettingsTabs();
+  const tab = allowedTabs.includes(nextTab) ? nextTab : "profile";
+  activeSettingsTab = tab;
+
+  settingsPanels.forEach((panel) => {
+    const panelTab = panel.dataset.settingsPanel;
+    const isActive = panelTab === tab;
+    panel.classList.toggle("active", isActive);
+  });
+
+  settingsMenuButtons.forEach((btn) => {
+    const isActive = btn.dataset.settingsTab === tab;
+    btn.classList.toggle("active", isActive);
+    btn.setAttribute("aria-selected", isActive ? "true" : "false");
+    if (btn.dataset.settingsTab === "labs") {
+      btn.disabled = !labsSettings.unlocked;
+      btn.classList.toggle("hidden", !labsSettings.unlocked);
+    }
+  });
+  if (tab === "connections") {
+    refreshConnectionsSettingsPanel().catch(() => {});
+  }
+}
+
+function bindSettingsMenuControls() {
+  settingsMenuButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      setActiveSettingsTab(btn.dataset.settingsTab || "profile");
+    });
+  });
+}
+
+function applySettingsTooltips(root = document) {
+  const tabHints = {
+    profile: "Account profile, identity, and personal info controls.",
+    voice: "Microphone, voice processing, and call display settings.",
+    appearance: "Theme, layout, colors, and visual customization.",
+    connections: "Realtime health checks, diagnostics, and recovery tools.",
+    labs: "Experimental features and visual effects.",
+  };
+  root.querySelectorAll(".settings-menu-btn[data-settings-tab]").forEach((btn) => {
+    const key = String(btn.dataset.settingsTab || "").trim();
+    const hint = tabHints[key];
+    if (!btn.dataset.tooltip && hint) btn.dataset.tooltip = hint;
+  });
+
+  root.querySelectorAll(".settings-control-row").forEach((row) => {
+    const label = row.querySelector("label");
+    const help = row.querySelector("span");
+    const helpText = String(help?.textContent || "").trim();
+    if (label && helpText && !label.dataset.tooltip) {
+      label.dataset.tooltip = helpText;
+    }
+  });
+
+  const serverHints = {
+    "server-settings-name-input": "Display name for this server.",
+    "server-settings-upload-limit-input": "Maximum upload size in MB per file. Use 0 for unlimited.",
+    "server-settings-log-retention-input": "How long server activity logs are kept. 0 disables server activity log retention entirely.",
+    "server-settings-message-retention-input": "How long messages persist. -1 keeps messages forever; 0 means realtime-only and not stored.",
+    "server-settings-strip-metadata": "If enabled, uploaded images are re-encoded to remove EXIF/metadata.",
+    "settings-strip-upload-metadata": "If enabled, your uploads remove EXIF/metadata even when server defaults do not require it.",
+    "server-settings-automod-enabled": "Master switch for all server AutoMod rules.",
+    "server-settings-automod-block-links": "Block messages containing external http/https links.",
+    "server-settings-automod-block-invites": "Block messages containing invite-style links.",
+    "server-settings-automod-terms": "Comma or newline separated blocked terms.",
+    "server-settings-automod-extensions": "Comma or newline separated blocked file extensions.",
+  };
+  root.querySelectorAll(".server-settings-grid label[for]").forEach((label) => {
+    const key = String(label.getAttribute("for") || "").trim();
+    const hint = serverHints[key];
+    if (hint && !label.dataset.tooltip) label.dataset.tooltip = hint;
+  });
+
+  root.querySelectorAll(".settings-action-row button, .settings-import-label").forEach((el) => {
+    const text = String(el.textContent || "").trim().replace(/\s+/g, " ");
+    if (text && !el.dataset.tooltip) {
+      el.dataset.tooltip = text;
+    }
+  });
+}
+
 function updateLabsControlValues() {
   if (settingsLabsSection) settingsLabsSection.classList.toggle("hidden", !labsSettings.unlocked);
+  if (!labsSettings.unlocked && activeSettingsTab === "labs") {
+    setActiveSettingsTab("profile");
+  } else {
+    setActiveSettingsTab(activeSettingsTab);
+  }
   Object.entries(labsControlInputs).forEach(([key, input]) => {
     if (!input) return;
     input.checked = Boolean(labsSettings[key]);
   });
+  if (labsLanternColorAInput) labsLanternColorAInput.value = normalizeHexColor(labsSettings.lanternColorA, DEFAULT_LABS_SETTINGS.lanternColorA);
+  if (labsLanternColorBInput) labsLanternColorBInput.value = normalizeHexColor(labsSettings.lanternColorB, DEFAULT_LABS_SETTINGS.lanternColorB);
+  if (labsBokehColorAInput) labsBokehColorAInput.value = normalizeHexColor(labsSettings.bokehColorA, DEFAULT_LABS_SETTINGS.bokehColorA);
+  if (labsBokehColorBInput) labsBokehColorBInput.value = normalizeHexColor(labsSettings.bokehColorB, DEFAULT_LABS_SETTINGS.bokehColorB);
+  if (labsMessageBarGlowStyleInput) labsMessageBarGlowStyleInput.value = normalizeMessageBarGlowStyle(labsSettings.messageBarGlowStyle);
+  if (labsMessageBarGlowColorAInput) {
+    labsMessageBarGlowColorAInput.value = normalizeHexColor(labsSettings.messageBarGlowColorA, DEFAULT_LABS_SETTINGS.messageBarGlowColorA);
+  }
+  if (labsMessageBarGlowColorBInput) {
+    labsMessageBarGlowColorBInput.value = normalizeHexColor(labsSettings.messageBarGlowColorB, DEFAULT_LABS_SETTINGS.messageBarGlowColorB);
+  }
+  if (labsLanternColorAValue) labsLanternColorAValue.textContent = normalizeHexColor(labsSettings.lanternColorA, DEFAULT_LABS_SETTINGS.lanternColorA).toUpperCase();
+  if (labsLanternColorBValue) labsLanternColorBValue.textContent = normalizeHexColor(labsSettings.lanternColorB, DEFAULT_LABS_SETTINGS.lanternColorB).toUpperCase();
+  if (labsBokehColorAValue) labsBokehColorAValue.textContent = normalizeHexColor(labsSettings.bokehColorA, DEFAULT_LABS_SETTINGS.bokehColorA).toUpperCase();
+  if (labsBokehColorBValue) labsBokehColorBValue.textContent = normalizeHexColor(labsSettings.bokehColorB, DEFAULT_LABS_SETTINGS.bokehColorB).toUpperCase();
+  if (labsMessageBarGlowColorAValue) {
+    labsMessageBarGlowColorAValue.textContent = normalizeHexColor(labsSettings.messageBarGlowColorA, DEFAULT_LABS_SETTINGS.messageBarGlowColorA).toUpperCase();
+  }
+  if (labsMessageBarGlowColorBValue) {
+    labsMessageBarGlowColorBValue.textContent = normalizeHexColor(labsSettings.messageBarGlowColorB, DEFAULT_LABS_SETTINGS.messageBarGlowColorB).toUpperCase();
+  }
+  syncCustomSelects(userSettingsModal || document);
 }
 
 function ensureLanternLayer() {
@@ -1009,18 +2935,241 @@ function ensureLanternLayer() {
   document.body.appendChild(layer);
 }
 
+function ensureBokehLayer() {
+  if (document.getElementById("bokeh-layer")) return;
+  const layer = document.createElement("div");
+  layer.id = "bokeh-layer";
+  layer.className = "bokeh-layer";
+  for (let i = 0; i < 10; i += 1) {
+    const node = document.createElement("span");
+    node.className = "bokeh-orb";
+    randomizeBokehOrb(node);
+    layer.appendChild(node);
+  }
+  document.body.appendChild(layer);
+  startBokehAnimation();
+}
+
+function stopBokehAnimation() {
+  if (bokehAnimationFrame) {
+    cancelAnimationFrame(bokehAnimationFrame);
+    bokehAnimationFrame = null;
+  }
+  bokehLastTickMs = 0;
+}
+
+function randomizeBokehOrb(orb) {
+  const size = 48 + Math.random() * 140;
+  const baseX = Math.random() * 100;
+  const baseY = Math.random() * 100;
+  const baseOpacity = 0.08 + Math.random() * 0.18;
+  orb.style.width = `${size}px`;
+  orb.style.height = `${size}px`;
+  orb.style.left = `${baseX}%`;
+  orb.style.top = `${baseY}%`;
+  orb.style.opacity = `${baseOpacity}`;
+  orb.dataset.baseOpacity = String(baseOpacity);
+  orb.dataset.phase = String(Math.random() * Math.PI * 2);
+  orb.dataset.speed = String(0.22 + Math.random() * 0.4);
+  orb.dataset.amp = String(8 + Math.random() * 26);
+  orb.dataset.parallax = String(10 + Math.random() * 20);
+  orb.dataset.reactRadius = String(180 + Math.random() * 200);
+  orb.dataset.reactStrength = String(0.38 + Math.random() * 0.44);
+  orb.dataset.rx = "0";
+  orb.dataset.ry = "0";
+  orb.dataset.vx = "0";
+  orb.dataset.vy = "0";
+  orb.dataset.fadeState = "steady";
+  orb.dataset.fadeTime = "0";
+  orb.dataset.fadeDuration = String(1.8 + Math.random() * 1.8);
+  orb.dataset.holdDuration = String(7 + Math.random() * 10);
+}
+
+function startBokehAnimation() {
+  if (bokehAnimationFrame) return;
+  const tick = (timeMs) => {
+    const layer = document.getElementById("bokeh-layer");
+    if (!layer || safeModeEnabled || !labsSettings.fxBokeh) {
+      bokehAnimationFrame = null;
+      return;
+    }
+    const dt = bokehLastTickMs > 0 ? Math.min(0.05, (timeMs - bokehLastTickMs) / 1000) : 0.016;
+    bokehLastTickMs = timeMs;
+    bokehPointerX += (bokehPointerTargetX - bokehPointerX) * 0.035;
+    bokehPointerY += (bokehPointerTargetY - bokehPointerY) * 0.035;
+    const t = timeMs * 0.001;
+    layer.querySelectorAll(".bokeh-orb").forEach((orb) => {
+      const phase = Number(orb.dataset.phase || 0);
+      const speed = Number(orb.dataset.speed || 0.3);
+      const amp = Number(orb.dataset.amp || 12);
+      const parallax = Number(orb.dataset.parallax || 14);
+      const reactRadius = Number(orb.dataset.reactRadius || 260);
+      const reactStrength = Number(orb.dataset.reactStrength || 0.5);
+      const baseOpacity = Number(orb.dataset.baseOpacity || 0.14);
+      let fadeState = String(orb.dataset.fadeState || "steady");
+      let fadeTime = Number(orb.dataset.fadeTime || 0);
+      let fadeDuration = Number(orb.dataset.fadeDuration || 2.4);
+      let holdDuration = Number(orb.dataset.holdDuration || 10);
+      let rx = Number(orb.dataset.rx || 0);
+      let ry = Number(orb.dataset.ry || 0);
+      let vx = Number(orb.dataset.vx || 0);
+      let vy = Number(orb.dataset.vy || 0);
+      const driftX = Math.sin((t * speed) + phase) * amp;
+      const driftY = Math.cos((t * speed * 0.85) + phase) * amp * 0.72;
+      let targetReactX = bokehPointerX * parallax * 0.18;
+      let targetReactY = bokehPointerY * parallax * 0.18;
+      if (bokehPointerActive) {
+        const rect = orb.getBoundingClientRect();
+        const cx = rect.left + (rect.width / 2);
+        const cy = rect.top + (rect.height / 2);
+        const dx = cx - bokehPointerClientX;
+        const dy = cy - bokehPointerClientY;
+        const dist = Math.hypot(dx, dy) || 0.0001;
+        if (dist < reactRadius) {
+          const falloff = 1 - (dist / reactRadius);
+          const influence = (falloff * falloff) * reactStrength;
+          // dx/dy already points away from the cursor.
+          targetReactX += (dx / dist) * influence * parallax;
+          targetReactY += (dy / dist) * influence * parallax;
+        }
+      }
+      vx = (vx + ((targetReactX - rx) * 0.032)) * 0.9;
+      vy = (vy + ((targetReactY - ry) * 0.032)) * 0.9;
+      rx += vx;
+      ry += vy;
+      fadeTime += dt;
+      if (fadeState === "steady" && fadeTime >= holdDuration) {
+        fadeState = "fadingOut";
+        fadeTime = 0;
+        fadeDuration = 1.8 + Math.random() * 1.8;
+      } else if (fadeState === "fadingOut" && fadeTime >= fadeDuration) {
+        randomizeBokehOrb(orb);
+        fadeState = "fadingIn";
+        fadeTime = 0;
+        fadeDuration = Number(orb.dataset.fadeDuration || (1.8 + Math.random() * 1.8));
+        holdDuration = Number(orb.dataset.holdDuration || (7 + Math.random() * 10));
+        rx = 0;
+        ry = 0;
+        vx = 0;
+        vy = 0;
+      } else if (fadeState === "fadingIn" && fadeTime >= fadeDuration) {
+        fadeState = "steady";
+        fadeTime = 0;
+        holdDuration = 7 + Math.random() * 10;
+      }
+      let opacity = baseOpacity;
+      if (fadeState === "fadingOut") {
+        const progress = clamp(fadeTime / Math.max(0.001, fadeDuration), 0, 1);
+        opacity = baseOpacity * (1 - progress);
+      } else if (fadeState === "fadingIn") {
+        const progress = clamp(fadeTime / Math.max(0.001, fadeDuration), 0, 1);
+        opacity = baseOpacity * progress;
+      }
+      orb.dataset.rx = String(rx);
+      orb.dataset.ry = String(ry);
+      orb.dataset.vx = String(vx);
+      orb.dataset.vy = String(vy);
+      orb.dataset.fadeState = fadeState;
+      orb.dataset.fadeTime = String(fadeTime);
+      orb.dataset.fadeDuration = String(fadeDuration);
+      orb.dataset.holdDuration = String(holdDuration);
+      orb.style.opacity = String(opacity);
+      orb.style.transform = `translate3d(${(driftX + rx).toFixed(2)}px, ${(driftY + ry).toFixed(2)}px, 0)`;
+    });
+    bokehAnimationFrame = requestAnimationFrame(tick);
+  };
+  bokehAnimationFrame = requestAnimationFrame(tick);
+}
+
+function updateBokehPointerTarget(clientX, clientY) {
+  const width = Math.max(window.innerWidth, 1);
+  const height = Math.max(window.innerHeight, 1);
+  bokehPointerClientX = clientX;
+  bokehPointerClientY = clientY;
+  bokehPointerActive = true;
+  bokehPointerTargetX = clamp(((clientX / width) - 0.5) * 2, -1, 1);
+  bokehPointerTargetY = clamp(((clientY / height) - 0.5) * 2, -1, 1);
+}
+
+function applyLabsColorVariables() {
+  const lanternA = normalizeHexColor(labsSettings.lanternColorA, DEFAULT_LABS_SETTINGS.lanternColorA);
+  const lanternB = normalizeHexColor(labsSettings.lanternColorB, DEFAULT_LABS_SETTINGS.lanternColorB);
+  const bokehA = normalizeHexColor(labsSettings.bokehColorA, DEFAULT_LABS_SETTINGS.bokehColorA);
+  const bokehB = normalizeHexColor(labsSettings.bokehColorB, DEFAULT_LABS_SETTINGS.bokehColorB);
+  const messageBarGlowA = normalizeHexColor(labsSettings.messageBarGlowColorA, DEFAULT_LABS_SETTINGS.messageBarGlowColorA);
+  const messageBarGlowB = normalizeHexColor(labsSettings.messageBarGlowColorB, DEFAULT_LABS_SETTINGS.messageBarGlowColorB);
+  const messageBarGlowArgb = hexToRgbCsv(messageBarGlowA, "94, 188, 255");
+  const messageBarGlowBrgb = hexToRgbCsv(messageBarGlowB, "142, 217, 255");
+  const messageBarGlowStyle = normalizeMessageBarGlowStyle(labsSettings.messageBarGlowStyle);
+  labsSettings.lanternColorA = lanternA;
+  labsSettings.lanternColorB = lanternB;
+  labsSettings.bokehColorA = bokehA;
+  labsSettings.bokehColorB = bokehB;
+  labsSettings.messageBarGlowColorA = messageBarGlowA;
+  labsSettings.messageBarGlowColorB = messageBarGlowB;
+  labsSettings.messageBarGlowStyle = messageBarGlowStyle;
+  const htmlStyle = document.documentElement.style;
+  const bodyStyle = document.body.style;
+  [htmlStyle, bodyStyle].forEach((styleRef) => {
+    styleRef.setProperty("--labs-lantern-a", lanternA);
+    styleRef.setProperty("--labs-lantern-b", lanternB);
+    styleRef.setProperty("--labs-bokeh-a", bokehA);
+    styleRef.setProperty("--labs-bokeh-b", bokehB);
+    styleRef.setProperty("--labs-messagebar-glow-a", messageBarGlowA);
+    styleRef.setProperty("--labs-messagebar-glow-b", messageBarGlowB);
+    styleRef.setProperty("--labs-messagebar-glow-a-rgb", messageBarGlowArgb);
+    styleRef.setProperty("--labs-messagebar-glow-b-rgb", messageBarGlowBrgb);
+  });
+  document.body.setAttribute("data-composer-glow-style", messageBarGlowStyle);
+}
+
+function ensureSpaceCoreLayer() {
+  if (document.getElementById("space-core-layer")) return;
+  const layer = document.createElement("div");
+  layer.id = "space-core-layer";
+  layer.className = "space-core-layer";
+  layer.innerHTML = `
+    <div class="space-core-vortex"></div>
+    <div class="space-core-ring"></div>
+    <div class="space-core-stars"></div>
+  `;
+  document.body.appendChild(layer);
+}
+
+function updateSpaceCoreLayerAnchor() {
+  const layer = document.getElementById("space-core-layer");
+  if (!layer) return;
+  const canvasEl = document.getElementById("d20-canvas");
+  if (!canvasEl) {
+    layer.style.removeProperty("--space-core-x");
+    layer.style.removeProperty("--space-core-y");
+    return;
+  }
+  const rect = canvasEl.getBoundingClientRect();
+  const x = rect.left + (rect.width / 2);
+  const y = rect.top + (rect.height / 2);
+  layer.style.setProperty("--space-core-x", `${x}px`);
+  layer.style.setProperty("--space-core-y", `${y}px`);
+}
+
 function applyLabsSettings() {
   if (safeModeEnabled) {
     document.body.classList.remove(
       "fx-grain", "fx-glass", "fx-gradient", "fx-bob", "fx-message-glow",
-      "fx-compact", "fx-neon", "fx-retro", "fx-lanterns", "fx-rainbow-author",
-      "fx-scanlines", "fx-panel-tilt", "fx-unread-shimmer", "fx-konami"
+      "fx-compact", "fx-neon", "fx-retro", "fx-lanterns", "fx-bokeh", "fx-rainbow-author",
+      "fx-scanlines", "fx-panel-tilt", "fx-unread-shimmer", "fx-konami", "fx-cosmic-d20", "fx-composer-glow"
     );
+    const spaceCoreLayer = document.getElementById("space-core-layer");
+    if (spaceCoreLayer) spaceCoreLayer.remove();
+    const bokehLayer = document.getElementById("bokeh-layer");
+    if (bokehLayer) bokehLayer.remove();
+    stopBokehAnimation();
     d20SpinMultiplier = 1;
     d20BounceEnabled = false;
     rollAnimationsEnabled = false;
     return;
   }
+  applyLabsColorVariables();
   document.body.classList.toggle("fx-grain", Boolean(labsSettings.fxGrain));
   document.body.classList.toggle("fx-glass", Boolean(labsSettings.fxGlass));
   document.body.classList.toggle("fx-gradient", Boolean(labsSettings.fxGradient));
@@ -1030,16 +3179,18 @@ function applyLabsSettings() {
   document.body.classList.toggle("fx-neon", Boolean(labsSettings.fxNeon));
   document.body.classList.toggle("fx-retro", Boolean(labsSettings.fxRetro));
   document.body.classList.toggle("fx-lanterns", Boolean(labsSettings.fxLanterns));
+  document.body.classList.toggle("fx-bokeh", Boolean(labsSettings.fxBokeh));
+  document.body.classList.toggle("fx-cosmic-d20", Boolean(labsSettings.fxCosmicD20));
   document.body.classList.toggle("fx-rainbow-author", Boolean(labsSettings.fxRainbowAuthor));
   document.body.classList.toggle("fx-scanlines", Boolean(labsSettings.fxScanlines));
   document.body.classList.toggle("fx-panel-tilt", Boolean(labsSettings.fxPanelTilt));
   document.body.classList.toggle("fx-unread-shimmer", Boolean(labsSettings.fxUnreadShimmer));
   document.body.classList.toggle("fx-konami", Boolean(labsSettings.konamiMode));
+  document.body.classList.toggle("fx-composer-glow", Boolean(labsSettings.fxGlow));
   d20SpinMultiplier = labsSettings.fxD20Turbo ? 2.35 : 1;
   d20BounceEnabled = Boolean(labsSettings.fxD20Bounce);
   rollAnimationsEnabled = Boolean(labsSettings.fxRollAnim);
-  const d20Canvas = document.getElementById("d20-canvas");
-  if (d20Canvas) d20Canvas.style.pointerEvents = d20BounceEnabled ? "auto" : "none";
+  updateD20CanvasInteractivity();
   if (messageInput) {
     messageInput.placeholder = labsSettings.fxCommandHints
       ? "Type a message... (/roll 2d20, /party, /shrug)"
@@ -1051,7 +3202,74 @@ function applyLabsSettings() {
     const layer = document.getElementById("lantern-layer");
     if (layer) layer.remove();
   }
+  if (labsSettings.fxBokeh) {
+    ensureBokehLayer();
+    startBokehAnimation();
+  } else {
+    const layer = document.getElementById("bokeh-layer");
+    if (layer) layer.remove();
+    stopBokehAnimation();
+  }
+  if (labsSettings.fxSpaceCore || labsSettings.fxCosmicD20) {
+    ensureSpaceCoreLayer();
+    const layer = document.getElementById("space-core-layer");
+    if (layer) {
+      layer.classList.toggle("cosmic-mode", Boolean(labsSettings.fxCosmicD20));
+      updateSpaceCoreLayerAnchor();
+    }
+  } else {
+    const layer = document.getElementById("space-core-layer");
+    if (layer) layer.remove();
+  }
 }
+
+function updateD20CanvasInteractivity() {
+  const d20Canvas = document.getElementById("d20-canvas");
+  if (!d20Canvas) return;
+  const settingsOpen = Boolean(userSettingsModal?.classList?.contains("open"));
+  const wireframeVisible = !Boolean(labsSettings.fxCosmicD20);
+  d20Canvas.style.pointerEvents = (wireframeVisible || d20BounceEnabled || settingsOpen) ? "auto" : "none";
+  d20Canvas.style.cursor = d20Canvas.style.pointerEvents === "auto" ? "grab" : "default";
+}
+
+function updateD20SettingsPreviewPosition() {
+  const d20Canvas = document.getElementById("d20-canvas");
+  if (!d20Canvas) return;
+  const settingsOpen = Boolean(userSettingsModal?.classList?.contains("open"));
+  document.body.classList.toggle("settings-d20-preview-open", settingsOpen);
+  if (!settingsOpen) {
+    d20Canvas.style.removeProperty("--settings-d20-preview-left");
+    d20Canvas.style.removeProperty("--settings-d20-preview-top");
+    return;
+  }
+  const modalContent = userSettingsModal?.querySelector?.(".settings-modal-content");
+  if (!modalContent) return;
+  const rect = modalContent.getBoundingClientRect();
+  const size = 176;
+  const margin = 18;
+  const left = Math.max(12, Math.min(window.innerWidth - size - 12, rect.right - size - margin));
+  const top = Math.max(12, Math.min(window.innerHeight - size - 12, rect.top + 74));
+  d20Canvas.style.setProperty("--settings-d20-preview-left", `${left}px`);
+  d20Canvas.style.setProperty("--settings-d20-preview-top", `${top}px`);
+}
+
+window.addEventListener("resize", () => {
+  updateSpaceCoreLayerAnchor();
+  updateD20SettingsPreviewPosition();
+});
+window.addEventListener("pointermove", (event) => {
+  updateBokehPointerTarget(event.clientX, event.clientY);
+}, { passive: true });
+window.addEventListener("blur", () => {
+  bokehPointerActive = false;
+  bokehPointerTargetX = 0;
+  bokehPointerTargetY = 0;
+});
+document.addEventListener("mouseleave", () => {
+  bokehPointerActive = false;
+  bokehPointerTargetX = 0;
+  bokehPointerTargetY = 0;
+});
 
 function unlockLabs(showMessage = false) {
   if (labsSettings.unlocked) return;
@@ -1064,7 +3282,7 @@ function unlockLabs(showMessage = false) {
 function launchEmojiRain(durationMs = 1800) {
   const layer = document.createElement("div");
   layer.className = "emoji-rain-layer";
-  const emojis = ["🎉", "✨", "🎲", "🍻", "🔥", "🌙"];
+  const emojis = ["\u{1F389}", "\u2728", "\u{1F3B2}", "\u{1F37B}", "\u{1F525}", "\u{1F319}"];
   for (let i = 0; i < 32; i += 1) {
     const piece = document.createElement("span");
     piece.className = "emoji-rain-piece";
@@ -1114,7 +3332,7 @@ function parseDiceExpression(raw) {
 
 function parseRollMessage(content) {
   const text = String(content || "").trim();
-  const match = text.match(/^🎲\s*\[ROLL\s+(\d{1,2})d(\d{1,4})\]\s*\[([0-9,\s]+)\]\s*=\s*(\d+)$/i);
+  const match = text.match(/^\u{1F3B2}\s*\[ROLL\s+(\d{1,2})d(\d{1,4})\]\s*\[([0-9,\s]+)\]\s*=\s*(\d+)$/iu);
   if (!match) return null;
   const count = Number(match[1]);
   const sides = Number(match[2]);
@@ -1224,13 +3442,13 @@ function handleComposerCommand(content) {
     const total = rolls.reduce((sum, value) => sum + value, 0);
     return {
       handled: false,
-      rewrite: `🎲 [ROLL ${parsed.count}d${parsed.sides}] [${rolls.join(", ")}] = ${total}`,
+      rewrite: `\u{1F3B2} [ROLL ${parsed.count}d${parsed.sides}] [${rolls.join(", ")}] = ${total}`,
     };
   }
 
   if (command === "party") {
     launchEmojiRain();
-    appendClientSystemMessage("🎉 Party mode activated.");
+    appendClientSystemMessage("\u{1F389} Party mode activated.");
     return { handled: true };
   }
 
@@ -1248,10 +3466,10 @@ function handleComposerCommand(content) {
     return { handled: true };
   }
 
-  if (command === "shrug") return { handled: false, rewrite: "¯\\_(ツ)_/¯" };
-  if (command === "tableflip") return { handled: false, rewrite: "(╯°□°）╯︵ ┻━┻" };
-  if (command === "unflip") return { handled: false, rewrite: "┬─┬ ノ( ゜-゜ノ)" };
-  if (command === "lenny") return { handled: false, rewrite: "( ͡° ͜ʖ ͡°)" };
+  if (command === "shrug") return { handled: false, rewrite: "\u00AF\\_(\u30C4)_/\u00AF" };
+  if (command === "tableflip") return { handled: false, rewrite: "(\u256F\u00B0\u25A1\u00B0\uFF09\u256F\uFE35 \u253B\u2501\u253B" };
+  if (command === "unflip") return { handled: false, rewrite: "\u252C\u2500\u252C \u30CE( \u309C-\u309C\u30CE)" };
+  if (command === "lenny") return { handled: false, rewrite: "( \u0361\u00B0 \u035C\u0296 \u0361\u00B0)" };
 
   return { handled: false, rewrite: content };
 }
@@ -1277,11 +3495,251 @@ function trackKonami(event) {
 function openModal(modal) {
   if (!modal) return;
   modal.classList.add("open");
+  enhanceCustomSelects(modal);
+  syncCustomSelects(modal);
+  if (modal === userSettingsModal) updateD20CanvasInteractivity();
+  if (modal === userSettingsModal) updateD20SettingsPreviewPosition();
 }
 
 function closeModal(modal) {
   if (!modal) return;
   modal.classList.remove("open");
+  if (modal === userSettingsModal) updateD20CanvasInteractivity();
+  if (modal === userSettingsModal) updateD20SettingsPreviewPosition();
+}
+
+const customSelectStates = new WeakMap();
+let activeCustomSelectState = null;
+
+function closeActiveCustomSelect(force = false) {
+  const state = activeCustomSelectState;
+  if (!state) return;
+  if (!force && state.select?.disabled) return;
+  state.wrapper.classList.remove("open");
+  state.trigger.setAttribute("aria-expanded", "false");
+  activeCustomSelectState = null;
+}
+
+function openCustomSelect(state) {
+  if (!state || state.select?.disabled) return;
+  if (activeCustomSelectState && activeCustomSelectState !== state) closeActiveCustomSelect(true);
+  state.wrapper.classList.add("open");
+  state.trigger.setAttribute("aria-expanded", "true");
+  activeCustomSelectState = state;
+}
+
+function syncCustomSelectState(state) {
+  if (!state || !state.select) return;
+  const { select, wrapper, trigger, menu } = state;
+  const selectedOption = select.options[select.selectedIndex] || select.options[0] || null;
+  const triggerLabel = String(selectedOption?.textContent || selectedOption?.label || selectedOption?.value || "Select").trim() || "Select";
+  trigger.textContent = triggerLabel;
+  const disabled = !!select.disabled;
+  wrapper.classList.toggle("is-disabled", disabled);
+  trigger.disabled = disabled;
+  trigger.setAttribute("aria-disabled", disabled ? "true" : "false");
+  menu.querySelectorAll(".custom-select-option").forEach((btn) => {
+    const isSelected = String(btn.dataset.value || "") === String(select.value || "");
+    btn.classList.toggle("selected", isSelected);
+    btn.setAttribute("aria-selected", isSelected ? "true" : "false");
+  });
+  if (disabled && activeCustomSelectState === state) closeActiveCustomSelect(true);
+}
+
+function rebuildCustomSelectOptions(state) {
+  if (!state || !state.select) return;
+  const { select, menu } = state;
+  menu.innerHTML = "";
+  Array.from(select.options || []).forEach((option, index) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "custom-select-option";
+    btn.dataset.value = String(option.value ?? "");
+    btn.dataset.index = String(index);
+    btn.setAttribute("role", "option");
+    btn.setAttribute("aria-selected", option.selected ? "true" : "false");
+    btn.textContent = String(option.textContent || option.label || option.value || "").trim() || " ";
+    btn.disabled = !!option.disabled;
+    btn.addEventListener("click", () => {
+      if (select.disabled || option.disabled) return;
+      select.value = option.value;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+      select.dispatchEvent(new Event("input", { bubbles: true }));
+      syncCustomSelectState(state);
+      closeActiveCustomSelect(true);
+    });
+    menu.appendChild(btn);
+  });
+  syncCustomSelectState(state);
+}
+
+function enhanceCustomSelect(select) {
+  if (!(select instanceof HTMLSelectElement)) return null;
+  if (select.multiple || Number(select.size) > 1) return null;
+  let state = customSelectStates.get(select);
+  if (!state) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "custom-select";
+    Array.from(select.classList).forEach((cls) => wrapper.classList.add(cls));
+    wrapper.dataset.customSelect = "1";
+    select.classList.add("custom-select-native");
+    select.setAttribute("data-custom-select-native", "1");
+    const trigger = document.createElement("button");
+    trigger.type = "button";
+    trigger.className = "custom-select-trigger";
+    trigger.setAttribute("aria-haspopup", "listbox");
+    trigger.setAttribute("aria-expanded", "false");
+    const menu = document.createElement("div");
+    menu.className = "custom-select-menu";
+    menu.setAttribute("role", "listbox");
+    const parent = select.parentNode;
+    if (!parent) return null;
+    parent.insertBefore(wrapper, select);
+    wrapper.appendChild(select);
+    wrapper.appendChild(trigger);
+    wrapper.appendChild(menu);
+    state = { select, wrapper, trigger, menu };
+    customSelectStates.set(select, state);
+    trigger.addEventListener("click", () => {
+      if (wrapper.classList.contains("open")) closeActiveCustomSelect(true);
+      else openCustomSelect(state);
+    });
+    trigger.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeActiveCustomSelect(true);
+        return;
+      }
+      if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openCustomSelect(state);
+      }
+    });
+    select.addEventListener("change", () => syncCustomSelectState(state));
+    const observer = new MutationObserver(() => rebuildCustomSelectOptions(state));
+    observer.observe(select, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["disabled", "label", "selected", "value"],
+    });
+    state.observer = observer;
+  }
+  rebuildCustomSelectOptions(state);
+  return state;
+}
+
+function enhanceCustomSelects(root = document) {
+  if (!root || typeof root.querySelectorAll !== "function") return;
+  root.querySelectorAll("select").forEach((select) => enhanceCustomSelect(select));
+}
+
+function syncCustomSelects(root = document) {
+  if (!root || typeof root.querySelectorAll !== "function") return;
+  root.querySelectorAll("select[data-custom-select-native='1']").forEach((select) => {
+    const state = customSelectStates.get(select);
+    if (state) syncCustomSelectState(state);
+  });
+}
+
+document.addEventListener("pointerdown", (event) => {
+  if (!activeCustomSelectState) return;
+  if (activeCustomSelectState.wrapper.contains(event.target)) return;
+  closeActiveCustomSelect(true);
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  closeActiveCustomSelect(true);
+});
+
+function getTutorialDismissedStorageKey() {
+  if (!currentUser?.public_id) return "";
+  return `${TUTORIAL_DISMISSED_STORAGE_PREFIX}${currentUser.public_id}`;
+}
+
+function isTutorialDismissedLocally() {
+  const key = getTutorialDismissedStorageKey();
+  if (!key) return false;
+  try {
+    return localStorage.getItem(key) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function setTutorialDismissedLocally(value) {
+  const key = getTutorialDismissedStorageKey();
+  if (!key) return;
+  try {
+    if (value) localStorage.setItem(key, "1");
+    else localStorage.removeItem(key);
+  } catch {
+    // Ignore storage failures
+  }
+}
+
+function clearTutorialHighlight() {
+  if (tutorialHighlightedEl) {
+    tutorialHighlightedEl.classList.remove("tutorial-target-highlight");
+    tutorialHighlightedEl = null;
+  }
+}
+
+function highlightTutorialTarget(selector) {
+  clearTutorialHighlight();
+  if (!selector) return;
+  const el = document.querySelector(selector);
+  if (!el) return;
+  el.classList.add("tutorial-target-highlight");
+  tutorialHighlightedEl = el;
+  try {
+    el.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+  } catch {
+    // no-op
+  }
+}
+
+async function markTutorialComplete() {
+  setTutorialDismissedLocally(true);
+  if (tutorialCompletionPending || currentUser?.has_seen_tutorial) return;
+  tutorialCompletionPending = true;
+  try {
+    const res = await fetch("/users/me/tutorial-complete", {
+      method: "POST",
+      credentials: "include",
+    });
+    if (res.ok && currentUser) currentUser.has_seen_tutorial = true;
+  } catch {
+    // no-op
+  } finally {
+    tutorialCompletionPending = false;
+  }
+}
+
+function renderTutorialStep() {
+  const step = ONBOARDING_TUTORIAL_STEPS[tutorialStepIndex];
+  if (!step || !tutorialTitleEl || !tutorialBodyEl || !tutorialProgressEl) return;
+  tutorialTitleEl.textContent = step.title;
+  tutorialBodyEl.textContent = step.body;
+  tutorialProgressEl.textContent = `Step ${tutorialStepIndex + 1} of ${ONBOARDING_TUTORIAL_STEPS.length}`;
+  if (tutorialPrevBtn) tutorialPrevBtn.disabled = tutorialStepIndex === 0;
+  if (tutorialNextBtn) tutorialNextBtn.classList.toggle("hidden", tutorialStepIndex === ONBOARDING_TUTORIAL_STEPS.length - 1);
+  if (tutorialFinishBtn) tutorialFinishBtn.classList.toggle("hidden", tutorialStepIndex !== ONBOARDING_TUTORIAL_STEPS.length - 1);
+  highlightTutorialTarget(step.targetSelector);
+}
+
+function startOnboardingTutorial() {
+  if (!onboardingTutorialModal) return;
+  tutorialStepIndex = 0;
+  openModal(onboardingTutorialModal);
+  renderTutorialStep();
+}
+
+async function finishOnboardingTutorial() {
+  clearTutorialHighlight();
+  closeModal(onboardingTutorialModal);
+  setTutorialDismissedLocally(true);
+  await markTutorialComplete();
 }
 
 function closeActiveReactionPicker() {
@@ -1359,9 +3817,14 @@ function showContextMenu(x, y, items) {
     btn.type = "button";
     btn.className = `context-menu-item${item.danger ? " danger" : ""}`;
     btn.textContent = item.label;
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      suppressNextMessageUiAutoClose = true;
       hideContextMenu();
       item.onClick();
+      setTimeout(() => {
+        suppressNextMessageUiAutoClose = false;
+      }, 0);
     });
     menu.appendChild(btn);
   });
@@ -1391,6 +3854,46 @@ function applyStoredTheme() {
   } catch {
     appearanceSettings = { ...DEFAULT_APPEARANCE };
   }
+  if (appearanceSettings.themeId === "pure-dark-modern") {
+    appearanceSettings.themeId = DEFAULT_APPEARANCE.lastDarkThemeId;
+  }
+  if (appearanceSettings.lastDarkThemeId === "pure-dark-modern") {
+    appearanceSettings.lastDarkThemeId = DEFAULT_APPEARANCE.lastDarkThemeId;
+  }
+  appearanceSettings.notificationPingVolume = clamp(
+    Number(appearanceSettings.notificationPingVolume),
+    0,
+    2
+  );
+  appearanceSettings.uiScale = clamp(Number(appearanceSettings.uiScale), UI_SCALE_MIN, UI_SCALE_MAX);
+  const pureDarkDefaults = getPureDarkDefaultColors();
+  appearanceSettings.pureDarkBgColor = normalizeHexColor(appearanceSettings.pureDarkBgColor, pureDarkDefaults.bg);
+  appearanceSettings.pureDarkPanelStartColor = normalizeHexColor(appearanceSettings.pureDarkPanelStartColor, pureDarkDefaults.panelStart);
+  appearanceSettings.pureDarkPanelEndColor = normalizeHexColor(appearanceSettings.pureDarkPanelEndColor, pureDarkDefaults.panelEnd);
+  appearanceSettings.pureDarkHeaderColor = normalizeHexColor(appearanceSettings.pureDarkHeaderColor, pureDarkDefaults.header);
+  appearanceSettings.pureDarkTextColor = normalizeHexColor(appearanceSettings.pureDarkTextColor, pureDarkDefaults.text);
+  appearanceSettings.pureDarkMutedColor = normalizeHexColor(appearanceSettings.pureDarkMutedColor, pureDarkDefaults.muted);
+  appearanceSettings.pureDarkAccentColor = normalizeHexColor(appearanceSettings.pureDarkAccentColor, pureDarkDefaults.accent);
+  appearanceSettings.pureDarkAccentStrongColor = normalizeHexColor(appearanceSettings.pureDarkAccentStrongColor, pureDarkDefaults.accentStrong);
+  appearanceSettings.uiStyle = normalizeUiStyle(appearanceSettings.uiStyle);
+  appearanceSettings.modernUi = appearanceSettings.modernUi !== false;
+  appearanceSettings.themeAccentColor = normalizeOptionalHexColor(appearanceSettings.themeAccentColor);
+  appearanceSettings.centerWireframeShape = normalizeCenterWireframeShape(appearanceSettings.centerWireframeShape);
+  appearanceSettings.centerGlowCoolColor = normalizeHexColor(appearanceSettings.centerGlowCoolColor, DEFAULT_APPEARANCE.centerGlowCoolColor);
+  appearanceSettings.centerGlowVioletColor = normalizeHexColor(appearanceSettings.centerGlowVioletColor, DEFAULT_APPEARANCE.centerGlowVioletColor);
+  appearanceSettings.centerGlowWarmColor = normalizeHexColor(appearanceSettings.centerGlowWarmColor, DEFAULT_APPEARANCE.centerGlowWarmColor);
+  if (!getAllThemes().some((preset) => preset.id === appearanceSettings.themeId)) {
+    appearanceSettings.themeId = DEFAULT_APPEARANCE.themeId;
+  }
+  if (!getAllThemes().some((preset) => preset.id === appearanceSettings.lastLightThemeId)) {
+    appearanceSettings.lastLightThemeId = DEFAULT_APPEARANCE.lastLightThemeId;
+  }
+  if (!getAllThemes().some((preset) => preset.id === appearanceSettings.lastMediumThemeId)) {
+    appearanceSettings.lastMediumThemeId = DEFAULT_APPEARANCE.lastMediumThemeId;
+  }
+  if (!getAllThemes().some((preset) => preset.id === appearanceSettings.lastDarkThemeId)) {
+    appearanceSettings.lastDarkThemeId = DEFAULT_APPEARANCE.lastDarkThemeId;
+  }
 
   // Legacy migration from old light/dark toggle key.
   try {
@@ -1402,7 +3905,50 @@ function applyStoredTheme() {
     // Ignore storage failures
   }
 
+  const snapshot = getAppearanceSettingsSnapshot();
+  if (snapshot) lastAppearanceSavedSnapshot = snapshot;
   applyAppearanceSettings();
+}
+
+function applyAccountAppearanceSettings(serverAppearanceSettings) {
+  if (!serverAppearanceSettings || typeof serverAppearanceSettings !== "object") return;
+  appearanceSettings = {
+    ...appearanceSettings,
+    ...serverAppearanceSettings,
+  };
+  appearanceSettings.uiStyle = normalizeUiStyle(appearanceSettings.uiStyle);
+  appearanceSettings.modernUi = appearanceSettings.modernUi !== false;
+  appearanceSettings.uiScale = clamp(Number(appearanceSettings.uiScale), UI_SCALE_MIN, UI_SCALE_MAX);
+  appearanceSettings.panelRadius = clamp(Number(appearanceSettings.panelRadius), 8, 24);
+  appearanceSettings.messageDensity = clamp(Number(appearanceSettings.messageDensity), 0.85, 1.25);
+  appearanceSettings.notificationPingVolume = clamp(Number(appearanceSettings.notificationPingVolume), 0, 2);
+  appearanceSettings.themeAccentColor = normalizeOptionalHexColor(appearanceSettings.themeAccentColor);
+  appearanceSettings.centerWireframeShape = normalizeCenterWireframeShape(appearanceSettings.centerWireframeShape);
+  appearanceSettings.centerGlowCoolColor = normalizeHexColor(appearanceSettings.centerGlowCoolColor, DEFAULT_APPEARANCE.centerGlowCoolColor);
+  appearanceSettings.centerGlowVioletColor = normalizeHexColor(appearanceSettings.centerGlowVioletColor, DEFAULT_APPEARANCE.centerGlowVioletColor);
+  appearanceSettings.centerGlowWarmColor = normalizeHexColor(appearanceSettings.centerGlowWarmColor, DEFAULT_APPEARANCE.centerGlowWarmColor);
+  if (!getAllThemes().some((preset) => preset.id === appearanceSettings.themeId)) {
+    appearanceSettings.themeId = DEFAULT_APPEARANCE.themeId;
+  }
+  if (!getAllThemes().some((preset) => preset.id === appearanceSettings.lastLightThemeId)) {
+    appearanceSettings.lastLightThemeId = DEFAULT_APPEARANCE.lastLightThemeId;
+  }
+  if (!getAllThemes().some((preset) => preset.id === appearanceSettings.lastMediumThemeId)) {
+    appearanceSettings.lastMediumThemeId = DEFAULT_APPEARANCE.lastMediumThemeId;
+  }
+  if (!getAllThemes().some((preset) => preset.id === appearanceSettings.lastDarkThemeId)) {
+    appearanceSettings.lastDarkThemeId = DEFAULT_APPEARANCE.lastDarkThemeId;
+  }
+  applyAppearanceSettings();
+  saveAppearanceSettings({ syncAccount: false });
+  const snapshot = getAppearanceSettingsSnapshot();
+  if (snapshot) {
+    lastAppearanceSavedSnapshot = snapshot;
+    lastAppearanceSyncedSnapshot = snapshot;
+  }
+  renderThemePresetGrid();
+  updateAppearanceControlValues();
+  populateThemeTemplateEditor(getThemeById(appearanceSettings.themeId));
 }
 
 function loadCustomThemes() {
@@ -1423,27 +3969,102 @@ function saveCustomThemes() {
   }
 }
 
-function saveAppearanceSettings() {
+async function flushAppearanceSettingsToAccount() {
+  if (!currentUser?.public_id) return;
+  const snapshot = getAppearanceSettingsSnapshot();
+  if (snapshot && snapshot === lastAppearanceSyncedSnapshot) return;
+  if (appearanceSyncInFlight) {
+    appearanceSyncPending = true;
+    return;
+  }
+  appearanceSyncInFlight = true;
+  appearanceSyncPending = false;
   try {
-    localStorage.setItem(APPEARANCE_STORAGE_KEY, JSON.stringify(appearanceSettings));
+    const res = await fetch("/users/me/appearance", {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ appearance_settings: appearanceSettings }),
+    });
+    if (res.ok && snapshot) lastAppearanceSyncedSnapshot = snapshot;
+  } catch {
+    // Best-effort sync only. Local preference persistence remains primary fallback.
+  } finally {
+    appearanceSyncInFlight = false;
+    if (appearanceSyncPending) {
+      if (appearanceSyncTimer) window.clearTimeout(appearanceSyncTimer);
+      appearanceSyncTimer = window.setTimeout(() => {
+        flushAppearanceSettingsToAccount().catch(() => {});
+      }, 150);
+    }
+  }
+}
+
+function queueAppearanceSettingsAccountSync() {
+  if (!currentUser?.public_id) return;
+  if (appearanceSyncTimer) window.clearTimeout(appearanceSyncTimer);
+  appearanceSyncTimer = window.setTimeout(() => {
+    flushAppearanceSettingsToAccount().catch(() => {});
+  }, 600);
+}
+
+function saveAppearanceSettings({ syncAccount = true } = {}) {
+  const snapshot = getAppearanceSettingsSnapshot();
+  try {
+    if (snapshot && snapshot !== lastAppearanceSavedSnapshot) {
+      localStorage.setItem(APPEARANCE_STORAGE_KEY, snapshot);
+      lastAppearanceSavedSnapshot = snapshot;
+    }
   } catch {
     // Ignore storage failures
   }
+  if (syncAccount) queueAppearanceSettingsAccountSync();
   applyCustomCss();
 }
 
 function applyAppearanceSettings() {
   const preset = getThemeById(appearanceSettings.themeId);
+  const isAuroraSlate = preset.id === AURORA_SLATE_THEME_ID;
+  const effectiveBg = isAuroraSlate
+    ? normalizeHexColor(appearanceSettings.pureDarkBgColor, preset.bg)
+    : preset.bg;
+  const panelStart = isAuroraSlate
+    ? normalizeHexColor(appearanceSettings.pureDarkPanelStartColor, "#121a22")
+    : null;
+  const panelEnd = isAuroraSlate
+    ? normalizeHexColor(appearanceSettings.pureDarkPanelEndColor, "#0d141b")
+    : null;
+  const effectivePanelBg = isAuroraSlate ? `linear-gradient(145deg, ${panelStart}, ${panelEnd})` : preset.panelBg;
+  const effectiveHeaderFooterBg = isAuroraSlate
+    ? normalizeHexColor(appearanceSettings.pureDarkHeaderColor, preset.headerFooterBg)
+    : preset.headerFooterBg;
+  const effectiveText = isAuroraSlate
+    ? normalizeHexColor(appearanceSettings.pureDarkTextColor, preset.text)
+    : preset.text;
+  const effectiveMuted = isAuroraSlate
+    ? normalizeHexColor(appearanceSettings.pureDarkMutedColor, preset.muted)
+    : preset.muted;
+  const effectiveAccent = isAuroraSlate
+    ? normalizeHexColor(appearanceSettings.pureDarkAccentColor, preset.accent)
+    : preset.accent;
+  const effectiveAccentStrong = isAuroraSlate
+    ? normalizeHexColor(appearanceSettings.pureDarkAccentStrongColor, preset.accentStrong)
+    : preset.accentStrong;
+  const accentOverride = normalizeOptionalHexColor(appearanceSettings.themeAccentColor);
+  const finalAccent = accentOverride || effectiveAccent;
+  const finalAccentStrong = accentOverride
+    ? blendHexColors(accentOverride, "#ffffff", 0.28)
+    : effectiveAccentStrong;
   const htmlStyle = document.documentElement.style;
   const bodyStyle = document.body.style;
   [htmlStyle, bodyStyle].forEach((styleRef) => {
-    styleRef.setProperty("--bg", preset.bg);
-    styleRef.setProperty("--panel-bg", preset.panelBg);
-    styleRef.setProperty("--header-footer-bg", preset.headerFooterBg);
-    styleRef.setProperty("--text", preset.text);
-    styleRef.setProperty("--muted", preset.muted);
-    styleRef.setProperty("--accent", preset.accent);
-    styleRef.setProperty("--accent-strong", preset.accentStrong);
+    styleRef.setProperty("--bg", effectiveBg);
+    styleRef.setProperty("--panel-bg", effectivePanelBg);
+    styleRef.setProperty("--header-footer-bg", effectiveHeaderFooterBg);
+    styleRef.setProperty("--text", effectiveText);
+    styleRef.setProperty("--muted", effectiveMuted);
+    styleRef.setProperty("--accent", finalAccent);
+    styleRef.setProperty("--accent-strong", finalAccentStrong);
     styleRef.setProperty("--border", preset.border);
     styleRef.setProperty("--shadow", preset.shadow);
     styleRef.setProperty("--ui-scale", String(appearanceSettings.uiScale));
@@ -1451,22 +4072,77 @@ function applyAppearanceSettings() {
     styleRef.setProperty("--message-density", String(appearanceSettings.messageDensity));
   });
 
-  document.body.classList.toggle("dark-mode", preset.mode === "dark");
+  document.body.classList.toggle("dark-mode", isDarkLikeThemeMode(preset.mode));
+  document.body.classList.toggle("fx-ui-overhaul", appearanceSettings.modernUi !== false);
+  document.body.classList.toggle("ui-style-boxy", normalizeUiStyle(appearanceSettings.uiStyle) === "boxy");
+  document.body.classList.toggle("channels-flat", appearanceSettings.highlightChannelRows === false);
+  document.body.setAttribute("data-theme-id", preset.id);
   document.body.style.fontFamily = appearanceSettings.fontFamily || DEFAULT_APPEARANCE.fontFamily;
   applyCustomCss();
   applyLabsSettings();
+  applyCenterWireframeShape();
+  updateCenterGlowColors();
   updateD20ThemeColor();
 }
 
 function updateAppearanceControlValues() {
+  const activePreset = getThemeById(appearanceSettings.themeId);
+  const isAuroraSlate = activePreset.id === AURORA_SLATE_THEME_ID;
+  if (settingsUiStyleInput) settingsUiStyleInput.value = normalizeUiStyle(appearanceSettings.uiStyle);
+  if (settingsModernUiInput) settingsModernUiInput.checked = appearanceSettings.modernUi !== false;
   if (settingsUiScaleInput) settingsUiScaleInput.value = String(appearanceSettings.uiScale);
   if (settingsPanelRadiusInput) settingsPanelRadiusInput.value = String(appearanceSettings.panelRadius);
   if (settingsMessageDensityInput) settingsMessageDensityInput.value = String(appearanceSettings.messageDensity);
+  if (settingsCenterWireframeShapeInput) settingsCenterWireframeShapeInput.value = normalizeCenterWireframeShape(appearanceSettings.centerWireframeShape);
+  if (settingsCenterGlowCoolColorInput) settingsCenterGlowCoolColorInput.value = normalizeHexColor(appearanceSettings.centerGlowCoolColor, DEFAULT_APPEARANCE.centerGlowCoolColor);
+  if (settingsCenterGlowVioletColorInput) settingsCenterGlowVioletColorInput.value = normalizeHexColor(appearanceSettings.centerGlowVioletColor, DEFAULT_APPEARANCE.centerGlowVioletColor);
+  if (settingsCenterGlowWarmColorInput) settingsCenterGlowWarmColorInput.value = normalizeHexColor(appearanceSettings.centerGlowWarmColor, DEFAULT_APPEARANCE.centerGlowWarmColor);
+  if (settingsCenterGlowCoolColorValue) settingsCenterGlowCoolColorValue.textContent = normalizeHexColor(appearanceSettings.centerGlowCoolColor, DEFAULT_APPEARANCE.centerGlowCoolColor).toUpperCase();
+  if (settingsCenterGlowVioletColorValue) settingsCenterGlowVioletColorValue.textContent = normalizeHexColor(appearanceSettings.centerGlowVioletColor, DEFAULT_APPEARANCE.centerGlowVioletColor).toUpperCase();
+  if (settingsCenterGlowWarmColorValue) settingsCenterGlowWarmColorValue.textContent = normalizeHexColor(appearanceSettings.centerGlowWarmColor, DEFAULT_APPEARANCE.centerGlowWarmColor).toUpperCase();
+  if (settingsNotificationPingVolumeInput) {
+    settingsNotificationPingVolumeInput.value = String(appearanceSettings.notificationPingVolume);
+  }
   if (settingsUiScaleValue) settingsUiScaleValue.textContent = `${Number(appearanceSettings.uiScale).toFixed(2)}x`;
   if (settingsPanelRadiusValue) settingsPanelRadiusValue.textContent = `${Math.round(Number(appearanceSettings.panelRadius))}px`;
   if (settingsMessageDensityValue) settingsMessageDensityValue.textContent = `${Number(appearanceSettings.messageDensity).toFixed(2)}x`;
+  if (settingsChannelRowHighlightInput) settingsChannelRowHighlightInput.checked = appearanceSettings.highlightChannelRows !== false;
+  if (settingsNotificationPingVolumeValue) {
+    settingsNotificationPingVolumeValue.textContent = `${Math.round(Number(appearanceSettings.notificationPingVolume) * 100)}%`;
+  }
+  if (settingsThemeAccentColorInput) {
+    settingsThemeAccentColorInput.value = normalizeHexColor(
+      appearanceSettings.themeAccentColor || activePreset.accent,
+      activePreset.accent
+    );
+  }
+  if (settingsThemeAccentColorValue) {
+    const effectiveAccent = normalizeHexColor(
+      appearanceSettings.themeAccentColor || activePreset.accent,
+      activePreset.accent
+    );
+    settingsThemeAccentColorValue.textContent = effectiveAccent.toUpperCase();
+  }
+  if (settingsPureDarkAccentRow) settingsPureDarkAccentRow.classList.toggle("hidden", !isAuroraSlate);
+  if (settingsPureDarkBgColorInput) settingsPureDarkBgColorInput.value = normalizeHexColor(appearanceSettings.pureDarkBgColor);
+  if (settingsPureDarkPanelStartColorInput) settingsPureDarkPanelStartColorInput.value = normalizeHexColor(appearanceSettings.pureDarkPanelStartColor);
+  if (settingsPureDarkPanelEndColorInput) settingsPureDarkPanelEndColorInput.value = normalizeHexColor(appearanceSettings.pureDarkPanelEndColor);
+  if (settingsPureDarkHeaderColorInput) settingsPureDarkHeaderColorInput.value = normalizeHexColor(appearanceSettings.pureDarkHeaderColor);
+  if (settingsPureDarkTextColorInput) settingsPureDarkTextColorInput.value = normalizeHexColor(appearanceSettings.pureDarkTextColor);
+  if (settingsPureDarkMutedColorInput) settingsPureDarkMutedColorInput.value = normalizeHexColor(appearanceSettings.pureDarkMutedColor);
+  if (settingsPureDarkAccentColorInput) settingsPureDarkAccentColorInput.value = normalizeHexColor(appearanceSettings.pureDarkAccentColor);
+  if (settingsPureDarkAccentStrongColorInput) settingsPureDarkAccentStrongColorInput.value = normalizeHexColor(appearanceSettings.pureDarkAccentStrongColor);
+  if (settingsPureDarkBgColorValue) settingsPureDarkBgColorValue.textContent = normalizeHexColor(appearanceSettings.pureDarkBgColor).toUpperCase();
+  if (settingsPureDarkPanelStartColorValue) settingsPureDarkPanelStartColorValue.textContent = normalizeHexColor(appearanceSettings.pureDarkPanelStartColor).toUpperCase();
+  if (settingsPureDarkPanelEndColorValue) settingsPureDarkPanelEndColorValue.textContent = normalizeHexColor(appearanceSettings.pureDarkPanelEndColor).toUpperCase();
+  if (settingsPureDarkHeaderColorValue) settingsPureDarkHeaderColorValue.textContent = normalizeHexColor(appearanceSettings.pureDarkHeaderColor).toUpperCase();
+  if (settingsPureDarkTextColorValue) settingsPureDarkTextColorValue.textContent = normalizeHexColor(appearanceSettings.pureDarkTextColor).toUpperCase();
+  if (settingsPureDarkMutedColorValue) settingsPureDarkMutedColorValue.textContent = normalizeHexColor(appearanceSettings.pureDarkMutedColor).toUpperCase();
+  if (settingsPureDarkAccentColorValue) settingsPureDarkAccentColorValue.textContent = normalizeHexColor(appearanceSettings.pureDarkAccentColor).toUpperCase();
+  if (settingsPureDarkAccentStrongColorValue) settingsPureDarkAccentStrongColorValue.textContent = normalizeHexColor(appearanceSettings.pureDarkAccentStrongColor).toUpperCase();
   if (settingsFontFamilyInput) settingsFontFamilyInput.value = appearanceSettings.fontFamily || DEFAULT_APPEARANCE.fontFamily;
   if (settingsCustomCssInput) settingsCustomCssInput.value = appearanceSettings.customCss || "";
+  syncCustomSelects(userSettingsModal || document);
 }
 
 function renderThemePresetGrid() {
@@ -1495,7 +4171,9 @@ function renderThemePresetGrid() {
 
     btn.addEventListener("click", () => {
       appearanceSettings.themeId = preset.id;
-      if (preset.mode === "dark") {
+      if (normalizeThemeMode(preset.mode) === "medium") {
+        appearanceSettings.lastMediumThemeId = preset.id;
+      } else if (isDarkLikeThemeMode(preset.mode)) {
         appearanceSettings.lastDarkThemeId = preset.id;
       } else {
         appearanceSettings.lastLightThemeId = preset.id;
@@ -1503,6 +4181,7 @@ function renderThemePresetGrid() {
       applyAppearanceSettings();
       saveAppearanceSettings();
       renderThemePresetGrid();
+      updateAppearanceControlValues();
       populateThemeTemplateEditor(preset);
     });
 
@@ -1520,7 +4199,7 @@ function resetAppearanceSettings() {
 }
 
 function getAllThemes() {
-  return [...THEME_PRESETS, ...customThemes];
+  return [...THEME_PRESETS];
 }
 
 function getThemeById(themeId) {
@@ -1537,13 +4216,19 @@ function slugifyThemeName(name) {
 
 function normalizeThemeTemplate(rawTemplate, fallbackId = null) {
   const source = rawTemplate && typeof rawTemplate === "object" ? rawTemplate : {};
-  const mode = source.mode === "dark" ? "dark" : "light";
+  const mode = normalizeThemeMode(source.mode);
   let id = fallbackId || source.id || `custom-${slugifyThemeName(source.name || "theme")}`;
   if (THEME_PRESETS.some((preset) => preset.id === id)) {
     id = `custom-${slugifyThemeName(source.name || id)}`;
   }
   const name = String(source.name || "Custom Theme").trim() || "Custom Theme";
-  const fallback = mode === "dark" ? THEME_PRESETS.find((t) => t.mode === "dark") : THEME_PRESETS.find((t) => t.mode === "light");
+  const fallback = (
+    THEME_PRESETS.find((t) => t.mode === mode)
+    || (isDarkLikeThemeMode(mode)
+      ? THEME_PRESETS.find((t) => isDarkLikeThemeMode(t.mode))
+      : THEME_PRESETS.find((t) => t.mode === "light"))
+    || THEME_PRESETS[0]
+  );
   return {
     id,
     name,
@@ -1616,9 +4301,25 @@ function applyCustomCss() {
 }
 
 function bindAppearanceControls() {
+  if (settingsModernUiInput) {
+    settingsModernUiInput.addEventListener("change", () => {
+      appearanceSettings.modernUi = !!settingsModernUiInput.checked;
+      applyAppearanceSettings();
+      updateAppearanceControlValues();
+      saveAppearanceSettings();
+    });
+  }
+  if (settingsUiStyleInput) {
+    settingsUiStyleInput.addEventListener("change", () => {
+      appearanceSettings.uiStyle = normalizeUiStyle(settingsUiStyleInput.value);
+      applyAppearanceSettings();
+      updateAppearanceControlValues();
+      saveAppearanceSettings();
+    });
+  }
   if (settingsUiScaleInput) {
     settingsUiScaleInput.addEventListener("input", () => {
-      appearanceSettings.uiScale = clamp(Number(settingsUiScaleInput.value), 0.9, 1.15);
+      appearanceSettings.uiScale = clamp(Number(settingsUiScaleInput.value), UI_SCALE_MIN, UI_SCALE_MAX);
       applyAppearanceSettings();
       updateAppearanceControlValues();
       saveAppearanceSettings();
@@ -1635,6 +4336,84 @@ function bindAppearanceControls() {
   if (settingsMessageDensityInput) {
     settingsMessageDensityInput.addEventListener("input", () => {
       appearanceSettings.messageDensity = clamp(Number(settingsMessageDensityInput.value), 0.85, 1.25);
+      applyAppearanceSettings();
+      updateAppearanceControlValues();
+      saveAppearanceSettings();
+    });
+  }
+  if (settingsCenterWireframeShapeInput) {
+    settingsCenterWireframeShapeInput.addEventListener("change", () => {
+      appearanceSettings.centerWireframeShape = normalizeCenterWireframeShape(settingsCenterWireframeShapeInput.value);
+      applyAppearanceSettings();
+      updateAppearanceControlValues();
+      saveAppearanceSettings();
+    });
+  }
+  const applyCenterGlowColors = () => {
+    appearanceSettings.centerGlowCoolColor = normalizeHexColor(settingsCenterGlowCoolColorInput?.value, DEFAULT_APPEARANCE.centerGlowCoolColor);
+    appearanceSettings.centerGlowVioletColor = normalizeHexColor(settingsCenterGlowVioletColorInput?.value, DEFAULT_APPEARANCE.centerGlowVioletColor);
+    appearanceSettings.centerGlowWarmColor = normalizeHexColor(settingsCenterGlowWarmColorInput?.value, DEFAULT_APPEARANCE.centerGlowWarmColor);
+    applyAppearanceSettings();
+    updateAppearanceControlValues();
+    saveAppearanceSettings();
+  };
+  if (settingsCenterGlowCoolColorInput) settingsCenterGlowCoolColorInput.addEventListener("input", applyCenterGlowColors);
+  if (settingsCenterGlowVioletColorInput) settingsCenterGlowVioletColorInput.addEventListener("input", applyCenterGlowColors);
+  if (settingsCenterGlowWarmColorInput) settingsCenterGlowWarmColorInput.addEventListener("input", applyCenterGlowColors);
+  if (settingsChannelRowHighlightInput) {
+    settingsChannelRowHighlightInput.addEventListener("change", () => {
+      appearanceSettings.highlightChannelRows = !!settingsChannelRowHighlightInput.checked;
+      applyAppearanceSettings();
+      updateAppearanceControlValues();
+      saveAppearanceSettings();
+    });
+  }
+  if (settingsNotificationPingVolumeInput) {
+    settingsNotificationPingVolumeInput.addEventListener("input", () => {
+      appearanceSettings.notificationPingVolume = clamp(
+        Number(settingsNotificationPingVolumeInput.value),
+        0,
+        2
+      );
+      updateAppearanceControlValues();
+      saveAppearanceSettings();
+    });
+  }
+  if (settingsThemeAccentColorInput) {
+    settingsThemeAccentColorInput.addEventListener("input", () => {
+      appearanceSettings.themeAccentColor = normalizeHexColor(
+        settingsThemeAccentColorInput.value,
+        getThemeById(appearanceSettings.themeId).accent
+      );
+      applyAppearanceSettings();
+      updateAppearanceControlValues();
+      saveAppearanceSettings();
+    });
+  }
+  const applyPureDarkColors = () => {
+    appearanceSettings.pureDarkBgColor = normalizeHexColor(settingsPureDarkBgColorInput?.value, DEFAULT_APPEARANCE.pureDarkBgColor);
+    appearanceSettings.pureDarkPanelStartColor = normalizeHexColor(settingsPureDarkPanelStartColorInput?.value, DEFAULT_APPEARANCE.pureDarkPanelStartColor);
+    appearanceSettings.pureDarkPanelEndColor = normalizeHexColor(settingsPureDarkPanelEndColorInput?.value, DEFAULT_APPEARANCE.pureDarkPanelEndColor);
+    appearanceSettings.pureDarkHeaderColor = normalizeHexColor(settingsPureDarkHeaderColorInput?.value, DEFAULT_APPEARANCE.pureDarkHeaderColor);
+    appearanceSettings.pureDarkTextColor = normalizeHexColor(settingsPureDarkTextColorInput?.value, DEFAULT_APPEARANCE.pureDarkTextColor);
+    appearanceSettings.pureDarkMutedColor = normalizeHexColor(settingsPureDarkMutedColorInput?.value, DEFAULT_APPEARANCE.pureDarkMutedColor);
+    appearanceSettings.pureDarkAccentColor = normalizeHexColor(settingsPureDarkAccentColorInput?.value, DEFAULT_APPEARANCE.pureDarkAccentColor);
+    appearanceSettings.pureDarkAccentStrongColor = normalizeHexColor(settingsPureDarkAccentStrongColorInput?.value, DEFAULT_APPEARANCE.pureDarkAccentStrongColor);
+    applyAppearanceSettings();
+    updateAppearanceControlValues();
+    saveAppearanceSettings();
+  };
+  if (settingsPureDarkBgColorInput) settingsPureDarkBgColorInput.addEventListener("input", applyPureDarkColors);
+  if (settingsPureDarkPanelStartColorInput) settingsPureDarkPanelStartColorInput.addEventListener("input", applyPureDarkColors);
+  if (settingsPureDarkPanelEndColorInput) settingsPureDarkPanelEndColorInput.addEventListener("input", applyPureDarkColors);
+  if (settingsPureDarkHeaderColorInput) settingsPureDarkHeaderColorInput.addEventListener("input", applyPureDarkColors);
+  if (settingsPureDarkTextColorInput) settingsPureDarkTextColorInput.addEventListener("input", applyPureDarkColors);
+  if (settingsPureDarkMutedColorInput) settingsPureDarkMutedColorInput.addEventListener("input", applyPureDarkColors);
+  if (settingsPureDarkAccentColorInput) settingsPureDarkAccentColorInput.addEventListener("input", applyPureDarkColors);
+  if (settingsPureDarkAccentStrongColorInput) settingsPureDarkAccentStrongColorInput.addEventListener("input", applyPureDarkColors);
+  if (settingsPureDarkResetBtn) {
+    settingsPureDarkResetBtn.addEventListener("click", () => {
+      resetPureDarkColors();
       applyAppearanceSettings();
       updateAppearanceControlValues();
       saveAppearanceSettings();
@@ -1668,7 +4447,8 @@ function bindAppearanceControls() {
         const template = readThemeTemplateFromEditor();
         saveOrUpdateCustomTheme(template);
         appearanceSettings.themeId = template.id;
-        if (template.mode === "dark") appearanceSettings.lastDarkThemeId = template.id;
+        if (normalizeThemeMode(template.mode) === "medium") appearanceSettings.lastMediumThemeId = template.id;
+        else if (isDarkLikeThemeMode(template.mode)) appearanceSettings.lastDarkThemeId = template.id;
         else appearanceSettings.lastLightThemeId = template.id;
         applyAppearanceSettings();
         saveAppearanceSettings();
@@ -1746,17 +4526,190 @@ function updateD20ThemeColor() {
   d20Material.color.setHex(document.body.classList.contains("dark-mode") ? 0xffffff : 0x7f8072);
 }
 
-function bindLabsControls() {
-  if (settingsOpenLabsBtn) {
-    settingsOpenLabsBtn.addEventListener("click", () => {
-      unlockLabs(true);
-      updateLabsControlValues();
+const TESSERACT_VERTEX_ORDER = [
+  [-1, -1, -1],
+  [1, -1, -1],
+  [1, 1, -1],
+  [-1, 1, -1],
+  [-1, -1, 1],
+  [1, -1, 1],
+  [1, 1, 1],
+  [-1, 1, 1],
+];
+
+function rotate4DInPlane(point, a, b, angle) {
+  const c = Math.cos(angle);
+  const s = Math.sin(angle);
+  const pa = point[a];
+  const pb = point[b];
+  point[a] = (pa * c) - (pb * s);
+  point[b] = (pa * s) + (pb * c);
+}
+
+function buildTesseractProjectedPositions(angles) {
+  const {
+    xy = 0,
+    xz = 0,
+    yz = 0,
+    xw = 0,
+    yw = 0,
+    zw = 0,
+    projectionDistance = 3.6,
+    scale = 0.86,
+  } = angles || {};
+
+  const positions = [];
+  const wLayers = [-1, 1];
+  wLayers.forEach((w) => {
+    TESSERACT_VERTEX_ORDER.forEach(([x, y, z]) => {
+      const p = [x, y, z, w];
+      rotate4DInPlane(p, 0, 1, xy);
+      rotate4DInPlane(p, 0, 2, xz);
+      rotate4DInPlane(p, 1, 2, yz);
+      rotate4DInPlane(p, 0, 3, xw);
+      rotate4DInPlane(p, 1, 3, yw);
+      rotate4DInPlane(p, 2, 3, zw);
+      const perspective = projectionDistance / Math.max(0.001, projectionDistance - p[3]);
+      positions.push(p[0] * perspective * scale, p[1] * perspective * scale, p[2] * perspective * scale);
+    });
+  });
+  return positions;
+}
+
+function createTesseractWireframeGeometry() {
+  const positions = buildTesseractProjectedPositions({
+    xy: 0,
+    xz: 0,
+    yz: 0,
+    xw: 0,
+    yw: 0,
+    zw: 0,
+  });
+
+  const indices = [];
+  const addQuad = (a, b, c, d) => {
+    indices.push(a, b, c, a, c, d);
+  };
+  const faces = [
+    [0, 1, 2, 3], // back
+    [4, 5, 6, 7], // front
+    [0, 4, 5, 1], // bottom
+    [3, 2, 6, 7], // top
+    [1, 5, 6, 2], // right
+    [0, 3, 7, 4], // left
+  ];
+
+  // Outer + inner cubes.
+  faces.forEach(([a, b, c, d]) => addQuad(a, b, c, d));
+  faces.forEach(([a, b, c, d]) => addQuad(a + 8, b + 8, c + 8, d + 8));
+
+  // Bridge the corresponding faces to create a tesseract-style projection.
+  faces.forEach(([a, b, c, d]) => {
+    const ai = a + 8;
+    const bi = b + 8;
+    const ci = c + 8;
+    const di = d + 8;
+    addQuad(a, b, bi, ai);
+    addQuad(b, c, ci, bi);
+    addQuad(c, d, di, ci);
+    addQuad(d, a, ai, di);
+  });
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function updateTesseractGeometryProjection(geometry, angles) {
+  if (!geometry) return;
+  const attr = geometry.getAttribute("position");
+  if (!attr) return;
+  const positions = buildTesseractProjectedPositions(angles);
+  if (positions.length !== attr.array.length) return;
+  attr.array.set(positions);
+  attr.needsUpdate = true;
+  geometry.computeBoundingSphere();
+}
+
+function createCenterWireframeGeometry(shape) {
+  switch (normalizeCenterWireframeShape(shape)) {
+    case "d4":
+      return new THREE.TetrahedronGeometry(1.08, 0);
+    case "d6":
+      return new THREE.BoxGeometry(1.8, 1.8, 1.8);
+    case "d8":
+      return new THREE.OctahedronGeometry(1.12, 0);
+    case "d10":
+      return new THREE.CylinderGeometry(0.95, 0.95, 1.7, 5, 1, false);
+    case "d12":
+      return new THREE.DodecahedronGeometry(1.03, 0);
+    case "sphere":
+      return new THREE.SphereGeometry(1.05, 12, 10);
+    case "torus":
+      return new THREE.TorusGeometry(0.95, 0.28, 12, 24);
+    case "capsule":
+      return typeof THREE.CapsuleGeometry === "function"
+        ? new THREE.CapsuleGeometry(0.72, 1.0, 6, 12)
+        : new THREE.SphereGeometry(1.05, 12, 10);
+    case "tesseract":
+      return createTesseractWireframeGeometry();
+    case "d20":
+    default:
+      return new THREE.IcosahedronGeometry(1, 0);
+  }
+}
+
+function applyCenterWireframeShape() {
+  if (!d20Mesh) return;
+  const nextGeometry = createCenterWireframeGeometry(appearanceSettings.centerWireframeShape);
+  if (!nextGeometry) return;
+  if (d20Mesh.geometry) d20Mesh.geometry.dispose();
+  d20Mesh.geometry = nextGeometry;
+  if (normalizeCenterWireframeShape(appearanceSettings.centerWireframeShape) === "tesseract") {
+    d20Mesh.rotation.set(0, 0, 0);
+  }
+}
+
+function updateCenterGlowColors() {
+  const cool = normalizeHexColor(appearanceSettings.centerGlowCoolColor, DEFAULT_APPEARANCE.centerGlowCoolColor);
+  const violet = normalizeHexColor(appearanceSettings.centerGlowVioletColor, DEFAULT_APPEARANCE.centerGlowVioletColor);
+  const warm = normalizeHexColor(appearanceSettings.centerGlowWarmColor, DEFAULT_APPEARANCE.centerGlowWarmColor);
+  const coolRgb = hexToRgbCsv(cool, "94, 188, 255");
+  const violetRgb = hexToRgbCsv(violet, "124, 86, 255");
+  const warmRgb = hexToRgbCsv(warm, "255, 181, 106");
+
+  const htmlStyle = document.documentElement.style;
+  const bodyStyle = document.body.style;
+  [htmlStyle, bodyStyle].forEach((styleRef) => {
+    styleRef.setProperty("--center-glow-cool", cool);
+    styleRef.setProperty("--center-glow-violet", violet);
+    styleRef.setProperty("--center-glow-warm", warm);
+    styleRef.setProperty("--center-glow-cool-rgb", coolRgb);
+    styleRef.setProperty("--center-glow-violet-rgb", violetRgb);
+    styleRef.setProperty("--center-glow-warm-rgb", warmRgb);
+  });
+
+  if (centerGlowVisualRefs.cosmicRingMaterial) centerGlowVisualRefs.cosmicRingMaterial.color.set(cool);
+  if (centerGlowVisualRefs.cosmicAccretionRingMaterial) centerGlowVisualRefs.cosmicAccretionRingMaterial.color.set(warm);
+  if (centerGlowVisualRefs.cosmicAccretionGlowMaterial) centerGlowVisualRefs.cosmicAccretionGlowMaterial.color.set(warm);
+  if (centerGlowVisualRefs.cosmicHaloMaterial) centerGlowVisualRefs.cosmicHaloMaterial.color.set(cool);
+  if (centerGlowVisualRefs.cosmicInnerGlowMaterial) centerGlowVisualRefs.cosmicInnerGlowMaterial.color.set(cool);
+  if (centerGlowVisualRefs.cosmicNebulaMaterial) centerGlowVisualRefs.cosmicNebulaMaterial.color.set(cool);
+  if (Array.isArray(centerGlowVisualRefs.cosmicDustMaterials) && centerGlowVisualRefs.cosmicDustMaterials.length) {
+    centerGlowVisualRefs.cosmicDustMaterials.forEach((mat, idx) => {
+      if (!mat?.color) return;
+      if (idx % 3 === 0) mat.color.set(warm);
+      else if (idx % 3 === 1) mat.color.set(cool);
+      else mat.color.set(violet);
     });
   }
+}
 
+function bindLabsControls() {
   if (settingsTitle) {
-    settingsTitle.addEventListener("click", (event) => {
-      if (event.target === settingsOpenLabsBtn) return;
+    settingsTitle.addEventListener("click", () => {
       labsUnlockClicks += 1;
       if (labsUnlockClicks >= 7) {
         labsUnlockClicks = 0;
@@ -1774,6 +4727,29 @@ function bindLabsControls() {
       updateLabsControlValues();
     });
   });
+  const bindLabsColorInput = (inputEl, key) => {
+    if (!inputEl) return;
+    inputEl.addEventListener("input", () => {
+      labsSettings[key] = normalizeHexColor(inputEl.value, DEFAULT_LABS_SETTINGS[key]);
+      applyLabsColorVariables();
+      updateLabsControlValues();
+      saveLabsSettings();
+    });
+  };
+  bindLabsColorInput(labsLanternColorAInput, "lanternColorA");
+  bindLabsColorInput(labsLanternColorBInput, "lanternColorB");
+  bindLabsColorInput(labsBokehColorAInput, "bokehColorA");
+  bindLabsColorInput(labsBokehColorBInput, "bokehColorB");
+  bindLabsColorInput(labsMessageBarGlowColorAInput, "messageBarGlowColorA");
+  bindLabsColorInput(labsMessageBarGlowColorBInput, "messageBarGlowColorB");
+  if (labsMessageBarGlowStyleInput) {
+    labsMessageBarGlowStyleInput.addEventListener("change", () => {
+      labsSettings.messageBarGlowStyle = normalizeMessageBarGlowStyle(labsMessageBarGlowStyleInput.value);
+      applyLabsColorVariables();
+      updateLabsControlValues();
+      saveLabsSettings();
+    });
+  }
 
   if (labsTriggerPartyBtn) {
     labsTriggerPartyBtn.addEventListener("click", () => {
@@ -1820,6 +4796,116 @@ function bindLabsControls() {
   }
 }
 
+function bindVoiceControls() {
+  const saveAndRefreshVoiceUiOnly = () => {
+    saveVoiceSettings();
+    updateVoiceControlValues();
+  };
+  const applyNow = (showStatusToast = false) => {
+    saveVoiceSettings();
+    updateVoiceControlValues();
+    refreshLocalVoiceCaptureFromSettings({ showStatusToast }).then(() => {
+      if (!showStatusToast) return;
+      showToast("Voice processing updated.");
+    }).catch(() => {});
+    if (micSelfTestProcessedStream) {
+      startMicSelfTest().catch(() => {
+        showToast("Mic self test could not restart with new settings.");
+      });
+    }
+  };
+  const scheduleApply = () => {
+    saveVoiceSettings();
+    updateVoiceControlValues();
+    if (voiceSettingsApplyTimer) clearTimeout(voiceSettingsApplyTimer);
+    voiceSettingsApplyTimer = setTimeout(() => {
+      refreshLocalVoiceCaptureFromSettings({ showStatusToast: false }).catch(() => {});
+      if (micSelfTestProcessedStream) {
+        startMicSelfTest().catch(() => {
+          showToast("Mic self test could not restart with new settings.");
+        });
+      }
+      voiceSettingsApplyTimer = null;
+    }, 220);
+  };
+
+  if (settingsVoiceEqEnabledInput) {
+    settingsVoiceEqEnabledInput.addEventListener("change", () => {
+      voiceSettings.eqEnabled = Boolean(settingsVoiceEqEnabledInput.checked);
+      applyNow(true);
+    });
+  }
+  if (settingsVoiceEchoCancellationInput) {
+    settingsVoiceEchoCancellationInput.addEventListener("change", () => {
+      voiceSettings.echoCancellation = Boolean(settingsVoiceEchoCancellationInput.checked);
+      applyNow(true);
+    });
+  }
+  if (settingsVoiceNoiseSuppressionInput) {
+    settingsVoiceNoiseSuppressionInput.addEventListener("change", () => {
+      voiceSettings.noiseSuppression = Boolean(settingsVoiceNoiseSuppressionInput.checked);
+      applyNow(true);
+    });
+  }
+  if (settingsVoiceEqLowInput) {
+    settingsVoiceEqLowInput.addEventListener("input", () => {
+      voiceSettings.eqLowGain = clamp(Number(settingsVoiceEqLowInput.value), -12, 12);
+      scheduleApply();
+    });
+  }
+  if (settingsVoiceEqMidInput) {
+    settingsVoiceEqMidInput.addEventListener("input", () => {
+      voiceSettings.eqMidGain = clamp(Number(settingsVoiceEqMidInput.value), -12, 12);
+      scheduleApply();
+    });
+  }
+  if (settingsVoiceEqHighInput) {
+    settingsVoiceEqHighInput.addEventListener("input", () => {
+      voiceSettings.eqHighGain = clamp(Number(settingsVoiceEqHighInput.value), -12, 12);
+      scheduleApply();
+    });
+  }
+  if (settingsVoiceSelfTestBtn) {
+    settingsVoiceSelfTestBtn.addEventListener("click", async () => {
+      if (micSelfTestProcessedStream) {
+        stopMicSelfTest();
+        showToast("Mic self test stopped.");
+        return;
+      }
+      if (voiceSocket && voiceSocket.readyState === WebSocket.OPEN) {
+        alert("Leave voice channel/call before running mic self test.");
+        return;
+      }
+      try {
+        await startMicSelfTest();
+        showToast("Mic self test started.");
+      } catch (err) {
+        console.error(err);
+        alert(err.message || "Mic self test failed.");
+      }
+    });
+  }
+  if (settingsVoiceCompactVideoTilesInput) {
+    settingsVoiceCompactVideoTilesInput.addEventListener("change", () => {
+      voiceSettings.compactVideoTiles = Boolean(settingsVoiceCompactVideoTilesInput.checked);
+      saveAndRefreshVoiceUiOnly();
+    });
+  }
+  if (settingsVoiceVideoTileScaleInput) {
+    settingsVoiceVideoTileScaleInput.addEventListener("input", () => {
+      voiceSettings.videoTileScale = clamp(Number(settingsVoiceVideoTileScaleInput.value), 0.7, 1.4);
+      saveAndRefreshVoiceUiOnly();
+    });
+  }
+  if (settingsVoiceScreenShareQualityInput) {
+    settingsVoiceScreenShareQualityInput.addEventListener("change", () => {
+      voiceSettings.screenShareQuality = getNormalizedScreenShareQuality(settingsVoiceScreenShareQualityInput.value);
+      saveAndRefreshVoiceUiOnly();
+      showToast(`Screen share quality set to ${voiceSettings.screenShareQuality}`);
+    });
+  }
+}
+
 function bindUtilityControls() {
   if (settingsResetClientCacheBtn) {
     settingsResetClientCacheBtn.addEventListener("click", () => {
@@ -1833,6 +4919,42 @@ function bindUtilityControls() {
         localStorage.removeItem(key);
       });
       window.location.reload();
+    });
+  }
+
+  if (settingsForceRefreshBtn) {
+    settingsForceRefreshBtn.addEventListener("click", async () => {
+      const ok = window.confirm("Force refresh this client? This clears local Tavern caches, unregisters service workers, and reloads.");
+      if (!ok) return;
+      settingsForceRefreshBtn.disabled = true;
+      settingsForceRefreshBtn.textContent = "Refreshing...";
+      try {
+        const localKeys = Object.keys(localStorage || {});
+        localKeys.forEach((key) => {
+          if (key.startsWith("tavern.")) localStorage.removeItem(key);
+        });
+      } catch {}
+      try {
+        const sessionKeys = Object.keys(sessionStorage || {});
+        sessionKeys.forEach((key) => {
+          if (key.startsWith("tavern.")) sessionStorage.removeItem(key);
+        });
+      } catch {}
+      if ("caches" in window) {
+        try {
+          const names = await caches.keys();
+          await Promise.all(names.map((name) => caches.delete(name)));
+        } catch {}
+      }
+      if ("serviceWorker" in navigator) {
+        try {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map((reg) => reg.unregister()));
+        } catch {}
+      }
+      const next = new URL(window.location.href);
+      next.searchParams.set("nocache", String(Date.now()));
+      window.location.replace(next.toString());
     });
   }
 
@@ -1928,6 +5050,14 @@ function bindUtilityControls() {
     messageSearchClearBtn.addEventListener("click", () => {
       messageSearchInput.value = "";
       messageSearchInput.dispatchEvent(new Event("input"));
+    });
+  }
+
+  if (channelPinsBtn) {
+    channelPinsBtn.addEventListener("click", () => {
+      openPinnedMessagesModal().catch((err) => {
+        showToast(err?.message || "Failed to open pinned messages");
+      });
     });
   }
 
@@ -2089,10 +5219,14 @@ function closePresenceSocket() {
 }
 
 function connectPresenceSocket() {
+  if (presenceSocketBlocked) return;
   if (presenceSocket) return;
-  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-  presenceSocket = new WebSocket(`${protocol}://${window.location.host}/ws/presence`);
+  presenceSocket = new WebSocket(buildWsUrl("/ws/presence"));
+  presenceSocket._opened = false;
   presenceSocket.onopen = () => {
+    presenceSocket._opened = true;
+    presenceSocketFailureCount = 0;
+    presenceSocketBlocked = false;
     setRealtimeState("presence", true, 0);
   };
 
@@ -2114,8 +5248,18 @@ function connectPresenceSocket() {
   };
 
   presenceSocket.onclose = () => {
+    const opened = Boolean(presenceSocket?._opened);
     presenceSocket = null;
     if (presenceReconnectTimer) clearTimeout(presenceReconnectTimer);
+    if (!opened) {
+      presenceSocketFailureCount += 1;
+      if (presenceSocketFailureCount >= 3) {
+        presenceSocketBlocked = true;
+        showToast("Realtime presence disconnected (auth). Reload/login to reconnect.");
+        setRealtimeState("presence", false, 0);
+        return;
+      }
+    }
     const retryAt = Date.now() + 2000;
     setRealtimeState("presence", false, retryAt);
     presenceReconnectTimer = setTimeout(() => {
@@ -2142,25 +5286,42 @@ function closeDmMessageSocket() {
 }
 
 function openDmMessageSocket(conversationPublicId) {
+  if (dmSocketBlocked) return;
   closeDmMessageSocket();
-  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-  dmMessageSocket = new WebSocket(`${protocol}://${window.location.host}/ws/dms/${conversationPublicId}`);
+  dmMessageSocket = new WebSocket(buildWsUrl(`/ws/dms/${conversationPublicId}`));
+  dmMessageSocket._opened = false;
   dmMessageSocket.onopen = () => {
+    dmMessageSocket._opened = true;
+    dmSocketFailureCount = 0;
+    dmSocketBlocked = false;
     setRealtimeState("dm", true, 0);
   };
   dmMessageSocket.onmessage = async (event) => {
+    let payload = null;
     try {
-      const data = JSON.parse(event.data || "{}");
-      markSeenForContextIfPending("dm", conversationPublicId, data.user_id);
+      payload = JSON.parse(event.data || "{}");
+      markSeenForContextIfPending("dm", conversationPublicId, payload.user_id);
     } catch {
       // Ignore malformed payload
+    }
+    if (payload && payload.user_id !== currentUserId) {
+      emitIncomingMessageNotification("dm", conversationPublicId, payload);
     }
     if (activeMode === "dm" && activeDmConversationId === conversationPublicId) {
       await loadDmMessages(conversationPublicId, true);
     }
   };
   dmMessageSocket.onclose = () => {
+    const opened = Boolean(dmMessageSocket?._opened);
     dmMessageSocket = null;
+    if (!opened) {
+      dmSocketFailureCount += 1;
+      if (dmSocketFailureCount >= 3) {
+        dmSocketBlocked = true;
+        setRealtimeState("dm", false, 0);
+        return;
+      }
+    }
     const retryAt = Date.now() + 1500;
     setRealtimeState("dm", false, retryAt);
     if (activeMode === "dm" && activeDmConversationId === conversationPublicId) {
@@ -2177,13 +5338,47 @@ function openDmMessageSocket(conversationPublicId) {
 
 function updateSidebarModeUI() {
   const isDmMode = activeMode === "dm";
-  if (channelsPanelTitle) channelsPanelTitle.textContent = isDmMode ? "Direct Messages" : "Channels";
+  if (currentServerNameEl) {
+    currentServerNameEl.textContent = isDmMode
+      ? "Direct Messages"
+      : (activeServerId ? getServerNameById(activeServerId) : "Spaces");
+  }
+  if (channelsPanelTitle) channelsPanelTitle.textContent = isDmMode ? "Conversations" : "Channels";
   if (openServerMembersBtn) openServerMembersBtn.classList.toggle("hidden", isDmMode);
+  if (openServerSettingsBtn) openServerSettingsBtn.classList.toggle("hidden", isDmMode);
   if (openFriendsBtn) openFriendsBtn.classList.toggle("hidden", !isDmMode);
   if (openCreateDmBtn) openCreateDmBtn.classList.toggle("hidden", !isDmMode);
   if (openAddSeparatorBtn) openAddSeparatorBtn.classList.toggle("hidden", isDmMode);
   if (openCreateChannelBtn) openCreateChannelBtn.classList.toggle("hidden", isDmMode);
+  if (openServerSwitcherBtn) openServerSwitcherBtn.classList.remove("hidden");
+  if (openCreateItemBtn) openCreateItemBtn.classList.toggle("hidden", false);
   if (homeDmBtn) homeDmBtn.classList.toggle("active", isDmMode);
+  updateServerSwitcherNotificationState();
+  updateDmQuickButtonState();
+}
+
+function closeServerSwitcherOverlay() {
+  if (!serverSwitcherOverlay) return;
+  serverSwitcherOverlay.classList.add("hidden");
+  serverSwitcherOverlay.setAttribute("aria-hidden", "true");
+}
+
+function openServerSwitcherOverlay() {
+  if (!serverSwitcherOverlay) return;
+  serverSwitcherOverlay.classList.remove("hidden");
+  serverSwitcherOverlay.setAttribute("aria-hidden", "false");
+}
+
+function updateServerSwitcherNotificationState() {
+  if (!openServerSwitcherBtn) return;
+  const hasUnreadElsewhere = [...unreadServers].some((id) => id !== activeServerId);
+  openServerSwitcherBtn.classList.toggle("has-unread", hasUnreadElsewhere);
+}
+
+function updateDmQuickButtonState() {
+  if (!homeDmBtn) return;
+  const hasUnreadDm = Boolean(channelsPanel?.querySelector(".dm-item.has-unread"));
+  homeDmBtn.classList.toggle("has-unread", hasUnreadDm);
 }
 
 function updateTopbar(title, showCall) {
@@ -2192,11 +5387,1125 @@ function updateTopbar(title, showCall) {
     messagesTopbar.classList.add("hidden");
     dmCallBtn.classList.add("hidden");
     if (messageSearchBar) messageSearchBar.classList.add("hidden");
+    if (messagesTopbarTypeBadge) {
+      messagesTopbarTypeBadge.classList.add("hidden");
+      messagesTopbarTypeBadge.textContent = "";
+    }
     return;
   }
   messagesTopbar.classList.remove("hidden");
+  ensureMobileChannelBackButton();
   messagesTopbarTitle.textContent = title;
   dmCallBtn.classList.toggle("hidden", !showCall);
+  if (messagesTopbarTypeBadge) {
+    const label = activeMode === "dm"
+      ? "dm"
+      : (activeChannelType || "text");
+    messagesTopbarTypeBadge.textContent = `type: ${label}`;
+    messagesTopbarTypeBadge.classList.remove("hidden");
+  }
+  updateMobileNavigationState();
+}
+
+function updateComposerPlaceholder() {
+  if (!messageInput) return;
+  if (activeChannelType === "voice") return;
+  if (activeChannelType === "notes") {
+    messageInput.placeholder = "Write notes... Use [[Other Note]] to link";
+    return;
+  }
+  messageInput.placeholder = labsSettings.fxCommandHints
+    ? "Type a message... (/roll 2d20, /party, /shrug)"
+    : "Type a message...";
+}
+
+async function ensureNotesEditorShell() {
+  if (!messagesPanel || notesEditorShell) return;
+  notesEditorShell = document.createElement("div");
+  notesEditorShell.className = "notes-editor-shell hidden";
+  notesEditorShell.style.display = "block";
+  notesEditorShell.style.height = "100%";
+  notesEditorShell.style.padding = "8px";
+  notesEditorShell.style.position = "relative";
+
+  notesStatusEl = document.createElement("span");
+  notesStatusEl.className = "notes-editor-status";
+  notesStatusEl.style.display = "none";
+
+  notesSaveBtn = document.createElement("button");
+  notesSaveBtn.type = "button";
+  notesSaveBtn.textContent = "Save";
+  notesSaveBtn.className = "topbar-btn";
+  notesSaveBtn.style.position = "absolute";
+  notesSaveBtn.style.top = "12px";
+  notesSaveBtn.style.right = "12px";
+  notesSaveBtn.style.zIndex = "3";
+  notesSaveBtn.addEventListener("click", () => {
+    saveActiveNotesPage({ showSavedToast: false, switchToPreview: true }).then(() => {
+      showToast("Document saved!");
+    }).catch((err) => {
+      alert(err.message || "Failed to save note");
+    });
+  });
+
+  notesEditModeBtn = document.createElement("button");
+  notesEditModeBtn.type = "button";
+  notesEditModeBtn.textContent = "Edit";
+  notesEditModeBtn.className = "topbar-btn";
+  notesEditModeBtn.style.position = "absolute";
+  notesEditModeBtn.style.top = "12px";
+  notesEditModeBtn.style.right = "74px";
+  notesEditModeBtn.style.zIndex = "3";
+  notesEditModeBtn.addEventListener("click", () => {
+    showNotesEditMode();
+  });
+
+  notesEditorHost = document.createElement("div");
+  notesEditorHost.className = "notes-rich-editor-host";
+  notesEditorHost.style.height = "100%";
+  notesEditorHost.style.minHeight = "360px";
+  notesEditorHost.style.borderRadius = "10px";
+  notesEditorHost.style.overflow = "hidden";
+  notesEditorHost.style.border = "1px solid rgba(255,255,255,0.14)";
+  notesEditorHost.style.background = "rgba(0,0,0,0.16)";
+  mountNotesPlainFallbackEditor();
+  notesEditorShell.appendChild(notesEditorHost);
+  notesEditorShell.appendChild(notesEditModeBtn);
+  notesEditorShell.appendChild(notesSaveBtn);
+  messagesPanel.appendChild(notesEditorShell);
+}
+
+function setNotesEditorStatus(text) {
+  if (notesStatusEl) notesStatusEl.textContent = text || "";
+}
+
+function renderActiveNotesPreview() {
+  if (!notesPreviewFrame) return;
+  const text = String(getNotesEditorMarkdown() || "");
+  const styleBlocks = [...text.matchAll(/<style\b[^>]*>[\s\S]*?<\/style>/gi)].map((m) => m[0]).join("\n");
+  const markdownSource = text.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "");
+  const prepared = injectWikiLinks(markdownSource);
+  const htmlBody = window.marked
+    ? window.marked.parse(prepared, { gfm: true, breaks: true })
+    : escapeHtml(prepared).replaceAll("\n", "<br>");
+  const doc = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+html,body{background:transparent !important}
+body{margin:0;padding:14px;color:#e9eef7;font:14px/1.6 Inter,system-ui,sans-serif;word-wrap:break-word}
+code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:rgba(255,255,255,.06);padding:10px;border-radius:8px;overflow:auto}
+blockquote{margin:0;padding-left:10px;border-left:3px solid rgba(121,198,255,.45)}
+a{color:#79c6ff} img{max-width:100%;height:auto}
+table{border-collapse:collapse;width:100%} th,td{border:1px solid rgba(255,255,255,.12);padding:6px 8px}
+</style>
+${styleBlocks}
+</head><body>${htmlBody}</body></html>`;
+  notesPreviewFrame.srcdoc = doc;
+}
+
+function mountNotesPlainFallbackEditor() {
+  if (!notesEditorHost) return;
+  notesEditorHost.innerHTML = "";
+  const wrap = document.createElement("div");
+  wrap.style.height = "100%";
+  wrap.style.minHeight = "360px";
+  wrap.style.display = "flex";
+  wrap.style.flexDirection = "column";
+  wrap.style.gap = "8px";
+  wrap.style.padding = "12px";
+
+  notesEditorTextarea = document.createElement("textarea");
+  notesEditorTextarea.className = "notes-editor-textarea";
+  notesEditorTextarea.placeholder = "Write markdown / HTML / CSS notes...";
+  notesEditorTextarea.style.flex = "0 0 45%";
+  notesEditorTextarea.style.minHeight = "220px";
+  notesEditorTextarea.style.resize = "none";
+  notesEditorTextarea.style.padding = "12px";
+  notesEditorTextarea.style.borderRadius = "8px";
+  notesEditorTextarea.style.border = "1px solid rgba(255,255,255,0.14)";
+  notesEditorTextarea.style.background = "rgba(0,0,0,0.12)";
+  notesEditorTextarea.style.color = "inherit";
+  notesEditorTextarea.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+  notesEditorTextarea.style.lineHeight = "1.5";
+  notesEditorTextarea.style.outline = "none";
+  notesEditorTextarea.addEventListener("input", () => {
+    notesOverlayEditing = true;
+    queueNotesAutosave();
+  });
+  notesPreviewFrame = document.createElement("iframe");
+  notesPreviewFrame.className = "notes-preview-frame";
+  notesPreviewFrame.setAttribute("sandbox", "allow-same-origin");
+  notesPreviewFrame.style.flex = "1";
+  notesPreviewFrame.style.width = "100%";
+  notesPreviewFrame.style.minHeight = "180px";
+  notesPreviewFrame.style.borderRadius = "8px";
+  notesPreviewFrame.style.border = "1px solid rgba(255,255,255,0.14)";
+  notesPreviewFrame.style.background = "transparent";
+
+  wrap.appendChild(notesEditorTextarea);
+  wrap.appendChild(notesPreviewFrame);
+  notesEditorHost.appendChild(wrap);
+}
+
+function showNotesEditMode() {
+  notesOverlayEditing = true;
+  notesIsEditMode = true;
+  notesPreviewVisible = false;
+  if (notesEditorTextarea) {
+    notesEditorTextarea.style.display = "";
+    notesEditorTextarea.focus();
+  }
+  if (notesPreviewFrame) notesPreviewFrame.style.display = "none";
+  if (notesEditModeBtn) notesEditModeBtn.style.display = "none";
+  if (notesSaveBtn) notesSaveBtn.style.display = "";
+}
+
+function showNotesPreviewMode() {
+  notesOverlayEditing = false;
+  notesIsEditMode = false;
+  notesPreviewVisible = true;
+  renderActiveNotesPreview();
+  if (notesEditorTextarea) notesEditorTextarea.style.display = "none";
+  if (notesPreviewFrame) notesPreviewFrame.style.display = "";
+  if (notesEditModeBtn) notesEditModeBtn.style.display = "";
+  if (notesSaveBtn) notesSaveBtn.style.display = "none";
+}
+
+function getNotesEditorMarkdown() {
+  if (notesEditorTextarea) return String(notesEditorTextarea.value || "");
+  return "";
+}
+
+function setNotesEditorMarkdown(value) {
+  const content = String(value || "");
+  if (notesEditorTextarea) notesEditorTextarea.value = content;
+}
+
+function queueNotesAutosave() {
+  if (activeMode !== "server" || activeChannelType !== "notes") return;
+  if (notesSaveTimer) clearTimeout(notesSaveTimer);
+  setNotesEditorStatus("Editing...");
+  notesSaveTimer = setTimeout(() => {
+    notesSaveTimer = null;
+    saveActiveNotesPage({ switchToPreview: false }).catch(() => {
+      setNotesEditorStatus("Autosave failed");
+    });
+  }, 900);
+}
+
+function getLatestTopLevelMessage(messages) {
+  const topLevel = (messages || []).filter((msg) => !msg.parent_message_public_id);
+  return topLevel[topLevel.length - 1] || null;
+}
+
+async function loadNotesPage(channelPublicId) {
+  await ensureNotesEditorShell();
+  if (!notesEditorShell) return;
+  if (notesSaveTimer) {
+    clearTimeout(notesSaveTimer);
+    notesSaveTimer = null;
+  }
+  setJumpUnreadVisible(false);
+  updateTextVsVoiceUI();
+  messagesPanel.innerHTML = "";
+  messagesPanel.appendChild(notesEditorShell);
+  notesEditorShell.classList.remove("hidden");
+  setNotesEditorStatus("Loading note...");
+  const res = await fetch(`/messages/${channelPublicId}`, { credentials: "include" });
+  if (!res.ok) {
+    setNotesEditorStatus("Could not load note");
+    throw new Error(`Failed to load notes page: ${res.status}`);
+  }
+  const messages = await res.json();
+  const latest = getLatestTopLevelMessage(messages);
+  activeNoteMessageId = latest?.public_id || null;
+  activeNoteLoadedContent = String(latest?.content || "");
+  setNotesEditorMarkdown(activeNoteLoadedContent);
+  showNotesPreviewMode();
+  if (notesEditorTextarea) {
+    notesEditorTextarea.scrollTop = 0;
+    if (notesIsEditMode) notesEditorTextarea.focus();
+  }
+  const timeLabel = latest?.edited_at || latest?.created_at;
+  setNotesEditorStatus(timeLabel ? `Loaded \u00B7 ${formatTimestamp(timeLabel)}` : "New note");
+  channelLastSeen.set(channelPublicId, Date.now());
+  markChannelRead(channelPublicId);
+  recalculateUnreadServers();
+  renderTypingIndicator();
+  refreshSendStatusForActiveContext();
+}
+
+async function saveActiveNotesPage(options = {}) {
+  if (activeMode !== "server" || activeChannelType !== "notes" || !activeChannelId) return;
+  const content = getNotesEditorMarkdown();
+  if (notesSaveInFlight) return;
+  if (content === activeNoteLoadedContent && activeNoteMessageId) {
+    setNotesEditorStatus("Saved");
+    return;
+  }
+  notesSaveInFlight = true;
+  if (notesSaveBtn) notesSaveBtn.disabled = true;
+  setNotesEditorStatus("Saving...");
+  try {
+    let savedMessage = null;
+    if (!activeNoteMessageId) {
+      if (!content.trim()) {
+        setNotesEditorStatus("Empty note");
+        return;
+      }
+      const res = await fetch(`/messages/${activeChannelId}`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content, parent_message_public_id: null }),
+      });
+      if (!res.ok) throw new Error("Failed to create note");
+      savedMessage = await res.json().catch(() => null);
+    } else {
+      savedMessage = await patchMessageContent(activeNoteMessageId, content);
+    }
+    activeNoteMessageId = savedMessage?.public_id || activeNoteMessageId;
+    activeNoteLoadedContent = content;
+    setDeliveredForContext("server", activeChannelId, savedMessage);
+    if (options.switchToPreview !== false) showNotesPreviewMode();
+    else if (notesPreviewVisible || notesOverlayEditing) renderActiveNotesPreview();
+    setNotesEditorStatus("Saved");
+    if (options.showSavedToast) showToast("Note saved");
+  } finally {
+    notesSaveInFlight = false;
+    if (notesSaveBtn) notesSaveBtn.disabled = false;
+  }
+}
+
+function getDefaultBattlemapState() {
+  return {
+    backgroundImage: "",
+    gridEnabled: true,
+    gridSize: 48,
+    gridOpacity: 0.22,
+    pawns: [],
+    currentTurnPawnId: null,
+    round: 1,
+  };
+}
+
+function normalizePawnConditions(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => String(item || "").trim())
+      .filter(Boolean)
+      .slice(0, 12);
+  }
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .slice(0, 12);
+  }
+  return [];
+}
+
+function normalizeBattlemapState(raw) {
+  const base = getDefaultBattlemapState();
+  const src = raw && typeof raw === "object" ? raw : {};
+  return {
+    ...base,
+    ...src,
+    gridEnabled: src.gridEnabled !== false,
+    gridSize: Math.max(16, Math.min(128, Number(src.gridSize) || base.gridSize)),
+    pawns: Array.isArray(src.pawns) ? src.pawns.map((p) => ({
+      id: String(p?.id || `pawn-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`),
+      name: String(p?.name || "Pawn"),
+      type: ["pc", "npc", "enemy"].includes(String(p?.type || "")) ? String(p.type) : "npc",
+      x: Math.max(0, Math.min(1, Number(p?.x) || 0.5)),
+      y: Math.max(0, Math.min(1, Number(p?.y) || 0.5)),
+      hp: Number.isFinite(Number(p?.hp)) ? Number(p.hp) : 10,
+      maxHp: Number.isFinite(Number(p?.maxHp)) ? Math.max(1, Number(p.maxHp)) : 10,
+      initiative: Number.isFinite(Number(p?.initiative)) ? Number(p.initiative) : 0,
+      color: String(p?.color || ""),
+      conditions: normalizePawnConditions(p?.conditions),
+      concentration: Boolean(p?.concentration),
+    })) : [],
+    currentTurnPawnId: src.currentTurnPawnId ? String(src.currentTurnPawnId) : null,
+    round: Math.max(1, Number(src.round) || base.round),
+  };
+}
+
+function getBattlemapChannelState(channelId) {
+  return normalizeBattlemapState(getStoredObject(getBattlemapStateStorageKey(channelId), getDefaultBattlemapState()));
+}
+
+function hasBattlemapStateContent(state) {
+  const normalized = normalizeBattlemapState(state);
+  return Boolean(normalized.backgroundImage || normalized.pawns.length);
+}
+
+function saveBattlemapChannelState(channelId, nextState) {
+  if (!channelId) return;
+  const stateToSave = nextState || getDefaultBattlemapState();
+  const storageKey = getBattlemapStateStorageKey(channelId);
+  try {
+    saveObject(storageKey, stateToSave);
+  } catch {
+    // Mobile Safari / PWA storage can fail on large map image Data URLs.
+    // Keep a lightweight cache so live battlemap sync/render still works.
+    try {
+      const fallbackState = {
+        ...normalizeBattlemapState(stateToSave),
+        backgroundImage: "",
+      };
+      saveObject(storageKey, fallbackState);
+    } catch {
+      // Ignore local cache failures; in-memory state + websocket sync can still function.
+    }
+  }
+}
+
+async function fetchBattlemapServerState(channelId) {
+  if (!channelId) return null;
+  if (battlemapServerLoadPromises.has(channelId)) return battlemapServerLoadPromises.get(channelId);
+  const promise = (async () => {
+    try {
+      const res = await fetch(`/channels/${channelId}/battlemap-state`, { credentials: "include" });
+      if (!res.ok) return null;
+      const payload = await res.json().catch(() => null);
+      return normalizeBattlemapState(payload?.state);
+    } catch {
+      return null;
+    }
+  })();
+  battlemapServerLoadPromises.set(channelId, promise);
+  try {
+    return await promise;
+  } finally {
+    battlemapServerLoadPromises.delete(channelId);
+  }
+}
+
+async function flushBattlemapServerStateSave(channelId) {
+  if (!channelId) return;
+  if (battlemapServerSaveInFlight.get(channelId)) {
+    battlemapServerSavePendingFlush.add(channelId);
+    return;
+  }
+  const state = battlemapServerSaveQueuedStates.get(channelId);
+  if (!state) return;
+  battlemapServerSaveInFlight.set(channelId, true);
+  try {
+    await fetch(`/channels/${channelId}/battlemap-state`, {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ state }),
+    });
+  } catch {
+    // Keep local/websocket state primary if persistence write fails.
+  } finally {
+    battlemapServerSaveInFlight.delete(channelId);
+    if (battlemapServerSavePendingFlush.has(channelId)) {
+      battlemapServerSavePendingFlush.delete(channelId);
+      if (battlemapServerSaveQueuedStates.has(channelId)) {
+        setTimeout(() => {
+          flushBattlemapServerStateSave(channelId).catch(() => {});
+        }, 50);
+      }
+    }
+  }
+}
+
+function queueBattlemapServerStateSave(channelId, state, { immediate = false } = {}) {
+  if (!channelId) return;
+  battlemapServerSaveQueuedStates.set(channelId, normalizeBattlemapState(state));
+  const existingTimer = battlemapServerSaveTimers.get(channelId);
+  if (existingTimer) {
+    clearTimeout(existingTimer);
+    battlemapServerSaveTimers.delete(channelId);
+  }
+  if (immediate) {
+    flushBattlemapServerStateSave(channelId).catch(() => {});
+    return;
+  }
+  const timer = setTimeout(() => {
+    battlemapServerSaveTimers.delete(channelId);
+    flushBattlemapServerStateSave(channelId).catch(() => {});
+  }, BATTLEMAP_SERVER_SAVE_DEBOUNCE_MS);
+  battlemapServerSaveTimers.set(channelId, timer);
+}
+
+function hydrateBattlemapStateFromServer(channelId, localStateAtOpen) {
+  if (!channelId) return;
+  fetchBattlemapServerState(channelId).then((serverState) => {
+    if (!serverState) return;
+    const serverHasContent = hasBattlemapStateContent(serverState);
+    const localHasContent = hasBattlemapStateContent(localStateAtOpen);
+    if (serverHasContent) {
+      saveBattlemapChannelState(channelId, serverState);
+      if (channelId === activeChannelId && activeChannelType === "battlemap") {
+        battlemapState = serverState;
+        if (
+          battlemapSelectedPawnId &&
+          !serverState.pawns.some((pawn) => pawn.id === battlemapSelectedPawnId)
+        ) {
+          battlemapSelectedPawnId = null;
+        }
+        renderBattlemapState();
+      }
+      return;
+    }
+    if (localHasContent) {
+      queueBattlemapServerStateSave(channelId, localStateAtOpen, { immediate: true });
+    }
+  }).catch(() => {});
+}
+
+function sendChannelSocketEvent(channelId, payload) {
+  if (!channelId || !payload || typeof payload !== "object") return false;
+  const socket = channelSockets.get(channelId);
+  if (!socket || socket.readyState !== WebSocket.OPEN) return false;
+  try {
+    socket.send(JSON.stringify(payload));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function persistBattlemapState(channelId, nextState, { broadcast = true, saveRemote = true } = {}) {
+  if (!channelId) return;
+  const normalized = normalizeBattlemapState(nextState);
+  saveBattlemapChannelState(channelId, normalized);
+  if (saveRemote) queueBattlemapServerStateSave(channelId, normalized);
+  if (broadcast) {
+    sendChannelSocketEvent(channelId, {
+      type: "battlemap_state_update",
+      state: normalized,
+    });
+  }
+}
+
+function getBattlemapPawnColor(pawn) {
+  if (pawn?.color) return pawn.color;
+  if (pawn?.type === "pc") return "#4da3ff";
+  if (pawn?.type === "enemy") return "#d95757";
+  return "#7f8c9f";
+}
+
+function ensureBattlemapShell() {
+  if (!messagesPanel) return;
+  const messagesMainPanel = messagesPanel.parentElement;
+  if (!messagesMainPanel) return;
+  if (battlemapShell && battlemapShell.isConnected) return;
+  if (battlemapShell && !battlemapShell.isConnected) {
+    battlemapShell = null;
+    battlemapCanvasEl = null;
+    battlemapGridOverlayEl = null;
+    battlemapPawnsLayerEl = null;
+    battlemapInitiativeListEl = null;
+    battlemapHealthListEl = null;
+    battlemapBackgroundInput = null;
+    battlemapGridToggleInput = null;
+    battlemapGridSizeInput = null;
+    battlemapGridSizeValue = null;
+    battlemapAddPawnBtn = null;
+    battlemapNextTurnBtn = null;
+    battlemapRoundLabelEl = null;
+    battlemapResetRoundBtn = null;
+  }
+
+  battlemapShell = document.createElement("div");
+  battlemapShell.className = "battlemap-shell hidden";
+  battlemapShell.style.display = "none";
+  battlemapShell.style.margin = "8px 8px 0";
+  battlemapShell.style.border = "1px solid rgba(255,255,255,0.12)";
+  battlemapShell.style.borderRadius = "12px";
+  battlemapShell.style.background = "rgba(255,255,255,0.04)";
+  battlemapShell.style.overflow = "auto";
+  battlemapShell.style.minHeight = "280px";
+  battlemapShell.style.height = "360px";
+  battlemapShell.style.maxHeight = "70vh";
+  battlemapShell.style.resize = "vertical";
+
+  const layout = document.createElement("div");
+  layout.style.display = "grid";
+  layout.style.gridTemplateColumns = "minmax(0, 1fr) 300px";
+  layout.style.height = "100%";
+  layout.style.minHeight = "280px";
+  battlemapShell.appendChild(layout);
+
+  const left = document.createElement("div");
+  left.style.display = "grid";
+  left.style.gridTemplateRows = "auto 1fr";
+  left.style.minHeight = "0";
+  left.style.borderRight = "1px solid rgba(255,255,255,0.08)";
+  layout.appendChild(left);
+
+  const controls = document.createElement("div");
+  controls.style.display = "flex";
+  controls.style.flexWrap = "wrap";
+  controls.style.gap = "8px";
+  controls.style.padding = "8px";
+  controls.style.alignItems = "center";
+  controls.style.background = "rgba(255,255,255,0.03)";
+  left.appendChild(controls);
+
+  const uploadBtn = document.createElement("button");
+  uploadBtn.type = "button";
+  uploadBtn.className = "topbar-btn";
+  uploadBtn.textContent = "Map Image";
+  controls.appendChild(uploadBtn);
+
+  battlemapBackgroundInput = document.createElement("input");
+  battlemapBackgroundInput.type = "file";
+  battlemapBackgroundInput.accept = "image/*";
+  battlemapBackgroundInput.hidden = true;
+  controls.appendChild(battlemapBackgroundInput);
+
+  const clearMapBtn = document.createElement("button");
+  clearMapBtn.type = "button";
+  clearMapBtn.className = "topbar-btn";
+  clearMapBtn.textContent = "Clear Map";
+  controls.appendChild(clearMapBtn);
+
+  const gridLabel = document.createElement("label");
+  gridLabel.style.display = "inline-flex";
+  gridLabel.style.alignItems = "center";
+  gridLabel.style.gap = "6px";
+  gridLabel.style.fontSize = "12px";
+  battlemapGridToggleInput = document.createElement("input");
+  battlemapGridToggleInput.type = "checkbox";
+  gridLabel.appendChild(battlemapGridToggleInput);
+  gridLabel.appendChild(document.createTextNode("Grid"));
+  controls.appendChild(gridLabel);
+
+  const gridSizeWrap = document.createElement("label");
+  gridSizeWrap.style.display = "inline-flex";
+  gridSizeWrap.style.alignItems = "center";
+  gridSizeWrap.style.gap = "6px";
+  gridSizeWrap.style.fontSize = "12px";
+  gridSizeWrap.appendChild(document.createTextNode("Size"));
+  battlemapGridSizeInput = document.createElement("input");
+  battlemapGridSizeInput.type = "range";
+  battlemapGridSizeInput.min = "16";
+  battlemapGridSizeInput.max = "128";
+  battlemapGridSizeInput.step = "1";
+  battlemapGridSizeInput.style.width = "100px";
+  gridSizeWrap.appendChild(battlemapGridSizeInput);
+  battlemapGridSizeValue = document.createElement("span");
+  battlemapGridSizeValue.style.color = "var(--muted)";
+  battlemapGridSizeValue.style.fontSize = "12px";
+  gridSizeWrap.appendChild(battlemapGridSizeValue);
+  controls.appendChild(gridSizeWrap);
+
+  battlemapAddPawnBtn = document.createElement("button");
+  battlemapAddPawnBtn.type = "button";
+  battlemapAddPawnBtn.className = "topbar-btn";
+  battlemapAddPawnBtn.textContent = "Add Pawn";
+  controls.appendChild(battlemapAddPawnBtn);
+
+  const mapWrap = document.createElement("div");
+  mapWrap.style.position = "relative";
+  mapWrap.style.minHeight = "220px";
+  mapWrap.style.height = "100%";
+  mapWrap.style.background = "rgba(0,0,0,0.16)";
+  mapWrap.style.overflow = "hidden";
+  left.appendChild(mapWrap);
+
+  battlemapCanvasEl = document.createElement("div");
+  battlemapCanvasEl.style.position = "absolute";
+  battlemapCanvasEl.style.inset = "0";
+  battlemapCanvasEl.style.backgroundPosition = "center";
+  battlemapCanvasEl.style.backgroundSize = "contain";
+  battlemapCanvasEl.style.backgroundRepeat = "no-repeat";
+  battlemapCanvasEl.style.backgroundColor = "rgba(0,0,0,0.18)";
+  mapWrap.appendChild(battlemapCanvasEl);
+
+  battlemapGridOverlayEl = document.createElement("div");
+  battlemapGridOverlayEl.style.position = "absolute";
+  battlemapGridOverlayEl.style.inset = "0";
+  battlemapGridOverlayEl.style.pointerEvents = "none";
+  mapWrap.appendChild(battlemapGridOverlayEl);
+
+  battlemapPawnsLayerEl = document.createElement("div");
+  battlemapPawnsLayerEl.style.position = "absolute";
+  battlemapPawnsLayerEl.style.inset = "0";
+  battlemapPawnsLayerEl.style.pointerEvents = "auto";
+  mapWrap.appendChild(battlemapPawnsLayerEl);
+
+  const right = document.createElement("div");
+  right.style.display = "grid";
+  right.style.gridTemplateRows = "auto 1fr 1fr";
+  right.style.minHeight = "0";
+  layout.appendChild(right);
+
+  const sideHeader = document.createElement("div");
+  sideHeader.style.display = "flex";
+  sideHeader.style.justifyContent = "space-between";
+  sideHeader.style.alignItems = "center";
+  sideHeader.style.padding = "8px 10px";
+  sideHeader.style.borderBottom = "1px solid rgba(255,255,255,0.08)";
+  const sideTitleWrap = document.createElement("div");
+  sideTitleWrap.style.display = "grid";
+  sideTitleWrap.style.gap = "2px";
+  const sideTitle = document.createElement("strong");
+  sideTitle.style.fontSize = "13px";
+  sideTitle.textContent = "Battle Tools";
+  battlemapRoundLabelEl = document.createElement("span");
+  battlemapRoundLabelEl.style.fontSize = "11px";
+  battlemapRoundLabelEl.style.color = "var(--muted)";
+  battlemapRoundLabelEl.textContent = "Round 1";
+  sideTitleWrap.appendChild(sideTitle);
+  sideTitleWrap.appendChild(battlemapRoundLabelEl);
+  sideHeader.appendChild(sideTitleWrap);
+  const sideButtons = document.createElement("div");
+  sideButtons.style.display = "inline-flex";
+  sideButtons.style.gap = "6px";
+  battlemapResetRoundBtn = document.createElement("button");
+  battlemapResetRoundBtn.type = "button";
+  battlemapResetRoundBtn.className = "topbar-btn";
+  battlemapResetRoundBtn.textContent = "Reset";
+  sideButtons.appendChild(battlemapResetRoundBtn);
+  battlemapNextTurnBtn = document.createElement("button");
+  battlemapNextTurnBtn.type = "button";
+  battlemapNextTurnBtn.className = "topbar-btn";
+  battlemapNextTurnBtn.textContent = "Next Turn";
+  sideButtons.appendChild(battlemapNextTurnBtn);
+  sideHeader.appendChild(sideButtons);
+  right.appendChild(sideHeader);
+
+  const initPane = document.createElement("div");
+  initPane.style.minHeight = "0";
+  initPane.style.overflow = "auto";
+  initPane.style.padding = "8px";
+  initPane.style.borderBottom = "1px solid rgba(255,255,255,0.08)";
+  initPane.innerHTML = "<div style='font-weight:600;font-size:12px;margin-bottom:6px;'>Initiative</div>";
+  battlemapInitiativeListEl = document.createElement("div");
+  battlemapInitiativeListEl.style.display = "grid";
+  battlemapInitiativeListEl.style.gap = "6px";
+  initPane.appendChild(battlemapInitiativeListEl);
+  right.appendChild(initPane);
+
+  const hpPane = document.createElement("div");
+  hpPane.style.minHeight = "0";
+  hpPane.style.overflow = "auto";
+  hpPane.style.padding = "8px";
+  hpPane.innerHTML = "<div style='font-weight:600;font-size:12px;margin-bottom:6px;'>Health</div>";
+  battlemapHealthListEl = document.createElement("div");
+  battlemapHealthListEl.style.display = "grid";
+  battlemapHealthListEl.style.gap = "6px";
+  hpPane.appendChild(battlemapHealthListEl);
+  right.appendChild(hpPane);
+
+  if (messagesPanel) messagesMainPanel.insertBefore(battlemapShell, messagesPanel);
+  else messagesMainPanel.appendChild(battlemapShell);
+
+  uploadBtn.addEventListener("click", () => battlemapBackgroundInput?.click());
+  battlemapBackgroundInput.addEventListener("change", () => {
+    const file = battlemapBackgroundInput.files?.[0];
+    if (!file || !activeChannelId || activeChannelType !== "battlemap") return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (!battlemapState) return;
+      battlemapState.backgroundImage = typeof reader.result === "string" ? reader.result : "";
+      persistBattlemapState(activeChannelId, battlemapState);
+      renderBattlemapState();
+    };
+    reader.readAsDataURL(file);
+  });
+  clearMapBtn.addEventListener("click", () => {
+    if (!battlemapState || !activeChannelId) return;
+    battlemapState.backgroundImage = "";
+    persistBattlemapState(activeChannelId, battlemapState);
+    renderBattlemapState();
+  });
+  battlemapGridToggleInput.addEventListener("change", () => {
+    if (!battlemapState || !activeChannelId) return;
+    battlemapState.gridEnabled = !!battlemapGridToggleInput.checked;
+    persistBattlemapState(activeChannelId, battlemapState);
+    renderBattlemapState();
+  });
+  battlemapGridSizeInput.addEventListener("input", () => {
+    if (!battlemapState || !activeChannelId) return;
+    battlemapState.gridSize = Math.max(16, Math.min(128, Number(battlemapGridSizeInput.value) || 48));
+    persistBattlemapState(activeChannelId, battlemapState);
+    renderBattlemapState();
+  });
+  battlemapAddPawnBtn.addEventListener("click", () => {
+    if (!battlemapState || !activeChannelId) return;
+    const name = window.prompt("Pawn name:");
+    if (!name || !name.trim()) return;
+    const typeRaw = (window.prompt("Pawn type: pc / npc / enemy", "npc") || "npc").trim().toLowerCase();
+    const type = ["pc", "npc", "enemy"].includes(typeRaw) ? typeRaw : "npc";
+    const pawn = {
+      id: `pawn-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      name: name.trim(),
+      type,
+      x: 0.5 + (Math.random() * 0.16 - 0.08),
+      y: 0.5 + (Math.random() * 0.16 - 0.08),
+      hp: type === "enemy" ? 15 : 20,
+      maxHp: type === "enemy" ? 15 : 20,
+      initiative: 0,
+      color: "",
+      conditions: [],
+      concentration: false,
+    };
+    battlemapState.pawns.push(pawn);
+    if (!battlemapState.currentTurnPawnId) battlemapState.currentTurnPawnId = pawn.id;
+    persistBattlemapState(activeChannelId, battlemapState);
+    renderBattlemapState();
+  });
+  battlemapResetRoundBtn.addEventListener("click", () => {
+    if (!battlemapState || !activeChannelId) return;
+    battlemapState.round = 1;
+    const sorted = [...battlemapState.pawns].sort((a, b) => Number(b.initiative || 0) - Number(a.initiative || 0));
+    battlemapState.currentTurnPawnId = sorted[0]?.id || battlemapState.pawns[0]?.id || null;
+    persistBattlemapState(activeChannelId, battlemapState);
+    renderBattlemapState();
+  });
+  battlemapNextTurnBtn.addEventListener("click", () => {
+    if (!battlemapState || !battlemapState.pawns.length || !activeChannelId) return;
+    const sorted = [...battlemapState.pawns].sort((a, b) => Number(b.initiative || 0) - Number(a.initiative || 0));
+    if (!sorted.length) return;
+    const idx = Math.max(0, sorted.findIndex((p) => p.id === battlemapState.currentTurnPawnId));
+    const next = sorted[(idx + 1) % sorted.length];
+    if (idx === sorted.length - 1 && sorted.length > 1) {
+      battlemapState.round = Math.max(1, Number(battlemapState.round || 1)) + 1;
+    }
+    battlemapState.currentTurnPawnId = next.id;
+    persistBattlemapState(activeChannelId, battlemapState);
+    renderBattlemapState();
+  });
+
+  const onDragMove = (event) => {
+    if (!battlemapDragState || !battlemapState || !battlemapPawnsLayerEl || !activeChannelId) return;
+    const rect = battlemapPawnsLayerEl.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const x = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+    const y = Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height));
+    const pawn = battlemapState.pawns.find((p) => p.id === battlemapDragState.pawnId);
+    if (!pawn) return;
+    pawn.x = x;
+    pawn.y = y;
+    renderBattlemapPawns();
+  };
+  const onDragEnd = () => {
+    if (!battlemapDragState || !battlemapState || !activeChannelId) return;
+    battlemapDragState = null;
+    persistBattlemapState(activeChannelId, battlemapState);
+    renderBattlemapTrackers();
+  };
+  window.addEventListener("pointermove", onDragMove);
+  window.addEventListener("pointerup", onDragEnd);
+}
+
+function renderBattlemapPawns() {
+  if (!battlemapPawnsLayerEl || !battlemapState) return;
+  battlemapPawnsLayerEl.innerHTML = "";
+  (battlemapState.pawns || []).forEach((pawn) => {
+    const token = document.createElement("button");
+    token.type = "button";
+    token.className = "battlemap-pawn-token";
+    token.title = `${pawn.name} (${pawn.type})`;
+    token.style.position = "absolute";
+    token.style.left = `${(pawn.x || 0.5) * 100}%`;
+    token.style.top = `${(pawn.y || 0.5) * 100}%`;
+    token.style.transform = "translate(-50%, -50%)";
+    token.style.width = "34px";
+    token.style.height = "34px";
+    token.style.borderRadius = "999px";
+    token.style.border = pawn.id === battlemapState.currentTurnPawnId ? "2px solid #ffd166" : "2px solid rgba(255,255,255,0.75)";
+    token.style.background = getBattlemapPawnColor(pawn);
+    token.style.color = "#fff";
+    token.style.fontWeight = "700";
+    token.style.fontSize = "11px";
+    token.style.boxShadow = "0 4px 10px rgba(0,0,0,0.25)";
+    token.style.cursor = "grab";
+    token.textContent = String(pawn.name || "?").trim().slice(0, 2).toUpperCase();
+    token.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      battlemapSelectedPawnId = pawn.id;
+      battlemapDragState = { pawnId: pawn.id };
+      token.style.cursor = "grabbing";
+      renderBattlemapTrackers();
+    });
+    token.addEventListener("click", (event) => {
+      event.preventDefault();
+      battlemapSelectedPawnId = pawn.id;
+      renderBattlemapTrackers();
+    });
+    battlemapPawnsLayerEl.appendChild(token);
+  });
+}
+
+function renderBattlemapTrackers() {
+  if (!battlemapState) return;
+  const pawns = Array.isArray(battlemapState.pawns) ? battlemapState.pawns : [];
+  if (battlemapRoundLabelEl) {
+    battlemapRoundLabelEl.textContent = `Round ${Math.max(1, Number(battlemapState.round || 1))}`;
+  }
+  if (battlemapInitiativeListEl) {
+    battlemapInitiativeListEl.innerHTML = "";
+    const sorted = [...pawns].sort((a, b) => Number(b.initiative || 0) - Number(a.initiative || 0));
+    if (!sorted.length) {
+      const empty = document.createElement("div");
+      empty.style.color = "var(--muted)";
+      empty.style.fontSize = "12px";
+      empty.textContent = "No pawns yet";
+      battlemapInitiativeListEl.appendChild(empty);
+    } else {
+      sorted.forEach((pawn) => {
+        const row = document.createElement("div");
+        row.style.display = "grid";
+        row.style.gridTemplateColumns = "18px minmax(0,1fr) 56px";
+        row.style.gap = "6px";
+        row.style.alignItems = "center";
+        row.style.padding = "6px";
+        row.style.border = "1px solid rgba(255,255,255,0.08)";
+        row.style.borderRadius = "8px";
+        row.style.background = pawn.id === battlemapState.currentTurnPawnId ? "rgba(255,209,102,0.12)" : "rgba(255,255,255,0.03)";
+        const dot = document.createElement("span");
+        dot.style.width = "12px";
+        dot.style.height = "12px";
+        dot.style.borderRadius = "999px";
+        dot.style.background = getBattlemapPawnColor(pawn);
+        row.appendChild(dot);
+        const name = document.createElement("button");
+        name.type = "button";
+        name.style.border = "none";
+        name.style.background = "transparent";
+        name.style.color = "inherit";
+        name.style.textAlign = "left";
+        name.style.padding = "0";
+        name.style.cursor = "pointer";
+        name.style.overflow = "hidden";
+        name.style.textOverflow = "ellipsis";
+        name.style.whiteSpace = "nowrap";
+        name.textContent = pawn.concentration ? `${pawn.name} [C]` : pawn.name;
+        if (Array.isArray(pawn.conditions) && pawn.conditions.length > 0) {
+          name.title = `${pawn.name} - ${pawn.conditions.join(", ")}`;
+        }
+        name.addEventListener("click", () => {
+          battlemapState.currentTurnPawnId = pawn.id;
+          battlemapSelectedPawnId = pawn.id;
+          if (activeChannelId) persistBattlemapState(activeChannelId, battlemapState);
+          renderBattlemapState();
+        });
+        row.appendChild(name);
+        const initInput = document.createElement("input");
+        initInput.type = "number";
+        initInput.value = String(Number(pawn.initiative || 0));
+        initInput.style.width = "56px";
+        initInput.style.height = "28px";
+        initInput.style.background = "rgba(255,255,255,0.08)";
+        initInput.style.border = "1px solid rgba(255,255,255,0.12)";
+        initInput.style.borderRadius = "6px";
+        initInput.style.color = "inherit";
+        initInput.addEventListener("change", () => {
+          pawn.initiative = Number(initInput.value) || 0;
+          if (activeChannelId) persistBattlemapState(activeChannelId, battlemapState);
+          renderBattlemapTrackers();
+        });
+        row.appendChild(initInput);
+        battlemapInitiativeListEl.appendChild(row);
+      });
+    }
+  }
+
+  if (battlemapHealthListEl) {
+    battlemapHealthListEl.innerHTML = "";
+    pawns.forEach((pawn) => {
+      const row = document.createElement("div");
+      row.style.display = "grid";
+      row.style.gridTemplateColumns = "minmax(0,1fr) auto auto auto auto auto auto";
+      row.style.gap = "6px";
+      row.style.alignItems = "center";
+      row.style.padding = "6px";
+      row.style.border = "1px solid rgba(255,255,255,0.08)";
+      row.style.borderRadius = "8px";
+      row.style.background = pawn.id === battlemapSelectedPawnId ? "rgba(121,198,255,0.12)" : "rgba(255,255,255,0.03)";
+      pawn.maxHp = Math.max(1, Number(pawn.maxHp || 1));
+      pawn.hp = Math.max(0, Math.min(Number(pawn.hp || 0), pawn.maxHp));
+      const name = document.createElement("span");
+      name.style.minWidth = "0";
+      name.style.overflow = "hidden";
+      name.style.textOverflow = "ellipsis";
+      name.style.whiteSpace = "nowrap";
+      name.textContent = pawn.concentration ? `${pawn.name} [C]` : pawn.name;
+      if (pawn.hp <= 0) {
+        row.style.opacity = "0.66";
+        name.style.textDecoration = "line-through";
+      }
+      row.appendChild(name);
+      const hpInput = document.createElement("input");
+      hpInput.type = "number";
+      hpInput.value = String(Number(pawn.hp || 0));
+      hpInput.style.width = "52px";
+      hpInput.style.height = "28px";
+      hpInput.style.background = "rgba(255,255,255,0.08)";
+      hpInput.style.border = "1px solid rgba(255,255,255,0.12)";
+      hpInput.style.borderRadius = "6px";
+      hpInput.style.color = "inherit";
+      hpInput.addEventListener("change", () => {
+        pawn.hp = Math.max(0, Number(hpInput.value) || 0);
+        if (activeChannelId) persistBattlemapState(activeChannelId, battlemapState);
+        renderBattlemapTrackers();
+      });
+      row.appendChild(hpInput);
+      const slash = document.createElement("span");
+      slash.textContent = "/";
+      slash.style.color = "var(--muted)";
+      row.appendChild(slash);
+      const maxInput = document.createElement("input");
+      maxInput.type = "number";
+      maxInput.value = String(Math.max(1, Number(pawn.maxHp || 1)));
+      maxInput.style.width = "52px";
+      maxInput.style.height = "28px";
+      maxInput.style.background = "rgba(255,255,255,0.08)";
+      maxInput.style.border = "1px solid rgba(255,255,255,0.12)";
+      maxInput.style.borderRadius = "6px";
+      maxInput.style.color = "inherit";
+      maxInput.addEventListener("change", () => {
+        pawn.maxHp = Math.max(1, Number(maxInput.value) || 1);
+        pawn.hp = Math.min(pawn.hp, pawn.maxHp);
+        hpInput.value = String(pawn.hp);
+        if (activeChannelId) persistBattlemapState(activeChannelId, battlemapState);
+        renderBattlemapTrackers();
+      });
+      row.appendChild(maxInput);
+      const damageBtn = document.createElement("button");
+      damageBtn.type = "button";
+      damageBtn.textContent = "-1";
+      damageBtn.className = "topbar-btn";
+      damageBtn.style.height = "26px";
+      damageBtn.style.minWidth = "34px";
+      damageBtn.style.padding = "0 6px";
+      damageBtn.addEventListener("click", () => {
+        pawn.hp = Math.max(0, Number(pawn.hp || 0) - 1);
+        hpInput.value = String(pawn.hp);
+        if (activeChannelId) persistBattlemapState(activeChannelId, battlemapState);
+        renderBattlemapTrackers();
+      });
+      row.appendChild(damageBtn);
+      const healBtn = document.createElement("button");
+      healBtn.type = "button";
+      healBtn.textContent = "+1";
+      healBtn.className = "topbar-btn";
+      healBtn.style.height = "26px";
+      healBtn.style.minWidth = "34px";
+      healBtn.style.padding = "0 6px";
+      healBtn.addEventListener("click", () => {
+        pawn.hp = Math.min(Math.max(1, Number(pawn.maxHp || 1)), Number(pawn.hp || 0) + 1);
+        hpInput.value = String(pawn.hp);
+        if (activeChannelId) persistBattlemapState(activeChannelId, battlemapState);
+        renderBattlemapTrackers();
+      });
+      row.appendChild(healBtn);
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.textContent = "x";
+      removeBtn.title = "Remove pawn";
+      removeBtn.style.width = "26px";
+      removeBtn.style.height = "26px";
+      removeBtn.style.borderRadius = "999px";
+      removeBtn.style.border = "none";
+      removeBtn.style.background = "rgba(209,71,71,0.85)";
+      removeBtn.style.color = "#fff";
+      removeBtn.style.cursor = "pointer";
+      removeBtn.addEventListener("click", () => {
+        battlemapState.pawns = battlemapState.pawns.filter((p) => p.id !== pawn.id);
+        if (battlemapState.currentTurnPawnId === pawn.id) {
+          battlemapState.currentTurnPawnId = battlemapState.pawns[0]?.id || null;
+        }
+        if (battlemapSelectedPawnId === pawn.id) battlemapSelectedPawnId = null;
+        if (activeChannelId) persistBattlemapState(activeChannelId, battlemapState);
+        renderBattlemapState();
+      });
+      row.appendChild(removeBtn);
+      battlemapHealthListEl.appendChild(row);
+
+      const detailsRow = document.createElement("div");
+      detailsRow.style.display = "grid";
+      detailsRow.style.gridTemplateColumns = "minmax(0,1fr) auto";
+      detailsRow.style.gap = "8px";
+      detailsRow.style.alignItems = "center";
+      detailsRow.style.padding = "0 2px 8px";
+
+      const conditionsInput = document.createElement("input");
+      conditionsInput.type = "text";
+      conditionsInput.placeholder = "Conditions (comma separated)";
+      conditionsInput.value = Array.isArray(pawn.conditions) ? pawn.conditions.join(", ") : "";
+      conditionsInput.style.width = "100%";
+      conditionsInput.style.height = "28px";
+      conditionsInput.style.background = "rgba(255,255,255,0.06)";
+      conditionsInput.style.border = "1px solid rgba(255,255,255,0.12)";
+      conditionsInput.style.borderRadius = "6px";
+      conditionsInput.style.color = "inherit";
+      conditionsInput.style.padding = "0 8px";
+      conditionsInput.addEventListener("change", () => {
+        pawn.conditions = normalizePawnConditions(conditionsInput.value);
+        if (activeChannelId) persistBattlemapState(activeChannelId, battlemapState);
+        renderBattlemapTrackers();
+      });
+
+      const concentrationLabel = document.createElement("label");
+      concentrationLabel.style.display = "inline-flex";
+      concentrationLabel.style.alignItems = "center";
+      concentrationLabel.style.gap = "6px";
+      concentrationLabel.style.fontSize = "12px";
+      concentrationLabel.style.color = "var(--muted)";
+      const concentrationInput = document.createElement("input");
+      concentrationInput.type = "checkbox";
+      concentrationInput.checked = Boolean(pawn.concentration);
+      concentrationInput.addEventListener("change", () => {
+        pawn.concentration = !!concentrationInput.checked;
+        if (activeChannelId) persistBattlemapState(activeChannelId, battlemapState);
+        renderBattlemapTrackers();
+      });
+      concentrationLabel.appendChild(concentrationInput);
+      concentrationLabel.appendChild(document.createTextNode("Concentration"));
+
+      detailsRow.appendChild(conditionsInput);
+      detailsRow.appendChild(concentrationLabel);
+      battlemapHealthListEl.appendChild(detailsRow);
+    });
+  }
+}
+
+function renderBattlemapState() {
+  if (!battlemapShell || !battlemapState) return;
+  if (battlemapGridToggleInput) battlemapGridToggleInput.checked = battlemapState.gridEnabled !== false;
+  if (battlemapGridSizeInput) battlemapGridSizeInput.value = String(battlemapState.gridSize || 48);
+  if (battlemapGridSizeValue) battlemapGridSizeValue.textContent = `${Math.round(Number(battlemapState.gridSize || 48))}px`;
+  if (battlemapCanvasEl) {
+    battlemapCanvasEl.style.backgroundImage = battlemapState.backgroundImage ? `url("${battlemapState.backgroundImage}")` : "none";
+  }
+  if (battlemapGridOverlayEl) {
+    const size = Math.max(16, Number(battlemapState.gridSize || 48));
+    const alpha = Math.max(0.05, Math.min(0.6, Number(battlemapState.gridOpacity || 0.22)));
+    battlemapGridOverlayEl.style.display = battlemapState.gridEnabled === false ? "none" : "";
+    battlemapGridOverlayEl.style.backgroundImage = `linear-gradient(to right, rgba(255,255,255,${alpha}) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,${alpha}) 1px, transparent 1px)`;
+    battlemapGridOverlayEl.style.backgroundSize = `${size}px ${size}px`;
+  }
+  renderBattlemapPawns();
+  renderBattlemapTrackers();
+}
+
+function loadBattlemapPage(channelPublicId) {
+  ensureBattlemapShell();
+  battlemapState = getBattlemapChannelState(channelPublicId);
+  if (!battlemapState.round) battlemapState.round = 1;
+  if (!battlemapState.currentTurnPawnId && battlemapState.pawns[0]?.id) {
+    const sorted = [...battlemapState.pawns].sort((a, b) => Number(b.initiative || 0) - Number(a.initiative || 0));
+    battlemapState.currentTurnPawnId = sorted[0]?.id || battlemapState.pawns[0].id;
+    persistBattlemapState(channelPublicId, battlemapState, { broadcast: false });
+  }
+  if (battlemapShell) {
+    battlemapShell.classList.remove("hidden");
+    battlemapShell.style.display = "block";
+  }
+  renderBattlemapState();
+  hydrateBattlemapStateFromServer(channelPublicId, battlemapState);
+  sendChannelSocketEvent(channelPublicId, { type: "battlemap_state_request" });
 }
 
 function applyUnreadStyles() {
@@ -2209,6 +6518,8 @@ function applyUnreadStyles() {
     const channelId = el.dataset.channelId;
     el.classList.toggle("has-unread", unreadChannels.has(channelId));
   });
+  updateServerSwitcherNotificationState();
+  updateDmQuickButtonState();
 }
 
 function markChannelRead(channelId) {
@@ -2292,7 +6603,7 @@ function handleTypingEvent(channelId, eventType, payload) {
 
 function renderTypingIndicator() {
   if (!typingIndicator) return;
-  if (activeMode !== "server" || activeChannelType === "voice" || !activeChannelId) {
+  if (activeMode !== "server" || activeChannelType === "voice" || activeChannelType === "notes" || !activeChannelId) {
     typingIndicator.classList.add("hidden");
     typingIndicator.textContent = "";
     return;
@@ -2313,10 +6624,8 @@ function renderTypingIndicator() {
 }
 
 function sendTypingEvent(eventType) {
-  if (activeMode !== "server" || !activeChannelId || activeChannelType === "voice") return;
-  const socket = channelSockets.get(activeChannelId);
-  if (!socket || socket.readyState !== WebSocket.OPEN) return;
-  socket.send(JSON.stringify({ type: eventType }));
+  if (activeMode !== "server" || !activeChannelId || activeChannelType === "voice" || activeChannelType === "notes") return;
+  sendChannelSocketEvent(activeChannelId, { type: eventType });
 }
 
 function stopTypingNow() {
@@ -2361,19 +6670,27 @@ async function loadServerMembersModal() {
       const name = document.createElement("div");
       name.className = "member-name";
       const nicknameText = (member.nickname || "").trim();
-      name.textContent = nicknameText
-        ? `${nicknameText} (@${member.username}) (${member.role})`
-        : `${member.username} (${member.role})`;
+      let currentRoleLabel = String(member.role || "member");
+      let nickInput = null;
+      const updateMemberNameLabel = (nextNicknameRaw = nicknameText) => {
+        const nextNickname = String(nextNicknameRaw || "").trim();
+        name.textContent = nextNickname
+          ? `${nextNickname} (@${member.username}) (${currentRoleLabel})`
+          : `${member.username} (${currentRoleLabel})`;
+      };
+      updateMemberNameLabel(nicknameText);
       const pid = document.createElement("div");
       pid.className = "member-public-id";
       pid.textContent = member.user_public_id;
+      attachPublicUserProfileTrigger(name, member.user_public_id);
+      attachPublicUserProfileTrigger(pid, member.user_public_id);
       left.appendChild(name);
       left.appendChild(pid);
 
       if (member.user_id === currentUserId) {
         const nickRow = document.createElement("div");
         nickRow.className = "member-nickname-controls";
-        const nickInput = document.createElement("input");
+        nickInput = document.createElement("input");
         const draftKey = member.user_public_id;
         nickInput.type = "text";
         nickInput.className = "member-nickname-input";
@@ -2384,6 +6701,7 @@ async function loadServerMembersModal() {
           : nicknameText;
         nickInput.addEventListener("input", () => {
           memberNicknameDrafts.set(draftKey, nickInput.value);
+          updateMemberNameLabel(nickInput.value);
         });
         const saveBtn = document.createElement("button");
         saveBtn.type = "button";
@@ -2407,6 +6725,7 @@ async function loadServerMembersModal() {
           try {
             nickInput.value = "";
             memberNicknameDrafts.set(draftKey, "");
+            updateMemberNameLabel("");
             await patchServerMemberNickname(activeServerId, member.user_public_id, "");
             memberNicknameDrafts.delete(draftKey);
             await loadServerMembersModal();
@@ -2428,7 +6747,11 @@ async function loadServerMembersModal() {
       const isOnline = online.has(member.user_public_id);
       if (isOnline) dot.classList.add("online");
       const label = document.createElement("span");
-      label.textContent = isOnline ? "Online" : "Offline";
+      decoratePresenceLabelWithCustomStatus(label, isOnline, "");
+      attachPublicUserProfileTrigger(label, member.user_public_id);
+      fetchPublicUserProfile(member.user_public_id).then((profile) => {
+        decoratePresenceLabelWithCustomStatus(label, isOnline, profile?.custom_status || "");
+      }).catch(() => {});
       presence.appendChild(dot);
       presence.appendChild(label);
 
@@ -2442,10 +6765,16 @@ async function loadServerMembersModal() {
         roleSelect.appendChild(option);
       });
       roleSelect.addEventListener("change", async () => {
+        const selectedLabel = roleSelect.options[roleSelect.selectedIndex]?.textContent || roleSelect.value;
+        const previousRoleLabel = currentRoleLabel;
+        currentRoleLabel = String(selectedLabel || "").trim() || previousRoleLabel;
+        updateMemberNameLabel(nickInput ? nickInput.value : nicknameText);
         try {
           await assignServerMemberRole(activeServerId, member.user_public_id, roleSelect.value);
           await loadServerMembersModal();
         } catch (err) {
+          currentRoleLabel = previousRoleLabel;
+          updateMemberNameLabel(nickInput ? nickInput.value : nicknameText);
           alert(err.message || "Failed to change member role");
         }
       });
@@ -2455,6 +6784,8 @@ async function loadServerMembersModal() {
       row.appendChild(roleSelect);
       membersListEl.appendChild(row);
     });
+  enhanceCustomSelects(membersListEl);
+  syncCustomSelects(membersListEl);
 }
 
 function setVoiceStatus(text) {
@@ -2463,18 +6794,142 @@ function setVoiceStatus(text) {
 
 function updateTextVsVoiceUI() {
   const isVoice = activeChannelType === "voice";
+  const isNotes = activeChannelType === "notes";
+  const isBattlemap = activeChannelType === "battlemap";
+  const messagesMainPanel = messagesPanel ? messagesPanel.parentElement : null;
+  if (messagesMainPanel) messagesMainPanel.classList.toggle("battlemap-chat-split", isBattlemap);
   if (voicePanel) voicePanel.classList.toggle("hidden", !isVoice);
   if (messagesPanel) messagesPanel.classList.toggle("hidden", isVoice);
-  if (messageBar) messageBar.classList.toggle("hidden", isVoice);
+  if (messageBar) {
+    const hideComposer = isVoice || isNotes;
+    messageBar.classList.toggle("hidden", hideComposer);
+    messageBar.style.display = hideComposer ? "none" : "";
+    messageBar.toggleAttribute("hidden", hideComposer);
+  }
+  if (replyPreview) {
+    if (isVoice || isNotes) {
+      replyPreview.classList.add("hidden");
+      replyPreview.style.display = "none";
+    } else {
+      // Restore default styling and let setPendingReply() control visibility.
+      replyPreview.style.display = "";
+    }
+  }
+  if (typingIndicator && (isVoice || isNotes)) {
+    typingIndicator.classList.add("hidden");
+    typingIndicator.textContent = "";
+  }
+  if (messageSearchBar) {
+    if (isVoice || isNotes) {
+      messageSearchBar.classList.add("hidden");
+      messageSearchBar.style.display = "none";
+    } else {
+      messageSearchBar.style.display = "";
+    }
+  }
+  if (messageSearchToggleBtn) messageSearchToggleBtn.classList.toggle("hidden", isVoice || isNotes);
+  if (channelPinsBtn) {
+    const hidePins = activeMode !== "server" || isVoice || isNotes || !activeChannelId;
+    channelPinsBtn.classList.toggle("hidden", hidePins);
+    if (hidePins && pinsModal?.classList?.contains("open")) closeModal(pinsModal);
+  }
+  if (notesEditorShell) notesEditorShell.classList.toggle("hidden", !isNotes);
+  if (battlemapShell) battlemapShell.classList.toggle("hidden", !isBattlemap);
+  if (battlemapShell) battlemapShell.style.display = isBattlemap ? "block" : "none";
   if (isVoice && typingIndicator) {
     typingIndicator.classList.add("hidden");
     typingIndicator.textContent = "";
   }
-  if (isVoice) setJumpUnreadVisible(false);
+  if (isVoice || isNotes) setJumpUnreadVisible(false);
+  if (jumpUnreadBtn && (isVoice || isNotes)) jumpUnreadBtn.classList.add("hidden");
   if (isVoice && voiceChannelTitle) {
     const channelName = channelNameById.get(activeChannelId) || "Voice Channel";
     voiceChannelTitle.textContent = channelName;
   }
+  if (!isNotes && notesEditorShell) notesEditorShell.classList.add("hidden");
+  if (!isBattlemap && battlemapShell) battlemapShell.classList.add("hidden");
+  updateComposerPlaceholder();
+  updateMobileNavigationState();
+}
+
+function isMobileDashboardLayout() {
+  return window.matchMedia("(max-width: 900px)").matches;
+}
+
+function ensureMobileChannelBackButton() {
+  if (mobileChannelBackBtn?.isConnected) return;
+  if (!messagesTopbarTitleWrap) return;
+  mobileChannelBackBtn = document.createElement("button");
+  mobileChannelBackBtn.type = "button";
+  mobileChannelBackBtn.id = "mobile-channel-back-btn";
+  mobileChannelBackBtn.className = "topbar-btn hidden";
+  mobileChannelBackBtn.textContent = "Back";
+  mobileChannelBackBtn.addEventListener("click", () => {
+    if (!isMobileDashboardLayout()) return;
+    if (activeMode !== "server" || !activeChannelId) return;
+    stopTypingNow();
+    if (activeChannelType === "voice") leaveVoiceChannel();
+    activeChannelId = null;
+    activeChannelType = "text";
+    activeThreadParentMessageId = null;
+    closeModal(threadModal);
+    setPendingReply(null);
+    updateTopbar("", false);
+    highlightActiveChannel();
+    updateTextVsVoiceUI();
+    persistActiveChatState();
+  });
+  messagesTopbarTitleWrap.prepend(mobileChannelBackBtn);
+}
+
+function updateMobileNavigationState() {
+  const isMobile = isMobileDashboardLayout();
+  document.body.classList.toggle("mobile-dashboard-layout", isMobile);
+  const isServerChannelFocus = isMobile && activeMode === "server" && !!activeChannelId;
+  document.body.classList.toggle("mobile-channel-focus", isServerChannelFocus);
+  if (mobileChannelBackBtn) {
+    mobileChannelBackBtn.classList.toggle("hidden", !isServerChannelFocus);
+  }
+}
+
+function normalizeNoteChannelName(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function findNotesChannelElementByName(serverId, noteName) {
+  const target = normalizeNoteChannelName(noteName);
+  if (!serverId || !target) return null;
+  return [...document.querySelectorAll(".channel-item[data-channel-type='notes']")].find((el) => (
+    el.dataset.serverId === serverId && normalizeNoteChannelName(el.dataset.channelName) === target
+  )) || null;
+}
+
+async function openOrCreateNotesChannelByName(noteName) {
+  const trimmed = String(noteName || "").trim();
+  if (!trimmed || !activeServerId) return;
+  const existing = findNotesChannelElementByName(activeServerId, trimmed);
+  if (existing) {
+    existing.click();
+    return;
+  }
+  const shouldCreate = window.confirm(`Create notes channel "${trimmed}"?`);
+  if (!shouldCreate) return;
+  const res = await fetch(`/channels/server/${activeServerId}`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: trimmed, type: "notes" }),
+  });
+  if (!res.ok) {
+    let detail = "Failed to create notes channel";
+    try {
+      const data = await res.json();
+      if (data?.detail) detail = data.detail;
+    } catch {}
+    throw new Error(detail);
+  }
+  const created = await res.json();
+  await loadChannels(activeServerId, { preferredChannelId: created?.public_id || null });
 }
 
 function closeVoiceSocket() {
@@ -2497,40 +6952,38 @@ function closePeerConnection(peerId) {
   const audio = peerAudioElements.get(peerId);
   if (audio) audio.remove();
   peerAudioElements.delete(peerId);
-  const node = peerAudioSources.get(peerId);
-  if (node) {
-    try {
-      node.source.disconnect();
-    } catch {
-      // Ignore disconnect failures
-    }
-  }
-  peerAudioSources.delete(peerId);
-  peerVolumeLevels.delete(peerId);
+  removeVoiceVideoTilesForPeer(peerId);
+  detachVoiceLevelSource(peerId);
 }
 
 function resetVoicePeers() {
   [...peerConnections.keys()].forEach((peerId) => closePeerConnection(peerId));
-  peerAudioSources.forEach((source) => {
-    try {
-      source.disconnect();
-    } catch {
-      // Ignore disconnect failures
-    }
-  });
+  [...peerAudioSources.keys()].forEach((peerId) => detachVoiceLevelSource(peerId));
   peerAudioSources.clear();
   peerVolumeLevels.clear();
   peerMeta.clear();
+  watchedPeerStreamIds.clear();
+  clearAllVoiceVideoTiles();
   if (voiceMeterAnimation) {
     cancelAnimationFrame(voiceMeterAnimation);
     voiceMeterAnimation = null;
   }
   if (voiceUsersList) voiceUsersList.innerHTML = "";
+  renderVoiceUsersInChannelsPanel();
 }
 
 function applyDeafenOutput() {
   peerAudioElements.forEach((audio) => {
     audio.muted = isDeafened;
+  });
+  peerVideoElements.forEach((entry, key) => {
+    if (!entry) return;
+    if (!String(key).endsWith(":link") && key !== "local:link") return;
+    if (entry.video) {
+      // Link videos are local media elements, so mute can follow deafen directly.
+      entry.video.muted = true;
+    }
+    if (entry.iframe) applyEmbeddedLinkAudioMute(entry);
   });
 }
 
@@ -2540,6 +6993,1030 @@ function applyLocalMuteState() {
   localVoiceStream.getAudioTracks().forEach((track) => {
     track.enabled = enabled;
   });
+}
+
+function updateVoiceMediaButtons() {
+  if (cameraVoiceBtn) cameraVoiceBtn.textContent = isCameraEnabled ? "Stop Camera" : "Camera";
+  if (screenVoiceBtn) screenVoiceBtn.textContent = isScreenSharing ? "Stop Share" : "Share Screen";
+  if (linkStreamVoiceBtn) linkStreamVoiceBtn.textContent = sharedLinkStreamUrl ? "Stop Link Stream" : "Link Stream";
+  if (watchSharesVoiceBtn) watchSharesVoiceBtn.textContent = `Watch Shares: ${watchRemoteScreenShares ? "On" : "Off"}`;
+}
+
+function getPeerDisplayName(peerId) {
+  const peer = peerMeta.get(peerId);
+  if (!peer) return peerId === voiceSelfPeerId ? "You" : "Peer";
+  return `${peer.username}${peerId === voiceSelfPeerId ? " (you)" : ""}`;
+}
+
+function bindUserAvatarImage(imgEl, userPublicId, { alt = "User avatar" } = {}) {
+  if (!imgEl) return;
+  imgEl.alt = alt;
+  if (!userPublicId) {
+    imgEl.style.visibility = "hidden";
+    return;
+  }
+  const baseSrc = resolveMediaUrl(`/api/users/${userPublicId}/avatar`);
+  imgEl.dataset.avatarRetry = "0";
+  imgEl.onload = () => {
+    imgEl.style.visibility = "visible";
+  };
+  imgEl.onerror = () => {
+    if (imgEl.dataset.avatarRetry !== "1") {
+      imgEl.dataset.avatarRetry = "1";
+      imgEl.src = `${baseSrc}?ts=${Date.now()}`;
+      return;
+    }
+    imgEl.style.visibility = "hidden";
+  };
+  imgEl.style.visibility = "visible";
+  imgEl.src = baseSrc;
+}
+
+async function fetchPublicUserProfile(userPublicId, { force = false } = {}) {
+  const publicId = String(userPublicId || "").trim();
+  if (!publicId) return null;
+  if (!force && publicUserProfileCache.has(publicId)) return publicUserProfileCache.get(publicId);
+  if (!force && publicUserProfileInflight.has(publicId)) return publicUserProfileInflight.get(publicId);
+  const job = (async () => {
+    const res = await fetch(`/users/${publicId}`, { credentials: "include" });
+    if (!res.ok) throw new Error(`Failed to load user profile (${res.status})`);
+    const data = await res.json();
+    publicUserProfileCache.set(publicId, data);
+    return data;
+  })().finally(() => {
+    publicUserProfileInflight.delete(publicId);
+  });
+  publicUserProfileInflight.set(publicId, job);
+  return job;
+}
+
+function decoratePresenceLabelWithCustomStatus(labelEl, isOnline, customStatus) {
+  if (!labelEl) return;
+  const base = isOnline ? "Online" : "Offline";
+  const status = normalizeCustomStatusInput(customStatus || "");
+  labelEl.textContent = status ? `${base} - ${status}` : base;
+}
+
+function hydrateUserStatusElement(statusEl, userPublicId, {
+  prefix = "",
+  emptyText = "",
+  hiddenWhenEmpty = true,
+} = {}) {
+  if (!statusEl) return;
+  const publicId = String(userPublicId || "").trim();
+  if (!publicId) {
+    statusEl.textContent = emptyText;
+    if (hiddenWhenEmpty) statusEl.hidden = !emptyText;
+    return;
+  }
+  const apply = (profile) => {
+    const status = normalizeCustomStatusInput(profile?.custom_status || "");
+    statusEl.textContent = status ? `${prefix}${status}` : emptyText;
+    if (hiddenWhenEmpty) statusEl.hidden = !status;
+  };
+  if (publicUserProfileCache.has(publicId)) apply(publicUserProfileCache.get(publicId));
+  else {
+    statusEl.textContent = emptyText;
+    if (hiddenWhenEmpty) statusEl.hidden = !emptyText;
+  }
+  fetchPublicUserProfile(publicId).then(apply).catch(() => {});
+}
+
+function attachPublicUserProfileTrigger(el, userPublicId) {
+  if (!el || el.dataset.publicProfileBound === "1") return;
+  const publicId = String(userPublicId || "").trim();
+  if (!publicId) return;
+  el.dataset.publicProfileBound = "1";
+  el.classList.add("user-profile-trigger");
+  el.addEventListener("click", (event) => {
+    if (publicUserProfileModal?.classList?.contains("open")) return;
+    event.preventDefault();
+    event.stopPropagation();
+    openPublicUserProfileModal(publicId).catch((err) => {
+      showToast(err?.message || "Failed to open user profile");
+    });
+  });
+}
+
+async function openPublicUserProfileModal(userPublicId) {
+  const publicId = String(userPublicId || "").trim();
+  if (!publicId || !publicUserProfileModal) return;
+  if (publicUserProfileDmBtn) {
+    publicUserProfileDmBtn.disabled = publicId === String(currentUser?.public_id || "");
+    publicUserProfileDmBtn.dataset.userPublicId = publicId;
+  }
+  if (publicUserProfilePublicId) publicUserProfilePublicId.textContent = publicId;
+  if (publicUserProfileName) publicUserProfileName.textContent = "Loading...";
+  if (publicUserProfileStatus) publicUserProfileStatus.textContent = "Loading...";
+  if (publicUserProfileCreatedAt) publicUserProfileCreatedAt.textContent = "-";
+  if (publicUserProfileUpdatedAt) publicUserProfileUpdatedAt.textContent = "-";
+  bindUserAvatarImage(publicUserProfileAvatar, publicId, { alt: "User avatar" });
+  openModal(publicUserProfileModal);
+  const profile = await fetchPublicUserProfile(publicId, { force: true });
+  const emoji = normalizeNameEmojiInput(profile?.name_emoji || "");
+  const color = normalizeHexColor(profile?.username_color || "");
+  if (publicUserProfileName) {
+    publicUserProfileName.textContent = `${emoji ? `${emoji} ` : ""}${profile?.username || "Unknown"}`;
+    publicUserProfileName.style.color = color || "";
+  }
+  if (publicUserProfileStatus) {
+    const status = normalizeCustomStatusInput(profile?.custom_status || "");
+    publicUserProfileStatus.textContent = status || "No custom status";
+  }
+  if (publicUserProfileCreatedAt) publicUserProfileCreatedAt.textContent = formatTimestamp(profile?.created_at) || "-";
+  if (publicUserProfileUpdatedAt) publicUserProfileUpdatedAt.textContent = formatTimestamp(profile?.updated_at) || "-";
+}
+
+async function openDmFromPublicProfileModal() {
+  const publicId = String(publicUserProfileDmBtn?.dataset?.userPublicId || publicUserProfilePublicId?.textContent || "").trim();
+  if (!publicId) return;
+  if (publicId === String(currentUser?.public_id || "")) {
+    showToast("You cannot DM yourself");
+    return;
+  }
+  try {
+    const convo = await createOrOpenDmConversation(publicId);
+    closeModal(publicUserProfileModal);
+    stopTypingNow();
+    activeMode = "dm";
+    activeDmConversationId = convo.public_id;
+    activeServerId = null;
+    activeChannelId = null;
+    activeChannelType = "text";
+    renderTypingIndicator();
+    setPendingReply(null);
+    activeThreadParentMessageId = null;
+    closeModal(threadModal);
+    updateSidebarModeUI();
+    await loadDmConversations();
+    highlightActiveChannel();
+    updateTopbar(`@ ${convo.other_username}`, true);
+    await loadDmMessages(convo.public_id, true);
+    openDmMessageSocket(convo.public_id);
+    applyDraftToComposer();
+    persistActiveChatState();
+  } catch (err) {
+    alert(err?.message || "Failed to open DM");
+  }
+}
+
+function refreshSettingsAvatarPreview({ bustCache = false } = {}) {
+  if (!settingsAvatarPreview) return;
+  const publicId = currentUser?.public_id;
+  if (!publicId) {
+    settingsAvatarPreview.style.visibility = "hidden";
+    return;
+  }
+  bindUserAvatarImage(settingsAvatarPreview, publicId, { alt: "Your avatar preview" });
+  if (bustCache) {
+    settingsAvatarPreview.src = resolveMediaUrl(`/api/users/${publicId}/avatar?ts=${Date.now()}`);
+  }
+}
+
+function normalizeHexColor(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  return /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(raw) ? raw.toLowerCase() : "";
+}
+
+function normalizeNameEmojiInput(value) {
+  const glyphs = Array.from(String(value || "").trim()).filter((ch) => !/\s/.test(ch));
+  return glyphs.slice(0, 2).join("");
+}
+
+async function saveCurrentUserNameStyle({ usernameColor, nameEmoji }) {
+  if (!currentUser?.public_id) throw new Error("Current user not loaded");
+  const payload = {
+    username_color: usernameColor || null,
+    name_emoji: nameEmoji || null,
+  };
+  const res = await fetch(`/users/${currentUser.public_id}`, {
+    method: "PUT",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    let detail = "Failed to save name style";
+    try {
+      const data = await res.json();
+      if (data?.detail) detail = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
+    } catch {}
+    throw new Error(detail);
+  }
+  const updated = await res.json();
+  if (currentUser) {
+    currentUser.username_color = updated.username_color || null;
+    currentUser.name_emoji = updated.name_emoji || null;
+    if (Object.prototype.hasOwnProperty.call(updated, "custom_status")) currentUser.custom_status = updated.custom_status || null;
+    if (currentUser.public_id) {
+      publicUserProfileCache.set(currentUser.public_id, { ...(publicUserProfileCache.get(currentUser.public_id) || {}), ...updated });
+    }
+  }
+  refreshUserDisplaySummary();
+  return updated;
+}
+
+function normalizeCustomStatusInput(value) {
+  const raw = sanitizeMojibakeForDisplay(value).trim();
+  return raw.slice(0, 140);
+}
+
+function sanitizeMojibakeForDisplay(value) {
+  let text = String(value ?? "");
+  // Attempt to repair common UTF-8 interpreted-as-Latin1 mojibake.
+  if (/[\u00c2\u00c3\u00e2]/.test(text)) {
+    try {
+      const bytes = Uint8Array.from(Array.from(text, (ch) => ch.charCodeAt(0) & 0xff));
+      const decoded = new TextDecoder("utf-8").decode(bytes);
+      const rawScore = (text.match(/[\u00c2\u00c3\u00e2]/g) || []).length;
+      const decodedScore = (decoded.match(/[\u00c2\u00c3\u00e2]/g) || []).length;
+      if (decodedScore < rawScore) text = decoded;
+    } catch {}
+  }
+  text = text.replace(/[\u2018\u2019]/g, "'");
+  text = text.replace(/[\u201c\u201d]/g, "\"");
+  text = text.replace(/\u2026/g, "...");
+  text = text.replace(/[\u2013\u2014]/g, "-");
+  text = text.replace(/[\u00c2\u00c3]/g, "");
+  return text.replace(/\uFFFD+/g, "");
+}
+
+function refreshUserDisplaySummary() {
+  if (!userDisplay || !currentUser) return;
+  const username = sanitizeMojibakeForDisplay(currentUser.username || "").trim() || "User";
+  const status = normalizeCustomStatusInput(currentUser.custom_status || "");
+  userDisplay.textContent = status
+    ? `Logged in as: ${username} - ${status}`
+    : `Logged in as: ${username}`;
+}
+
+async function saveCurrentUserCustomStatus(customStatus) {
+  if (!currentUser?.public_id) throw new Error("Current user not loaded");
+  const res = await fetch(`/users/${currentUser.public_id}`, {
+    method: "PUT",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ custom_status: customStatus || null }),
+  });
+  if (!res.ok) {
+    let detail = "Failed to save custom status";
+    try {
+      const data = await res.json();
+      if (data?.detail) detail = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
+    } catch {}
+    throw new Error(detail);
+  }
+  const updated = await res.json();
+  if (currentUser) {
+    currentUser.custom_status = updated.custom_status || null;
+    if (currentUser.public_id) {
+      publicUserProfileCache.set(currentUser.public_id, { ...(publicUserProfileCache.get(currentUser.public_id) || {}), ...updated });
+    }
+  }
+  refreshUserDisplaySummary();
+  return updated;
+}
+
+async function saveCurrentUserUploadPrivacy(stripUploadMetadata) {
+  if (!currentUser?.public_id) throw new Error("Current user not loaded");
+  const res = await fetch(`/users/${currentUser.public_id}`, {
+    method: "PUT",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ strip_upload_metadata: Boolean(stripUploadMetadata) }),
+  });
+  if (!res.ok) {
+    let detail = "Failed to save upload privacy";
+    try {
+      const data = await res.json();
+      if (data?.detail) detail = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
+    } catch {}
+    throw new Error(detail);
+  }
+  const updated = await res.json();
+  if (currentUser) {
+    currentUser.strip_upload_metadata = Boolean(updated?.strip_upload_metadata);
+    if (currentUser.public_id) {
+      publicUserProfileCache.set(currentUser.public_id, { ...(publicUserProfileCache.get(currentUser.public_id) || {}), ...updated });
+    }
+  }
+  return updated;
+}
+
+function setFocusedVoiceVideoTile(key = null) {
+  focusedVoiceVideoTileKey = key && peerVideoElements.has(key) ? key : null;
+  peerVideoElements.forEach((entry, entryKey) => {
+    if (!entry?.tile) return;
+    entry.tile.classList.toggle("focused", focusedVoiceVideoTileKey === entryKey);
+  });
+}
+
+function isRemoteStreamTileVisible(tileKey) {
+  const key = String(tileKey || "");
+  if (!key.includes(":")) return true;
+  const [peerId, source] = key.split(":");
+  if (!peerId || peerId === "local") return true;
+  if (source === "screen") return watchRemoteScreenShares && watchedPeerStreamIds.has(peerId);
+  if (source === "link") return watchedPeerStreamIds.has(peerId);
+  return true;
+}
+
+function applyRemoteStreamTileVisibilityPreferences() {
+  peerVideoElements.forEach((entry, key) => {
+    if (!entry?.tile) return;
+    entry.tile.classList.toggle("hidden", !isRemoteStreamTileVisible(key));
+  });
+  updateVoiceVideoGridVisibility();
+}
+
+function focusVoiceStreamForPeer(peerId) {
+  const peer = peerMeta.get(peerId);
+  if (!peer) return;
+  let targetKey = null;
+  if (peer.screen_on) {
+    if (!watchRemoteScreenShares) {
+      watchRemoteScreenShares = true;
+      updateVoiceMediaButtons();
+      applyRemoteScreenShareWatchPreference();
+    }
+    targetKey = `${peerId}:screen`;
+  } else if (peer.link_stream_url) {
+    targetKey = `${peerId}:link`;
+  }
+  if (!targetKey) {
+    showToast("This user is not streaming");
+    return;
+  }
+  watchedPeerStreamIds.add(peerId);
+  applyRemoteStreamTileVisibilityPreferences();
+  if (targetKey.endsWith(":link")) {
+    renderRemoteLinkStreamTile(peerId);
+  }
+  if (targetKey.endsWith(":screen")) {
+    const pendingStream = pendingRemoteVideoStreams.get(targetKey);
+    if (pendingStream) {
+      const tile = ensureVoiceVideoTile(targetKey, {
+        label: `${getPeerDisplayName(peerId)} - Screen`,
+      });
+      if (tile?.video) {
+        tile.video.muted = true;
+        tile.tile.classList.toggle("hidden", !isRemoteStreamTileVisible(targetKey));
+        tile.video.srcObject = pendingStream;
+        pendingRemoteVideoStreams.delete(targetKey);
+        updateVoiceVideoGridVisibility();
+      }
+    }
+  }
+  const entry = peerVideoElements.get(targetKey);
+  if (!entry?.tile) {
+    showToast("Stream is starting...");
+    return;
+  }
+  setFocusedVoiceVideoTile(targetKey);
+  try {
+    entry.tile.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+  } catch {
+    // Ignore scroll support issues
+  }
+}
+
+function toggleVoiceStreamWatchForPeer(peerId) {
+  if (!peerId) return;
+  if (watchedPeerStreamIds.has(peerId)) {
+    watchedPeerStreamIds.delete(peerId);
+    if (
+      focusedVoiceVideoTileKey &&
+      (focusedVoiceVideoTileKey === `${peerId}:screen` || focusedVoiceVideoTileKey === `${peerId}:link`)
+    ) {
+      setFocusedVoiceVideoTile(null);
+    }
+    renderRemoteLinkStreamTile(peerId);
+    applyRemoteStreamTileVisibilityPreferences();
+    return;
+  }
+  focusVoiceStreamForPeer(peerId);
+}
+
+function bindVoiceVideoTileFocus(key, tile) {
+  if (!tile || tile.dataset.focusBound === "1") return;
+  tile.dataset.focusBound = "1";
+  tile.tabIndex = 0;
+  tile.addEventListener("click", (event) => {
+    if (event.target?.closest?.(".voice-video-resize-handle, .voice-video-fullscreen-btn")) return;
+    setFocusedVoiceVideoTile(focusedVoiceVideoTileKey === key ? null : key);
+  });
+  tile.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    setFocusedVoiceVideoTile(focusedVoiceVideoTileKey === key ? null : key);
+  });
+}
+
+function getRemoteVideoSourceKeyForTrack(peerId, trackId) {
+  const peer = peerMeta.get(peerId) || {};
+  const slots = peerRemoteVideoTrackSlots.get(peerId) || { camera: null, screen: null };
+  if (slots.camera === trackId) return `${peerId}:camera`;
+  if (slots.screen === trackId) return `${peerId}:screen`;
+
+  let source = "camera";
+  // If this peer already has a camera slot populated and a second distinct video track arrives,
+  // treat it as a screen stream immediately (state message can arrive slightly later than ontrack).
+  if (trackId && slots.camera && slots.camera !== trackId && !slots.screen) {
+    source = "screen";
+  } else
+  if (peer.camera_on && peer.screen_on) {
+    source = slots.camera ? (slots.screen ? "camera" : "screen") : "camera";
+  } else if (peer.screen_on && !peer.camera_on) {
+    source = "screen";
+  } else {
+    source = "camera";
+  }
+  slots[source] = trackId || slots[source];
+  peerRemoteVideoTrackSlots.set(peerId, slots);
+  return `${peerId}:${source}`;
+}
+
+function parseEmbeddableStreamUrl(rawUrl) {
+  const raw = String(rawUrl || "").trim();
+  if (!raw) return null;
+  let url;
+  try {
+    url = new URL(raw);
+  } catch {
+    return null;
+  }
+  const protocol = url.protocol.toLowerCase();
+  if (protocol !== "http:" && protocol !== "https:") return null;
+  const host = url.hostname.toLowerCase();
+  const path = url.pathname.toLowerCase();
+  const isDirectVideo = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url.href);
+  if (isDirectVideo) {
+    return { kind: "video", src: url.href, label: "Link Video", provider: "direct" };
+  }
+  if (host.includes("youtube.com") || host === "youtu.be") {
+    let videoId = "";
+    if (host === "youtu.be") videoId = url.pathname.replace(/^\/+/, "").split("/")[0];
+    if (!videoId) videoId = url.searchParams.get("v") || "";
+    if (videoId) {
+      return {
+        kind: "iframe",
+        src: `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0&enablejsapi=1`,
+        label: "YouTube",
+        provider: "youtube",
+      };
+    }
+  }
+  if (host.includes("vimeo.com")) {
+    const parts = url.pathname.split("/").filter(Boolean);
+    const id = parts.find((p) => /^\d+$/.test(p)) || "";
+    if (id) {
+      return { kind: "iframe", src: `https://player.vimeo.com/video/${id}?autoplay=1&api=1`, label: "Vimeo", provider: "vimeo" };
+    }
+  }
+  return { kind: "iframe", src: url.href, label: "Link Stream", provider: "generic" };
+}
+
+async function requestFullscreenForElement(el) {
+  if (!el) return;
+  try {
+    if (el.requestFullscreen) await el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  } catch {
+    showToast("Fullscreen unavailable for this stream");
+  }
+}
+
+function applyEmbeddedLinkAudioMute(entry) {
+  if (!entry?.iframe) return;
+  try {
+    if (entry.provider === "youtube") {
+      entry.iframe.contentWindow?.postMessage(JSON.stringify({
+        event: "command",
+        func: isDeafened ? "mute" : "unMute",
+        args: [],
+      }), "*");
+      return;
+    }
+    if (entry.provider === "vimeo") {
+      entry.iframe.contentWindow?.postMessage({
+        method: "setVolume",
+        value: isDeafened ? 0 : 1,
+      }, "*");
+    }
+  } catch {
+    // Ignore provider embed command failures.
+  }
+}
+
+function getVoiceVideoTileResizeBounds() {
+  const gridWidth = Math.max(140, Number(voiceVideoGrid?.clientWidth || 0) - 12);
+  return {
+    min: 72,
+    max: Math.max(120, gridWidth),
+  };
+}
+
+function applyVoiceVideoTileSizeOverride(key, tile) {
+  if (!tile) return;
+  const width = Number(voiceVideoTileSizeOverrides.get(key) || 0);
+  if (width > 0) {
+    tile.style.width = `${Math.round(width)}px`;
+    tile.style.maxWidth = "none";
+  } else {
+    tile.style.removeProperty("width");
+    tile.style.removeProperty("max-width");
+  }
+}
+
+function bindVoiceVideoTileResize(key, tile) {
+  if (!tile || tile.dataset.resizeBound === "1") return;
+  tile.dataset.resizeBound = "1";
+  const handle = document.createElement("div");
+  handle.className = "voice-video-resize-handle";
+  handle.title = "Drag to resize";
+  handle.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const rect = tile.getBoundingClientRect();
+    const startX = event.clientX;
+    const startWidth = rect.width;
+    const pointerId = event.pointerId;
+    const { min, max } = getVoiceVideoTileResizeBounds();
+    tile.classList.add("is-resizing");
+    try {
+      handle.setPointerCapture(pointerId);
+    } catch {
+      // Some browsers may reject capture; fallback to window listeners still works.
+    }
+    const onMove = (moveEvent) => {
+      const dx = moveEvent.clientX - startX;
+      const nextWidth = clamp(startWidth + dx, min, max);
+      voiceVideoTileSizeOverrides.set(key, nextWidth);
+      applyVoiceVideoTileSizeOverride(key, tile);
+    };
+    const onEnd = () => {
+      tile.classList.remove("is-resizing");
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onEnd);
+      window.removeEventListener("pointercancel", onEnd);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onEnd);
+    window.addEventListener("pointercancel", onEnd);
+  });
+  tile.appendChild(handle);
+}
+
+function ensureVoiceVideoTile(key, { label = "", isLocal = false } = {}) {
+  if (!voiceVideoGrid) return null;
+  let entry = peerVideoElements.get(key);
+  if (entry?.tile?.isConnected && entry?.video?.isConnected) {
+    entry.tile.classList.toggle("screen-share", String(key).endsWith(":screen"));
+    applyVoiceVideoTileSizeOverride(key, entry.tile);
+    bindVoiceVideoTileFocus(key, entry.tile);
+    setFocusedVoiceVideoTile(focusedVoiceVideoTileKey);
+    if (entry.labelEl) entry.labelEl.textContent = label || entry.labelEl.textContent || "";
+    return entry;
+  }
+  const tile = document.createElement("div");
+  tile.className = `voice-video-tile${isLocal ? " local" : ""}`;
+  tile.classList.toggle("screen-share", String(key).endsWith(":screen"));
+  tile.dataset.tileKey = key;
+  const video = document.createElement("video");
+  video.autoplay = true;
+  video.playsInline = true;
+  video.muted = !!isLocal;
+  const labelEl = document.createElement("div");
+  labelEl.className = "voice-video-label";
+  labelEl.textContent = label || (isLocal ? "You" : "Video");
+  const fullscreenBtn = document.createElement("button");
+  fullscreenBtn.type = "button";
+  fullscreenBtn.className = "voice-video-fullscreen-btn";
+  fullscreenBtn.title = "Fullscreen";
+  fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+  fullscreenBtn.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    requestFullscreenForElement(tile);
+  });
+  tile.appendChild(video);
+  tile.appendChild(fullscreenBtn);
+  tile.appendChild(labelEl);
+  bindVoiceVideoTileResize(key, tile);
+  bindVoiceVideoTileFocus(key, tile);
+  applyVoiceVideoTileSizeOverride(key, tile);
+  voiceVideoGrid.appendChild(tile);
+  entry = { tile, video, labelEl, fullscreenBtn, key };
+  peerVideoElements.set(key, entry);
+  setFocusedVoiceVideoTile(focusedVoiceVideoTileKey);
+  return entry;
+}
+
+function ensureVoiceIframeTile(key, { label = "", src = "", provider = "generic" } = {}) {
+  if (!voiceVideoGrid || !src) return null;
+  let entry = peerVideoElements.get(key);
+  if (entry?.tile?.isConnected && entry?.iframe?.isConnected) {
+    applyVoiceVideoTileSizeOverride(key, entry.tile);
+    bindVoiceVideoTileFocus(key, entry.tile);
+    setFocusedVoiceVideoTile(focusedVoiceVideoTileKey);
+    if (entry.labelEl) entry.labelEl.textContent = label || entry.labelEl.textContent || "";
+    entry.provider = provider;
+    if (entry.iframe.getAttribute("src") !== src) entry.iframe.src = src;
+    applyEmbeddedLinkAudioMute(entry);
+    return entry;
+  }
+  const tile = document.createElement("div");
+  tile.className = "voice-video-tile link-stream";
+  tile.dataset.tileKey = key;
+  const iframe = document.createElement("iframe");
+  iframe.className = "voice-video-iframe";
+  iframe.allow = "autoplay; encrypted-media; fullscreen; picture-in-picture";
+  iframe.allowFullscreen = true;
+  iframe.referrerPolicy = "strict-origin-when-cross-origin";
+  iframe.src = src;
+  const labelEl = document.createElement("div");
+  labelEl.className = "voice-video-label";
+  labelEl.textContent = label || "Link Stream";
+  const fullscreenBtn = document.createElement("button");
+  fullscreenBtn.type = "button";
+  fullscreenBtn.className = "voice-video-fullscreen-btn";
+  fullscreenBtn.title = "Fullscreen";
+  fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+  fullscreenBtn.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    requestFullscreenForElement(tile);
+  });
+  tile.appendChild(iframe);
+  tile.appendChild(fullscreenBtn);
+  tile.appendChild(labelEl);
+  bindVoiceVideoTileResize(key, tile);
+  bindVoiceVideoTileFocus(key, tile);
+  applyVoiceVideoTileSizeOverride(key, tile);
+  voiceVideoGrid.appendChild(tile);
+  entry = { tile, iframe, labelEl, fullscreenBtn, key, provider };
+  peerVideoElements.set(key, entry);
+  applyEmbeddedLinkAudioMute(entry);
+  setFocusedVoiceVideoTile(focusedVoiceVideoTileKey);
+  updateVoiceVideoGridVisibility();
+  return entry;
+}
+
+function removeVoiceVideoTile(key) {
+  const entry = peerVideoElements.get(key);
+  if (!entry) return;
+  try {
+    if (entry.video) {
+      entry.video.pause?.();
+      entry.video.srcObject = null;
+    }
+  } catch {
+    // Ignore cleanup failures
+  }
+  entry.tile?.remove();
+  peerVideoElements.delete(key);
+  if (focusedVoiceVideoTileKey === key) focusedVoiceVideoTileKey = null;
+  updateVoiceVideoGridVisibility();
+  setFocusedVoiceVideoTile(focusedVoiceVideoTileKey);
+}
+
+function removeVoiceVideoTilesForPeer(peerId) {
+  [...peerVideoElements.keys()].forEach((key) => {
+    if (key === "local:camera" || key === "local:screen") return;
+    if (key.startsWith(`${peerId}:`)) removeVoiceVideoTile(key);
+  });
+  peerRemoteVideoTrackSlots.delete(peerId);
+}
+
+function updateVoiceVideoGridVisibility() {
+  if (!voiceVideoGrid) return;
+  const hasTiles = [...peerVideoElements.values()].some((entry) => entry?.tile && !entry.tile.classList.contains("hidden"));
+  voiceVideoGrid.classList.toggle("hidden", !hasTiles);
+  updateVoicePanelStreamLayout();
+}
+
+function updateVoicePanelStreamLayout() {
+  if (!voicePanel) return;
+  const watchingVisibleStream = [...peerVideoElements.entries()].some(([key, entry]) => {
+    if (!entry?.tile) return false;
+    if (!String(key).endsWith(":screen") && !String(key).endsWith(":link")) return false;
+    return !entry.tile.classList.contains("hidden");
+  });
+  voicePanel.classList.toggle("voice-panel-has-stream", watchingVisibleStream);
+}
+
+function clearAllVoiceVideoTiles() {
+  [...peerVideoElements.keys()].forEach((key) => removeVoiceVideoTile(key));
+  if (voiceVideoGrid) voiceVideoGrid.innerHTML = "";
+  peerVideoElements.clear();
+  pendingRemoteVideoStreams.clear();
+  updateVoiceVideoGridVisibility();
+}
+
+function applyRemoteScreenShareWatchPreference() {
+  applyRemoteStreamTileVisibilityPreferences();
+}
+
+function renderLocalVoiceVideoTiles() {
+  if (!voiceVideoGrid) return;
+  if (isCameraEnabled && localCameraStream?.getVideoTracks?.().length) {
+    const tile = ensureVoiceVideoTile("local:camera", { label: "You - Camera", isLocal: true });
+    if (tile) tile.video.srcObject = localCameraStream;
+  } else {
+    removeVoiceVideoTile("local:camera");
+  }
+  if (isScreenSharing && localScreenStream?.getVideoTracks?.().length) {
+    const tile = ensureVoiceVideoTile("local:screen", { label: "You - Screen", isLocal: false });
+    if (tile) {
+      tile.tile.classList.remove("local");
+      tile.video.muted = true;
+      tile.video.srcObject = localScreenStream;
+    }
+  } else {
+    removeVoiceVideoTile("local:screen");
+  }
+  if (sharedLinkStreamUrl) {
+    const parsed = parseEmbeddableStreamUrl(sharedLinkStreamUrl);
+    if (parsed) {
+      if (parsed.kind === "video") {
+        const tile = ensureVoiceVideoTile("local:link", { label: `You - ${parsed.label}`, isLocal: false });
+        if (tile?.video) {
+          tile.tile.classList.remove("screen-share");
+          tile.video.muted = true;
+          if (tile.video.src !== parsed.src) {
+            tile.video.srcObject = null;
+            tile.video.src = parsed.src;
+          }
+          tile.video.controls = true;
+          tile.video.play?.().catch(() => {});
+        }
+      } else {
+        ensureVoiceIframeTile("local:link", { label: `You - ${parsed.label}`, src: parsed.src, provider: parsed.provider });
+      }
+    } else {
+      removeVoiceVideoTile("local:link");
+    }
+  } else {
+    removeVoiceVideoTile("local:link");
+  }
+  updateVoiceVideoGridVisibility();
+}
+
+function updateRemotePeerVideoTileLabels() {
+  peerVideoElements.forEach((entry, key) => {
+    if (key.startsWith("local:")) return;
+    const [peerId, source = "camera"] = key.split(":");
+    if (!entry?.labelEl) return;
+    const sourceLabel = source === "screen" ? "Screen" : source === "link" ? "Link Stream" : "Camera";
+    entry.labelEl.textContent = `${getPeerDisplayName(peerId)} - ${sourceLabel}`;
+  });
+}
+
+function renderRemoteLinkStreamTile(peerId) {
+  const peer = peerMeta.get(peerId);
+  const key = `${peerId}:link`;
+  if (!watchedPeerStreamIds.has(peerId)) {
+    removeVoiceVideoTile(key);
+    return;
+  }
+  const rawUrl = peer?.link_stream_url ? String(peer.link_stream_url) : "";
+  if (!rawUrl) {
+    removeVoiceVideoTile(key);
+    return;
+  }
+  const parsed = parseEmbeddableStreamUrl(rawUrl);
+  if (!parsed) {
+    removeVoiceVideoTile(key);
+    return;
+  }
+  if (parsed.kind === "video") {
+    const tile = ensureVoiceVideoTile(key, { label: `${getPeerDisplayName(peerId)} - ${parsed.label}` });
+    if (tile?.video) {
+      tile.tile.classList.remove("screen-share");
+      tile.tile.classList.toggle("hidden", !isRemoteStreamTileVisible(key));
+      tile.video.muted = true;
+      if (tile.video.src !== parsed.src) {
+        tile.video.srcObject = null;
+        tile.video.src = parsed.src;
+      }
+      tile.video.controls = true;
+      tile.video.play?.().catch(() => {});
+    }
+  } else {
+    const tile = ensureVoiceIframeTile(key, { label: `${getPeerDisplayName(peerId)} - ${parsed.label}`, src: parsed.src, provider: parsed.provider });
+    if (tile?.tile) tile.tile.classList.toggle("hidden", !isRemoteStreamTileVisible(key));
+  }
+  updateVoiceVideoGridVisibility();
+}
+
+function getCombinedLocalVoiceStreams() {
+  const streams = [];
+  if (localVoiceStream) streams.push(localVoiceStream);
+  if (isCameraEnabled && localCameraStream) streams.push(localCameraStream);
+  if (isScreenSharing && localScreenStream) streams.push(localScreenStream);
+  return streams;
+}
+
+function getDesiredLocalVoiceTracks() {
+  const tracks = [];
+  if (localVoiceStream) tracks.push(...localVoiceStream.getAudioTracks());
+  if (isCameraEnabled && localCameraStream) tracks.push(...localCameraStream.getVideoTracks());
+  if (isScreenSharing && localScreenStream) {
+    tracks.push(...localScreenStream.getVideoTracks());
+    tracks.push(...localScreenStream.getAudioTracks());
+  }
+  return tracks;
+}
+
+async function ensureLocalCameraStream() {
+  if (localCameraStream?.getVideoTracks?.().length) return localCameraStream;
+  localCameraStream = await navigator.mediaDevices.getUserMedia({
+    audio: false,
+    video: {
+      width: { ideal: 640 },
+      height: { ideal: 360 },
+      frameRate: { ideal: 15, max: 24 },
+    },
+  });
+  return localCameraStream;
+}
+
+async function ensureLocalScreenStream() {
+  if (localScreenStream?.getVideoTracks?.().length) return localScreenStream;
+  try {
+    localScreenStream = await navigator.mediaDevices.getDisplayMedia({
+      video: getScreenShareVideoConstraints(),
+      audio: true,
+    });
+  } catch (err) {
+    // Some browsers/platforms reject audio capture for display media; fall back to video-only.
+    localScreenStream = await navigator.mediaDevices.getDisplayMedia({
+      video: getScreenShareVideoConstraints(),
+      audio: false,
+    });
+    try {
+      showToast("Screen sharing started without system audio");
+    } catch {
+      // ignore toast failures
+    }
+  }
+  const videoTrack = localScreenStream.getVideoTracks?.()[0];
+  if (videoTrack) {
+    videoTrack.onended = () => {
+      stopScreenShare({ notifyPeers: true }).catch(() => {});
+    };
+  }
+  return localScreenStream;
+}
+
+async function renegotiatePeer(peerId) {
+  const pc = peerConnections.get(peerId);
+  if (!pc || pc.signalingState === "closed") return;
+  try {
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    sendVoiceSignal(peerId, { description: pc.localDescription });
+  } catch {
+    // Ignore renegotiation failures (peer may be reconnecting)
+  }
+}
+
+async function syncPeerMediaTracks(peerId, { renegotiate = true } = {}) {
+  const pc = peerConnections.get(peerId);
+  if (!pc) return;
+  const desiredTracks = getDesiredLocalVoiceTracks();
+  const desiredTrackIds = new Set(desiredTracks.map((t) => t.id));
+  const senders = pc.getSenders ? pc.getSenders() : [];
+  let needsRenegotiation = false;
+
+  for (const sender of senders) {
+    if (!sender.track) continue;
+    const track = sender.track;
+    if (track.kind === "audio") continue;
+    if (!desiredTrackIds.has(track.id)) {
+      try {
+        await sender.replaceTrack(null);
+        needsRenegotiation = true;
+      } catch {
+        // Ignore sender teardown failures
+      }
+    }
+  }
+
+  const existingSenderTrackIds = new Set(
+    senders
+      .map((sender) => sender.track?.id)
+      .filter(Boolean)
+  );
+  for (const track of desiredTracks) {
+    if (existingSenderTrackIds.has(track.id)) continue;
+    const sourceStream = track.kind === "audio"
+      ? localVoiceStream
+      : (isScreenSharing && localScreenStream?.getVideoTracks?.().some((t) => t.id === track.id) ? localScreenStream : localCameraStream);
+    if (!sourceStream) continue;
+    try {
+      pc.addTrack(track, sourceStream);
+      needsRenegotiation = true;
+    } catch {
+      // Ignore addTrack failures for stale PCs
+    }
+  }
+
+  if (renegotiate && needsRenegotiation) {
+    await renegotiatePeer(peerId);
+  }
+}
+
+async function syncAllPeerMediaTracks({ renegotiate = true } = {}) {
+  const jobs = [...peerConnections.keys()].map((peerId) => syncPeerMediaTracks(peerId, { renegotiate }));
+  await Promise.allSettled(jobs);
+}
+
+async function startCameraShare() {
+  await ensureLocalCameraStream();
+  isCameraEnabled = true;
+  renderLocalVoiceVideoTiles();
+  updateVoiceMediaButtons();
+  sendVoiceState();
+  await syncAllPeerMediaTracks({ renegotiate: true });
+}
+
+function stopCameraShare({ notifyPeers = true } = {}) {
+  if (localCameraStream) {
+    stopStreamTracks(localCameraStream);
+    localCameraStream = null;
+  }
+  isCameraEnabled = false;
+  renderLocalVoiceVideoTiles();
+  updateVoiceMediaButtons();
+  if (notifyPeers) {
+    sendVoiceState();
+    syncAllPeerMediaTracks({ renegotiate: true }).catch(() => {});
+  }
+}
+
+async function stopScreenShare({ notifyPeers = true } = {}) {
+  if (localScreenStream) {
+    stopStreamTracks(localScreenStream);
+    localScreenStream = null;
+  }
+  isScreenSharing = false;
+  renderLocalVoiceVideoTiles();
+  updateVoiceMediaButtons();
+  if (notifyPeers) {
+    sendVoiceState();
+    await syncAllPeerMediaTracks({ renegotiate: true });
+  }
+}
+
+async function startScreenShare() {
+  await ensureLocalScreenStream();
+  isScreenSharing = true;
+  renderLocalVoiceVideoTiles();
+  updateVoiceMediaButtons();
+  sendVoiceState();
+  await syncAllPeerMediaTracks({ renegotiate: true });
+}
+
+function buildVoiceAudioConstraints() {
+  return {
+    // Keep app-side processing simple (optional EQ), but use browser capture DSP for stable calls.
+    echoCancellation: Boolean(voiceSettings.echoCancellation),
+    noiseSuppression: Boolean(voiceSettings.noiseSuppression),
+    autoGainControl: true,
+    channelCount: 1,
+    sampleRate: 48000,
+  };
+}
+
+async function applyVoiceConstraintsToStream(stream) {
+  if (!stream) return;
+  const track = stream.getAudioTracks?.()[0];
+  if (!track?.applyConstraints) return;
+  const supported = navigator.mediaDevices?.getSupportedConstraints?.() || {};
+  const next = {};
+  if (supported.echoCancellation) next.echoCancellation = Boolean(voiceSettings.echoCancellation);
+  if (supported.noiseSuppression) next.noiseSuppression = Boolean(voiceSettings.noiseSuppression);
+  if (supported.autoGainControl) next.autoGainControl = true;
+  if (supported.channelCount) next.channelCount = 1;
+  if (supported.sampleRate) next.sampleRate = 48000;
+  if (Object.keys(next).length === 0) return;
+  try {
+    await track.applyConstraints(next);
+  } catch {
+    // Constraint support varies by browser/device.
+  }
+}
+
+function getVoiceConstraintStatus(stream) {
+  const track = stream?.getAudioTracks?.()[0];
+  const settings = track?.getSettings ? track.getSettings() : {};
+  return {
+    echoCancellation: settings?.echoCancellation,
+    noiseSuppression: settings?.noiseSuppression,
+    autoGainControl: settings?.autoGainControl,
+  };
 }
 
 function ensureVoiceAudioContext() {
@@ -2552,6 +8029,266 @@ function ensureVoiceAudioContext() {
     voiceAudioContext.resume().catch(() => {});
   }
   return voiceAudioContext;
+}
+
+function teardownLocalVoiceProcessor() {
+  if (!localVoiceProcessor) return;
+  if (localVoiceProcessor.runtime?.dispose) {
+    try {
+      localVoiceProcessor.runtime.dispose();
+    } catch {
+      // Ignore runtime dispose failures
+    }
+  }
+  const nodes = localVoiceProcessor.nodes || [];
+  nodes.forEach((node) => {
+    try {
+      node.disconnect();
+    } catch {
+      // Ignore disconnect failures
+    }
+  });
+  localVoiceProcessor = null;
+}
+
+function stopStreamTracks(stream, seenTrackIds = null) {
+  if (!stream) return;
+  stream.getTracks().forEach((track) => {
+    if (seenTrackIds && seenTrackIds.has(track.id)) return;
+    if (seenTrackIds) seenTrackIds.add(track.id);
+    try {
+      track.stop();
+    } catch {
+      // Ignore stop failures
+    }
+  });
+}
+
+function buildProcessedVoiceStream(rawStream) {
+  teardownLocalVoiceProcessor();
+  const ctx = ensureVoiceAudioContext();
+  if (!ctx || !rawStream) return rawStream;
+  if (!voiceSettings.eqEnabled) return rawStream;
+
+  const source = ctx.createMediaStreamSource(rawStream);
+  const eqLow = ctx.createBiquadFilter();
+  eqLow.type = "lowshelf";
+  eqLow.frequency.value = 160;
+  eqLow.gain.value = voiceSettings.eqLowGain;
+
+  const eqMid = ctx.createBiquadFilter();
+  eqMid.type = "peaking";
+  eqMid.frequency.value = 1250;
+  eqMid.Q.value = 0.9;
+  eqMid.gain.value = voiceSettings.eqMidGain;
+
+  const eqHigh = ctx.createBiquadFilter();
+  eqHigh.type = "highshelf";
+  eqHigh.frequency.value = 4300;
+  eqHigh.gain.value = voiceSettings.eqHighGain;
+
+  const destination = ctx.createMediaStreamDestination();
+  source.connect(eqLow);
+  eqLow.connect(eqMid);
+  eqMid.connect(eqHigh);
+  eqHigh.connect(destination);
+
+  localVoiceProcessor = {
+    nodes: [source, eqLow, eqMid, eqHigh, destination],
+  };
+  return destination.stream;
+}
+
+function updateMicSelfTestUi() {
+  const isRunning = !!micSelfTestProcessedStream;
+  if (settingsVoiceSelfTestBtn) {
+    settingsVoiceSelfTestBtn.textContent = isRunning ? "Stop Mic Self Test" : "Start Mic Self Test";
+  }
+  if (settingsVoiceSelfTestStatus) {
+    settingsVoiceSelfTestStatus.textContent = isRunning
+      ? "Self test running (use headphones to avoid feedback)"
+      : "Self test idle";
+  }
+}
+
+function setMicSelfTestStatus(text) {
+  if (settingsVoiceSelfTestStatus) settingsVoiceSelfTestStatus.textContent = text;
+}
+
+function teardownMicSelfTestGraph() {
+  if (micSelfTestNodes.runtime?.dispose) {
+    try {
+      micSelfTestNodes.runtime.dispose();
+    } catch {
+      // Ignore runtime dispose failures
+    }
+  }
+  micSelfTestNodes.forEach((node) => {
+    try {
+      node.disconnect();
+    } catch {
+      // Ignore disconnect failures
+    }
+  });
+  micSelfTestNodes = [];
+}
+
+function buildProcessedVoiceStreamForSelfTest(rawStream) {
+  teardownMicSelfTestGraph();
+  const ctx = ensureVoiceAudioContext();
+  if (!ctx || !rawStream) return rawStream;
+  if (!voiceSettings.eqEnabled) return rawStream;
+
+  const source = ctx.createMediaStreamSource(rawStream);
+  const eqLow = ctx.createBiquadFilter();
+  eqLow.type = "lowshelf";
+  eqLow.frequency.value = 160;
+  eqLow.gain.value = voiceSettings.eqLowGain;
+
+  const eqMid = ctx.createBiquadFilter();
+  eqMid.type = "peaking";
+  eqMid.frequency.value = 1250;
+  eqMid.Q.value = 0.9;
+  eqMid.gain.value = voiceSettings.eqMidGain;
+
+  const eqHigh = ctx.createBiquadFilter();
+  eqHigh.type = "highshelf";
+  eqHigh.frequency.value = 4300;
+  eqHigh.gain.value = voiceSettings.eqHighGain;
+
+  const destination = ctx.createMediaStreamDestination();
+  source.connect(eqLow);
+  eqLow.connect(eqMid);
+  eqMid.connect(eqHigh);
+  eqHigh.connect(destination);
+
+  micSelfTestNodes = [source, eqLow, eqMid, eqHigh, destination];
+  return destination.stream;
+}
+
+function stopMicSelfTest() {
+  if (micSelfTestAudioEl) {
+    try {
+      micSelfTestAudioEl.pause();
+    } catch {}
+    micSelfTestAudioEl.srcObject = null;
+    micSelfTestAudioEl = null;
+  }
+  const seen = new Set();
+  stopStreamTracks(micSelfTestProcessedStream, seen);
+  stopStreamTracks(micSelfTestRawStream, seen);
+  micSelfTestProcessedStream = null;
+  micSelfTestRawStream = null;
+  teardownMicSelfTestGraph();
+  updateMicSelfTestUi();
+  setMicSelfTestStatus("Self test idle");
+}
+
+async function startMicSelfTest() {
+  stopMicSelfTest();
+  setMicSelfTestStatus("Starting self test...");
+  try {
+    const ctx = ensureVoiceAudioContext();
+    if (ctx && ctx.state === "suspended") {
+      await ctx.resume().catch(() => {});
+    }
+    if (rawLocalVoiceStream && rawLocalVoiceStream.getAudioTracks().length > 0) {
+      const clonedTracks = rawLocalVoiceStream.getAudioTracks().map((track) => track.clone());
+      micSelfTestRawStream = new MediaStream(clonedTracks);
+    } else {
+      micSelfTestRawStream = await navigator.mediaDevices.getUserMedia({
+        audio: buildVoiceAudioConstraints(),
+        video: false,
+      });
+      await applyVoiceConstraintsToStream(micSelfTestRawStream);
+    }
+    micSelfTestProcessedStream = buildProcessedVoiceStreamForSelfTest(micSelfTestRawStream);
+    micSelfTestAudioEl = document.createElement("audio");
+    micSelfTestAudioEl.autoplay = true;
+    micSelfTestAudioEl.playsInline = true;
+    micSelfTestAudioEl.volume = 1;
+    micSelfTestAudioEl.srcObject = micSelfTestProcessedStream;
+    await micSelfTestAudioEl.play();
+    updateMicSelfTestUi();
+    setMicSelfTestStatus("Self test running (use headphones to avoid feedback)");
+  } catch {
+    stopMicSelfTest();
+    setMicSelfTestStatus("Self test failed");
+    throw new Error("Mic self test failed. Check mic permission and try again.");
+  }
+}
+
+function detachVoiceLevelSource(peerId) {
+  const node = peerAudioSources.get(peerId);
+  if (node) {
+    try {
+      node.source.disconnect();
+    } catch {
+      // Ignore disconnect failures
+    }
+  }
+  peerAudioSources.delete(peerId);
+  peerVolumeLevels.delete(peerId);
+}
+
+async function refreshLocalVoiceCaptureFromSettings({ showStatusToast = false } = {}) {
+  if (!localVoiceStream && !rawLocalVoiceStream) return;
+  const previousLocalStream = localVoiceStream;
+  const previousRawStream = rawLocalVoiceStream;
+
+  let nextRaw = null;
+  let nextProcessed = null;
+  try {
+    nextRaw = await navigator.mediaDevices.getUserMedia({
+      audio: buildVoiceAudioConstraints(),
+      video: false,
+    });
+    await applyVoiceConstraintsToStream(nextRaw);
+    nextProcessed = buildProcessedVoiceStream(nextRaw);
+  } catch {
+    if (showStatusToast) {
+      showToast("Could not apply voice processing. Check mic permissions.");
+    }
+    stopStreamTracks(nextRaw);
+    return;
+  }
+
+  const nextTrack = nextProcessed?.getAudioTracks?.()[0] || null;
+  if (!nextTrack) {
+    stopStreamTracks(nextProcessed);
+    stopStreamTracks(nextRaw);
+    if (showStatusToast) showToast("Voice processing failed to create audio track.");
+    return;
+  }
+
+  localVoiceStream = nextProcessed;
+  rawLocalVoiceStream = nextRaw;
+  applyLocalMuteState();
+  if (voiceSelfPeerId) {
+    detachVoiceLevelSource(voiceSelfPeerId);
+    attachVoiceLevelStream(voiceSelfPeerId, localVoiceStream);
+  }
+
+  const replaceJobs = [];
+  peerConnections.forEach((pc) => {
+    pc.getSenders()
+      .filter((sender) => sender.track && sender.track.kind === "audio")
+      .forEach((sender) => {
+        replaceJobs.push(sender.replaceTrack(nextTrack).catch(() => {}));
+      });
+  });
+  if (replaceJobs.length > 0) {
+    await Promise.all(replaceJobs);
+  }
+
+  const seen = new Set();
+  stopStreamTracks(previousRawStream, seen);
+  stopStreamTracks(previousLocalStream, seen);
+
+  if (showStatusToast) {
+    showToast("Voice processing updated.");
+  }
+  return getVoiceConstraintStatus(nextRaw);
 }
 
 function attachVoiceLevelStream(peerId, stream) {
@@ -2600,31 +8337,41 @@ function renderVoiceUsers() {
   entries.forEach((peer) => {
     const row = document.createElement("div");
     row.className = "voice-user-row";
+    const canWatchStream = (peer.screen_on || peer.link_stream_url) && peer.peer_id !== voiceSelfPeerId;
+    if (canWatchStream) {
+      row.style.cursor = "pointer";
+      row.title = watchedPeerStreamIds.has(peer.peer_id) ? "Click to stop watching stream" : "Click to watch stream";
+      row.addEventListener("click", () => {
+        toggleVoiceStreamWatchForPeer(peer.peer_id);
+      });
+    }
 
     const left = document.createElement("div");
     left.className = "voice-user-left";
 
     const avatar = document.createElement("img");
     avatar.className = "voice-user-avatar";
-    avatar.alt = `${peer.username} avatar`;
-    if (peer.user_public_id) {
-      avatar.src = `/api/users/${peer.user_public_id}/avatar`;
-      avatar.onerror = () => {
-        avatar.style.visibility = "hidden";
-      };
-    } else {
-      avatar.style.visibility = "hidden";
-    }
+    bindUserAvatarImage(avatar, peer.user_public_id, { alt: `${peer.username} avatar` });
+    attachPublicUserProfileTrigger(avatar, peer.user_public_id);
+    const hasStream = Boolean(peer.screen_on || peer.link_stream_url);
+    avatar.style.boxShadow = hasStream ? "0 0 0 2px rgba(230,64,64,0.9)" : "";
+    avatar.style.border = hasStream ? "1px solid rgba(255,255,255,0.65)" : "";
     left.appendChild(avatar);
 
     const label = document.createElement("span");
     label.className = "voice-user-name";
     label.textContent = `${peer.username}${peer.peer_id === voiceSelfPeerId ? " (you)" : ""}`;
+    attachPublicUserProfileTrigger(label, peer.user_public_id);
     left.appendChild(label);
+    const statusText = document.createElement("span");
+    statusText.className = "voice-user-status";
+    attachPublicUserProfileTrigger(statusText, peer.user_public_id);
+    hydrateUserStatusElement(statusText, peer.user_public_id, { emptyText: "", hiddenWhenEmpty: true });
+    left.appendChild(statusText);
 
     const badges = document.createElement("span");
     badges.className = "voice-user-badges";
-    badges.innerHTML = `${peer.muted ? '<i class="fas fa-microphone-slash" title="Muted"></i>' : ""}${peer.deafened ? '<i class="fas fa-headphones-alt" title="Deafened"></i>' : ""}`;
+    badges.innerHTML = `${peer.muted ? '<i class="fas fa-microphone-slash" title="Muted"></i>' : ""}${peer.deafened ? '<i class="fas fa-headphones-alt" title="Deafened"></i>' : ""}${peer.camera_on ? '<i class="fas fa-video" title="Camera On"></i>' : ""}${peer.screen_on ? '<i class="fas fa-desktop" title="Screen Sharing"></i>' : ""}`;
     left.appendChild(badges);
     row.appendChild(left);
 
@@ -2652,13 +8399,71 @@ function renderVoiceUsers() {
 
     voiceUsersList.appendChild(row);
   });
+  renderVoiceUsersInChannelsPanel();
+}
+
+function renderVoiceUsersInChannelsPanel() {
+  if (!channelsPanel) return;
+  const activeVoiceChannelId = voiceSocketChannelId || null;
+  const entries = activeVoiceChannelId
+    ? [...peerMeta.values()].sort((a, b) => a.username.localeCompare(b.username))
+    : [];
+
+  channelsPanel.querySelectorAll(".channel-item[data-channel-type='voice']").forEach((el) => {
+    let listEl = el.querySelector(".channel-voice-members");
+    if (!listEl) {
+      listEl = document.createElement("div");
+      listEl.className = "channel-voice-members";
+      el.appendChild(listEl);
+    }
+
+    const isActiveVoiceRow = el.dataset.channelId === activeVoiceChannelId && entries.length > 0;
+    el.classList.toggle("has-voice-members", isActiveVoiceRow);
+    listEl.innerHTML = "";
+    if (!isActiveVoiceRow) return;
+
+    entries.forEach((peer) => {
+      const row = document.createElement("div");
+      row.className = "channel-voice-member";
+
+      const avatar = document.createElement("img");
+      avatar.className = "channel-voice-member-avatar";
+      bindUserAvatarImage(avatar, peer.user_public_id, { alt: "" });
+      attachPublicUserProfileTrigger(avatar, peer.user_public_id);
+      const hasStream = Boolean(peer.screen_on || peer.link_stream_url);
+      avatar.style.boxShadow = hasStream ? "0 0 0 2px rgba(230,64,64,0.9)" : "";
+      avatar.style.border = hasStream ? "1px solid rgba(255,255,255,0.65)" : "";
+      row.appendChild(avatar);
+
+      const name = document.createElement("span");
+      name.className = "channel-voice-member-name";
+      name.textContent = `${peer.username}${peer.peer_id === voiceSelfPeerId ? " (you)" : ""}`;
+      attachPublicUserProfileTrigger(name, peer.user_public_id);
+      row.appendChild(name);
+
+      if (peer.muted || peer.deafened) {
+        const badges = document.createElement("span");
+        badges.className = "channel-voice-member-badges";
+        badges.innerHTML = `${peer.muted ? '<i class="fas fa-microphone-slash" title="Muted"></i>' : ""}${peer.deafened ? '<i class="fas fa-headphones-alt" title="Deafened"></i>' : ""}`;
+        row.appendChild(badges);
+      }
+
+      listEl.appendChild(row);
+    });
+  });
 }
 
 async function ensureLocalVoiceStream() {
   if (localVoiceStream) return localVoiceStream;
-  localVoiceStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+  rawLocalVoiceStream = await navigator.mediaDevices.getUserMedia({
+    audio: buildVoiceAudioConstraints(),
+    video: false,
+  });
+  await applyVoiceConstraintsToStream(rawLocalVoiceStream);
+  localVoiceStream = buildProcessedVoiceStream(rawLocalVoiceStream);
   applyLocalMuteState();
   if (voiceSelfPeerId) attachVoiceLevelStream(voiceSelfPeerId, localVoiceStream);
+  renderLocalVoiceVideoTiles();
   return localVoiceStream;
 }
 
@@ -2669,6 +8474,9 @@ function sendVoiceState() {
       type: "state",
       muted: isMuted,
       deafened: isDeafened,
+      camera_on: isCameraEnabled,
+      screen_on: isScreenSharing,
+      link_stream_url: sharedLinkStreamUrl || null,
     })
   );
 }
@@ -2694,6 +8502,13 @@ async function createPeerConnection(peerId, makeOffer) {
 
   const stream = await ensureLocalVoiceStream();
   stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+  if (isCameraEnabled && localCameraStream) {
+    localCameraStream.getVideoTracks().forEach((track) => pc.addTrack(track, localCameraStream));
+  }
+  if (isScreenSharing && localScreenStream) {
+    localScreenStream.getVideoTracks().forEach((track) => pc.addTrack(track, localScreenStream));
+    localScreenStream.getAudioTracks().forEach((track) => pc.addTrack(track, localScreenStream));
+  }
 
   pc.onicecandidate = (event) => {
     if (event.candidate) {
@@ -2702,6 +8517,24 @@ async function createPeerConnection(peerId, makeOffer) {
   };
 
   pc.ontrack = (event) => {
+    if (event.track?.kind === "video") {
+      const tileKey = getRemoteVideoSourceKeyForTrack(peerId, event.track?.id || "");
+      const incomingStream = event.streams[0] || new MediaStream([event.track]);
+      if (!isRemoteStreamTileVisible(tileKey) && !tileKey.endsWith(":camera")) {
+        pendingRemoteVideoStreams.set(tileKey, incomingStream);
+        return;
+      }
+      const tile = ensureVoiceVideoTile(tileKey, {
+        label: `${getPeerDisplayName(peerId)} - ${tileKey.endsWith(":screen") ? "Screen" : "Camera"}`,
+      });
+      if (tile) {
+        tile.video.muted = true;
+        tile.tile.classList.toggle("hidden", !isRemoteStreamTileVisible(tileKey));
+        tile.video.srcObject = incomingStream;
+        updateVoiceVideoGridVisibility();
+      }
+      return;
+    }
     let audio = peerAudioElements.get(peerId);
     if (!audio) {
       audio = document.createElement("audio");
@@ -2712,9 +8545,17 @@ async function createPeerConnection(peerId, makeOffer) {
       document.body.appendChild(audio);
       peerAudioElements.set(peerId, audio);
     }
-    audio.srcObject = event.streams[0];
+    const incomingAudioTrack = event.track;
+    let targetAudioStream = audio.srcObject instanceof MediaStream ? audio.srcObject : null;
+    if (!targetAudioStream) {
+      targetAudioStream = new MediaStream();
+      audio.srcObject = targetAudioStream;
+    }
+    if (incomingAudioTrack && !targetAudioStream.getAudioTracks().some((t) => t.id === incomingAudioTrack.id)) {
+      targetAudioStream.addTrack(incomingAudioTrack);
+    }
     applyDeafenOutput();
-    attachVoiceLevelStream(peerId, event.streams[0]);
+    attachVoiceLevelStream(peerId, targetAudioStream);
   };
 
   if (makeOffer) {
@@ -2752,25 +8593,32 @@ function addVoicePeer(peer) {
     username: peer.username,
     muted: !!peer.muted,
     deafened: !!peer.deafened,
+    camera_on: !!peer.camera_on,
+    screen_on: !!peer.screen_on,
+    link_stream_url: peer.link_stream_url ? String(peer.link_stream_url) : null,
   });
   renderVoiceUsers();
+  updateRemotePeerVideoTileLabels();
+  renderRemoteLinkStreamTile(peer.peer_id);
 }
 
 function removeVoicePeer(peerId) {
   peerMeta.delete(peerId);
   closePeerConnection(peerId);
   renderVoiceUsers();
+  updateRemotePeerVideoTileLabels();
 }
 
 async function joinVoiceChannel(channelPublicId, wsPathPrefix = "/ws/voice/") {
   if (!channelPublicId) return;
   if (voiceSocket && voiceSocketChannelId === channelPublicId && voiceSocket.readyState === WebSocket.OPEN) return;
 
+  stopMicSelfTest();
   leaveVoiceChannel();
   await ensureLocalVoiceStream();
+  updateVoiceMediaButtons();
 
-  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-  const wsUrl = `${protocol}://${window.location.host}${wsPathPrefix}${channelPublicId}`;
+  const wsUrl = buildWsUrl(`${wsPathPrefix}${channelPublicId}`);
   voiceSocket = new WebSocket(wsUrl);
   voiceSocketChannelId = channelPublicId;
   setVoiceStatus("Connecting...");
@@ -2797,6 +8645,9 @@ async function joinVoiceChannel(channelPublicId, wsPathPrefix = "/ws/voice/") {
         username: currentUser?.username || "You",
         muted: isMuted,
         deafened: isDeafened,
+        camera_on: isCameraEnabled,
+        screen_on: isScreenSharing,
+        link_stream_url: sharedLinkStreamUrl,
       });
       if (localVoiceStream) attachVoiceLevelStream(voiceSelfPeerId, localVoiceStream);
       for (const peer of data.peers || []) {
@@ -2812,7 +8663,26 @@ async function joinVoiceChannel(channelPublicId, wsPathPrefix = "/ws/voice/") {
       if (peer) {
         peer.muted = !!data.muted;
         peer.deafened = !!data.deafened;
+        peer.camera_on = !!data.camera_on;
+        peer.screen_on = !!data.screen_on;
+        peer.link_stream_url = data.link_stream_url ? String(data.link_stream_url) : null;
+        if (!peer.camera_on) {
+          removeVoiceVideoTile(`${data.peer_id}:camera`);
+          const slots = peerRemoteVideoTrackSlots.get(data.peer_id);
+          if (slots) slots.camera = null;
+        }
+        if (!peer.screen_on) {
+          removeVoiceVideoTile(`${data.peer_id}:screen`);
+          pendingRemoteVideoStreams.delete(`${data.peer_id}:screen`);
+          const slots = peerRemoteVideoTrackSlots.get(data.peer_id);
+          if (slots) slots.screen = null;
+        }
+        if (!peer.screen_on && !peer.link_stream_url) {
+          watchedPeerStreamIds.delete(data.peer_id);
+        }
         renderVoiceUsers();
+        updateRemotePeerVideoTileLabels();
+        renderRemoteLinkStreamTile(data.peer_id);
       }
     } else if (data.type === "signal") {
       await handleVoiceSignal(data.from_peer_id, data.signal);
@@ -2834,11 +8704,26 @@ function leaveVoiceChannel() {
   closeVoiceSocket();
   resetVoicePeers();
   dmCallActive = false;
-  if (localVoiceStream) {
-    localVoiceStream.getTracks().forEach((track) => track.stop());
-    localVoiceStream = null;
+  const seen = new Set();
+  stopStreamTracks(localCameraStream, seen);
+  stopStreamTracks(localScreenStream, seen);
+  stopStreamTracks(localVoiceStream, seen);
+  stopStreamTracks(rawLocalVoiceStream, seen);
+  localCameraStream = null;
+  localScreenStream = null;
+  localVoiceStream = null;
+  rawLocalVoiceStream = null;
+  isCameraEnabled = false;
+  isScreenSharing = false;
+  sharedLinkStreamUrl = null;
+  teardownLocalVoiceProcessor();
+  if (voiceSettingsApplyTimer) {
+    clearTimeout(voiceSettingsApplyTimer);
+    voiceSettingsApplyTimer = null;
   }
   setVoiceStatus("Not connected");
+  updateVoiceMediaButtons();
+  renderLocalVoiceVideoTiles();
 }
 
 function disconnectChannelSocket(channelId) {
@@ -2862,17 +8747,50 @@ function closeAllChannelSockets() {
   [...channelSockets.keys()].forEach((channelId) => disconnectChannelSocket(channelId));
 }
 
-function connectChannelSocket(channelId) {
-  if (!channelId || channelSockets.has(channelId)) return;
+function removeStaleChannelState(channelId) {
+  unreadChannels.delete(channelId);
+  channelLastSeen.delete(channelId);
+  channelPresence.delete(channelId);
+  clearTypingForChannel(channelId);
+  channelToServer.delete(channelId);
+  channelTypeById.delete(channelId);
+  channelNameById.delete(channelId);
+  if (voiceSocketChannelId === channelId) {
+    leaveVoiceChannel();
+  }
+  recalculateUnreadServers();
+}
 
-  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-  const wsUrl = `${protocol}://${window.location.host}/ws/messages/${channelId}`;
+async function connectChannelSocket(channelId) {
+  if (!channelId || channelSockets.has(channelId)) return;
+  if (!channelToServer.has(channelId)) return;
+  if (blockedChannelSocketIds.has(channelId)) return;
+
+  try {
+    // Validate channel access/existence before opening websocket to avoid 404 WS loops.
+    const probe = await fetch(`/messages/${channelId}?limit=1`, { credentials: "include" });
+    if (probe.status === 404 || probe.status === 403) {
+      removeStaleChannelState(channelId);
+      return;
+    }
+  } catch {
+    // Ignore probe errors; websocket connect may still succeed after transient failures.
+  }
+
+  const wsUrl = buildWsUrl(`/ws/messages/${channelId}`);
   const socket = new WebSocket(wsUrl);
+  socket._opened = false;
   channelSockets.set(channelId, socket);
   setRealtimeState("channel", false, Date.now() + 2000, channelId);
 
   socket.onopen = () => {
+    socket._opened = true;
+    blockedChannelSocketIds.delete(channelId);
+    channelSocketFailureCounts.delete(channelId);
     setRealtimeState("channel", true, 0, channelId);
+    if (channelId === activeChannelId && activeChannelType === "battlemap") {
+      sendChannelSocketEvent(channelId, { type: "battlemap_state_request" });
+    }
   };
 
   socket.onmessage = async (event) => {
@@ -2887,6 +8805,27 @@ function connectChannelSocket(channelId) {
         handleTypingEvent(channelId, eventType, data);
         return;
       }
+      if (eventType === "battlemap_state_requested") {
+        if (channelId === activeChannelId && activeChannelType === "battlemap" && battlemapState) {
+          persistBattlemapState(channelId, battlemapState, { saveRemote: false });
+        }
+        return;
+      }
+      if (eventType === "battlemap_state_updated") {
+        const nextBattlemapState = normalizeBattlemapState(data.state);
+        saveBattlemapChannelState(channelId, nextBattlemapState);
+        if (channelId === activeChannelId && activeChannelType === "battlemap") {
+          battlemapState = nextBattlemapState;
+          if (
+            battlemapSelectedPawnId &&
+            !nextBattlemapState.pawns.some((pawn) => pawn.id === battlemapSelectedPawnId)
+          ) {
+            battlemapSelectedPawnId = null;
+          }
+          renderBattlemapState();
+        }
+        return;
+      }
       const createdTs = new Date(data.created_at || Date.now()).getTime();
       const isNewMessage = eventType === "message_created";
       const isThreadReplyForOpenThread =
@@ -2898,7 +8837,26 @@ function connectChannelSocket(channelId) {
         // channel_id in WS payload is internal int; keep explicit route channel mapping instead.
       }
 
+      if (isNewMessage && data.user_id !== currentUserId && shouldNotifyForMessage(channelId, data)) {
+        emitIncomingMessageNotification("server", channelId, data);
+      }
+
       if (channelId === activeChannelId && activeChannelType !== "voice") {
+        if (activeChannelType === "notes") {
+          if (isNewMessage) {
+            markSeenForContextIfPending("server", channelId, data.user_id);
+            channelLastSeen.set(channelId, createdTs);
+            markChannelRead(channelId);
+            recalculateUnreadServers();
+          }
+          if (data.user_id !== currentUserId) {
+            // Another user updated the note page. Refresh the editor from latest content.
+            await loadNotesPage(channelId);
+          } else {
+            setNotesEditorStatus("Saved");
+          }
+          return;
+        }
         const nearBottom = messagesPanel
           ? (messagesPanel.scrollTop + messagesPanel.clientHeight >= messagesPanel.scrollHeight - 64)
           : true;
@@ -2936,11 +8894,33 @@ function connectChannelSocket(channelId) {
     clearTypingForChannel(channelId);
     const serverId = channelToServer.get(channelId);
     if (serverId) recomputeServerPresence(serverId);
+    // Handshake failures (e.g. 403) never open; stop retrying after a few attempts.
+    if (!socket._opened) {
+      const failures = (channelSocketFailureCounts.get(channelId) || 0) + 1;
+      channelSocketFailureCounts.set(channelId, failures);
+      if (failures >= 3) {
+        blockedChannelSocketIds.add(channelId);
+        setRealtimeState("channel", false, 0, channelId);
+        return;
+      }
+    }
+
     const retryAt = Date.now() + 2000;
     setRealtimeState("channel", false, retryAt, channelId);
     // Reconnect after brief delay while still logged in.
-    const timer = setTimeout(() => {
-      connectChannelSocket(channelId);
+    const timer = setTimeout(async () => {
+      if (!channelToServer.has(channelId)) return;
+      try {
+        // If channel no longer exists or user lost access, stop reconnect loop.
+        const probe = await fetch(`/messages/${channelId}?limit=1`, { credentials: "include" });
+        if (probe.status === 404 || probe.status === 403) {
+          removeStaleChannelState(channelId);
+          return;
+        }
+      } catch {
+        // Network/proxy blips should still allow reconnect attempts.
+      }
+      connectChannelSocket(channelId).catch(() => {});
     }, 2000);
     channelReconnectTimers.set(channelId, timer);
   };
@@ -2952,44 +8932,65 @@ function connectChannelSocket(channelId) {
 }
 
 async function syncRealtimeSubscriptions() {
-  try {
-    const serversRes = await fetch("/servers/", { credentials: "include" });
-    if (!serversRes.ok) return;
-    const servers = await serversRes.json();
-    const nextChannelIds = new Set();
+  const runSync = async () => {
+    try {
+      const serversRes = await fetch("/servers/", { credentials: "include" });
+      if (!serversRes.ok) return;
+      const servers = await serversRes.json();
+      const nextChannelIds = new Set();
 
-    for (const server of servers) {
-      const channelsRes = await fetch(`/channels/server/${server.public_id}`, { credentials: "include" });
-      if (!channelsRes.ok) continue;
-      const channels = await channelsRes.json();
-      for (const channel of channels) {
-        nextChannelIds.add(channel.public_id);
-        channelToServer.set(channel.public_id, server.public_id);
-        channelTypeById.set(channel.public_id, channel.type || "text");
-        channelNameById.set(channel.public_id, channel.name);
-        connectChannelSocket(channel.public_id);
-      }
-    }
-
-    [...channelSockets.keys()].forEach((existingChannelId) => {
-      if (!nextChannelIds.has(existingChannelId)) {
-        disconnectChannelSocket(existingChannelId);
-        unreadChannels.delete(existingChannelId);
-        channelLastSeen.delete(existingChannelId);
-        channelPresence.delete(existingChannelId);
-        clearTypingForChannel(existingChannelId);
-        channelToServer.delete(existingChannelId);
-        channelTypeById.delete(existingChannelId);
-        channelNameById.delete(existingChannelId);
-        if (voiceSocketChannelId === existingChannelId) {
-          leaveVoiceChannel();
+      for (const server of servers) {
+        const channelsRes = await fetch(`/channels/server/${server.public_id}`, { credentials: "include" });
+        if (!channelsRes.ok) continue;
+        const channels = await channelsRes.json();
+        for (const channel of channels) {
+          nextChannelIds.add(channel.public_id);
+          channelSocketFailureCounts.delete(channel.public_id);
+          blockedChannelSocketIds.delete(channel.public_id);
+          channelToServer.set(channel.public_id, server.public_id);
+          channelTypeById.set(channel.public_id, channel.type || "text");
+          channelNameById.set(channel.public_id, channel.name);
+          connectChannelSocket(channel.public_id);
         }
       }
-    });
 
-    recalculateUnreadServers();
-  } catch {
-    // Ignore sync failures
+      [...channelSockets.keys()].forEach((existingChannelId) => {
+        if (!nextChannelIds.has(existingChannelId)) {
+          disconnectChannelSocket(existingChannelId);
+          removeStaleChannelState(existingChannelId);
+        }
+      });
+
+      [...channelToServer.keys()].forEach((knownChannelId) => {
+        if (!nextChannelIds.has(knownChannelId)) {
+          disconnectChannelSocket(knownChannelId);
+          removeStaleChannelState(knownChannelId);
+        }
+      });
+
+      recalculateUnreadServers();
+    } catch {
+      // Ignore sync failures
+    }
+  };
+
+  if (realtimeSubscriptionSyncGate) {
+    const result = await realtimeSubscriptionSyncGate.run(runSync);
+    const snap = realtimeSubscriptionSyncGate.getSnapshot();
+    realtimeSubscriptionSyncPromise = snap.in_flight ? Promise.resolve(result) : null;
+    lastRealtimeSubscriptionSyncAt = snap.last_run_at || lastRealtimeSubscriptionSyncAt;
+    return result;
+  }
+
+  const now = Date.now();
+  if (realtimeSubscriptionSyncPromise) return realtimeSubscriptionSyncPromise;
+  if (now - lastRealtimeSubscriptionSyncAt < REALTIME_SUBSCRIPTION_SYNC_COOLDOWN_MS) return;
+  lastRealtimeSubscriptionSyncAt = now;
+  realtimeSubscriptionSyncPromise = runSync();
+  try {
+    await realtimeSubscriptionSyncPromise;
+  } finally {
+    realtimeSubscriptionSyncPromise = null;
   }
 }
 
@@ -3016,10 +9017,29 @@ async function patchMessageContent(messagePublicId, content) {
 }
 
 async function deleteMessageByPublicId(messagePublicId) {
-  const res = await fetch(`/messages/${messagePublicId}`, {
-    method: "DELETE",
-    credentials: "include",
-  });
+  const isDmContext = activeMode === "dm" && !!activeDmConversationId;
+  const url = isDmContext
+    ? `/dms/${activeDmConversationId}/messages/${messagePublicId}`
+    : `/messages/${messagePublicId}`;
+  let res;
+  try {
+    res = await fetch(url, {
+      method: "DELETE",
+      credentials: "include",
+    });
+  } catch {
+    res = null;
+  }
+  const shouldFallbackToPost = !res || [403, 405, 501].includes(res.status);
+  if (shouldFallbackToPost) {
+    const fallbackUrl = isDmContext
+      ? `/dms/${activeDmConversationId}/messages/${messagePublicId}/delete`
+      : `/messages/${messagePublicId}/delete`;
+    res = await fetch(fallbackUrl, {
+      method: "POST",
+      credentials: "include",
+    });
+  }
   if (!res.ok) {
     let detail = "Failed to delete message";
     try {
@@ -3041,6 +9061,59 @@ async function toggleMessageReaction(messagePublicId, emoji) {
   });
   if (!res.ok) {
     let detail = "Failed to toggle reaction";
+    try {
+      const data = await res.json();
+      if (data?.detail) detail = data.detail;
+    } catch {
+      // Keep default detail
+    }
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
+async function pinMessageByPublicId(messagePublicId) {
+  const res = await fetch(`/messages/${messagePublicId}/pin`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    let detail = "Failed to pin message";
+    try {
+      const data = await res.json();
+      if (data?.detail) detail = data.detail;
+    } catch {
+      // Keep default detail
+    }
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
+async function unpinMessageByPublicId(messagePublicId) {
+  const res = await fetch(`/messages/${messagePublicId}/pin`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    let detail = "Failed to unpin message";
+    try {
+      const data = await res.json();
+      if (data?.detail) detail = data.detail;
+    } catch {
+      // Keep default detail
+    }
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
+async function fetchPinnedMessages(channelPublicId, limit = 80) {
+  const res = await fetch(`/messages/channel/${channelPublicId}/pins?limit=${Math.max(1, Math.min(200, Number(limit) || 80))}`, {
+    credentials: "include",
+  });
+  if (!res.ok) {
+    let detail = "Failed to load pinned messages";
     try {
       const data = await res.json();
       if (data?.detail) detail = data.detail;
@@ -3089,6 +9162,116 @@ async function openThreadModalForMessage(msg) {
   if (threadMessageInput) threadMessageInput.value = "";
   openModal(threadModal);
   await loadThreadMessages(true);
+}
+
+function focusRenderedMessage(messagePublicId) {
+  if (!messagesPanel || !messagePublicId) return false;
+  let target = null;
+  try {
+    const safeId = typeof CSS !== "undefined" && CSS.escape
+      ? CSS.escape(String(messagePublicId))
+      : String(messagePublicId).replace(/["\\]/g, "\\$&");
+    target = messagesPanel.querySelector(`.message[data-message-id="${safeId}"]`);
+  } catch {
+    target = null;
+  }
+  if (!target) return false;
+  try {
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+  } catch {
+    target.scrollIntoView();
+  }
+  target.classList.remove("message-jump-flash");
+  void target.offsetWidth;
+  target.classList.add("message-jump-flash");
+  setTimeout(() => target.classList.remove("message-jump-flash"), 1350);
+  return true;
+}
+
+function renderPinnedMessagesModal(rows) {
+  if (!pinsModalList) return;
+  pinsModalList.innerHTML = "";
+  const list = Array.isArray(rows) ? rows : [];
+  if (!list.length) {
+    const empty = document.createElement("div");
+    empty.className = "pins-modal-empty";
+    empty.textContent = "No pinned messages in this channel.";
+    pinsModalList.appendChild(empty);
+    return;
+  }
+  list.forEach((msg) => {
+    const item = document.createElement("div");
+    item.className = "pins-modal-item";
+
+    const header = document.createElement("div");
+    header.className = "pins-modal-item-header";
+    const author = document.createElement("span");
+    author.className = "pins-modal-item-author";
+    const pinnedRole = formatServerRoleLabel(msg.server_role);
+    author.textContent = pinnedRole ? `${msg.username || "Unknown"} (${pinnedRole})` : (msg.username || "Unknown");
+    const time = document.createElement("span");
+    time.className = "pins-modal-item-time";
+    time.textContent = formatTimestamp(msg.created_at) || "";
+    header.appendChild(author);
+    header.appendChild(time);
+
+    const body = document.createElement("div");
+    body.className = "pins-modal-item-content";
+    const raw = String(msg.content || "").trim();
+    body.textContent = raw.length > 280 ? `${raw.slice(0, 280)}...` : raw || "(empty)";
+
+    const actions = document.createElement("div");
+    actions.className = "pins-modal-item-actions";
+    const jumpBtn = document.createElement("button");
+    jumpBtn.type = "button";
+    jumpBtn.className = "topbar-btn";
+    jumpBtn.textContent = "Jump";
+    jumpBtn.addEventListener("click", async () => {
+      closeModal(pinsModal);
+      if (!focusRenderedMessage(msg.public_id)) {
+        await loadMessages(activeChannelId, false);
+        if (!focusRenderedMessage(msg.public_id)) {
+          showToast("Pinned message not currently loaded. Try Search.");
+        }
+      }
+    });
+    const copyBtn = document.createElement("button");
+    copyBtn.type = "button";
+    copyBtn.className = "topbar-btn";
+    copyBtn.textContent = "Copy Link";
+    copyBtn.addEventListener("click", async () => {
+      const href = `${window.location.origin}${window.location.pathname}#channel=${encodeURIComponent(activeChannelId || "")}&message=${encodeURIComponent(msg.public_id || "")}`;
+      try {
+        await navigator.clipboard.writeText(href);
+        showToast("Pinned message link copied");
+      } catch {}
+    });
+    actions.appendChild(jumpBtn);
+    actions.appendChild(copyBtn);
+
+    item.appendChild(header);
+    item.appendChild(body);
+    item.appendChild(actions);
+    pinsModalList.appendChild(item);
+  });
+}
+
+async function openPinnedMessagesModal() {
+  if (activeMode !== "server" || !activeChannelId) return;
+  if (activeChannelType === "voice" || activeChannelType === "notes") return;
+  if (!pinsModal || !pinsModalList) return;
+  pinsModalList.innerHTML = '<div class="pins-modal-empty">Loading pinned messages...</div>';
+  openModal(pinsModal);
+  try {
+    const rows = await fetchPinnedMessages(activeChannelId);
+    renderPinnedMessagesModal(rows);
+  } catch (err) {
+    pinsModalList.innerHTML = "";
+    const empty = document.createElement("div");
+    empty.className = "pins-modal-empty";
+    empty.textContent = err?.message || "Failed to load pinned messages.";
+    pinsModalList.appendChild(empty);
+  }
 }
 
 async function inviteMemberToServer(serverPublicId, userPublicId) {
@@ -3158,11 +9341,15 @@ async function fetchServerMembers(serverPublicId) {
 
 function cacheServerNicknames(serverPublicId, members) {
   const byUserId = new Map();
+  const roleByUserId = new Map();
   (Array.isArray(members) ? members : []).forEach((member) => {
     const trimmed = (member.nickname || "").trim();
     if (trimmed) byUserId.set(Number(member.user_id), trimmed);
+    const roleRaw = String(member.role || "").trim().toLowerCase();
+    if (roleRaw) roleByUserId.set(Number(member.user_id), roleRaw);
   });
   serverNicknamesByServer.set(serverPublicId, byUserId);
+  serverRolesByServer.set(serverPublicId, roleByUserId);
 }
 
 async function ensureServerNicknames(serverPublicId, force = false) {
@@ -3225,16 +9412,411 @@ async function patchServerMemberNickname(serverPublicId, memberUserPublicId, nic
   return res.json();
 }
 
-async function uploadMessageImage(file) {
-  const formData = new FormData();
-  formData.append("file", file);
-  const res = await fetch("/api/uploads/message-image", {
+async function patchServerUploadLimit(serverPublicId, maxUploadSizeMb) {
+  const res = await fetch(`/servers/${serverPublicId}`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ max_upload_size_mb: maxUploadSizeMb }),
+  });
+  if (!res.ok) {
+    let detail = "Failed to update upload limit";
+    try {
+      const data = await res.json();
+      if (data?.detail) detail = data.detail;
+    } catch {}
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
+async function fetchServerByPublicId(serverPublicId) {
+  const res = await fetch(`/servers/${serverPublicId}`, { credentials: "include" });
+  if (!res.ok) {
+    let detail = "Failed to load server";
+    try {
+      const data = await res.json();
+      if (data?.detail) detail = data.detail;
+    } catch {}
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
+async function fetchServerUploadDiagnostics(serverPublicId) {
+  const res = await fetch(`/servers/${serverPublicId}/upload-diagnostics`, { credentials: "include" });
+  if (!res.ok) {
+    let detail = "Failed to load upload diagnostics";
+    try {
+      const data = await res.json();
+      if (data?.detail) detail = data.detail;
+    } catch {}
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
+async function fetchServerActivity(serverPublicId) {
+  const res = await fetch(`/servers/${serverPublicId}/activity?limit=120`, { credentials: "include" });
+  if (!res.ok) {
+    let detail = "Failed to load server activity";
+    try {
+      const data = await res.json();
+      if (data?.detail) detail = data.detail;
+    } catch {}
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
+function formatBytes(bytes) {
+  const n = Number(bytes || 0);
+  if (!Number.isFinite(n) || n <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let value = n;
+  let idx = 0;
+  while (value >= 1024 && idx < units.length - 1) {
+    value /= 1024;
+    idx += 1;
+  }
+  return `${value.toFixed(value >= 100 || idx === 0 ? 0 : 1)} ${units[idx]}`;
+}
+
+function renderServerUploadDiagnostics(data) {
+  if (!serverUploadDiagnosticsList) return;
+  const payload = data && typeof data === "object" ? data : {};
+  const rows = [
+    ["Server Upload Limit", payload.max_upload_size_mb ? `${payload.max_upload_size_mb} MB` : "Unlimited"],
+    ["Active Upload Sessions", String(Number(payload.active_upload_sessions || 0))],
+    ["Pending Upload Bytes", formatBytes(payload.pending_upload_bytes)],
+    ["Uploads (24h)", String(Number(payload.uploads_24h_count || 0))],
+    ["Uploaded (24h)", formatBytes(payload.uploads_24h_bytes)],
+  ];
+  serverUploadDiagnosticsList.innerHTML = "";
+  rows.forEach(([label, value]) => {
+    const row = document.createElement("div");
+    row.className = "server-diagnostic-row";
+    row.innerHTML = `<strong>${label}:</strong> ${value}`;
+    serverUploadDiagnosticsList.appendChild(row);
+  });
+}
+
+function renderServerActivity(rows) {
+  if (!serverSettingsActivityList) return;
+  serverSettingsActivityList.innerHTML = "";
+  const list = Array.isArray(rows) ? rows : [];
+  if (!list.length) {
+    const empty = document.createElement("div");
+    empty.className = "message-placeholder";
+    empty.textContent = "No recent server activity.";
+    serverSettingsActivityList.appendChild(empty);
+    return;
+  }
+  list.forEach((row) => {
+    const item = document.createElement("div");
+    item.className = "server-activity-row";
+    const title = document.createElement("div");
+    title.className = "server-activity-title";
+    title.textContent = String(row?.event_type || "unknown").replaceAll("_", " ");
+    const meta = document.createElement("div");
+    meta.className = "server-activity-meta";
+    meta.textContent = `${formatTimestamp(row?.ts) || row?.ts || "-"} - actor: ${row?.actor_public_id || "system"}`;
+    item.appendChild(title);
+    item.appendChild(meta);
+    serverSettingsActivityList.appendChild(item);
+  });
+}
+
+async function createServerRole(serverPublicId, roleName) {
+  const res = await fetch(`/servers/${serverPublicId}/roles`, {
     method: "POST",
     credentials: "include",
-    body: formData,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: String(roleName || "").trim().toLowerCase(),
+      can_manage_server: false,
+      can_manage_channels: false,
+      can_manage_members: false,
+      can_manage_roles: false,
+      can_moderate_messages: false,
+    }),
   });
-  if (!res.ok) throw new Error("Failed to upload image");
+  if (!res.ok) {
+    let detail = "Failed to create role";
+    try {
+      const data = await res.json();
+      if (data?.detail) detail = data.detail;
+    } catch {}
+    throw new Error(detail);
+  }
   return res.json();
+}
+
+async function patchServerRole(serverPublicId, rolePublicId, payload) {
+  const res = await fetch(`/servers/${serverPublicId}/roles/${rolePublicId}`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload || {}),
+  });
+  if (!res.ok) {
+    let detail = "Failed to update role";
+    try {
+      const data = await res.json();
+      if (data?.detail) detail = data.detail;
+    } catch {}
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
+function renderServerSettingsRoles(roles) {
+  if (!serverSettingsRolesList) return;
+  serverSettingsRolesList.innerHTML = "";
+  const roleRows = Array.isArray(roles) ? roles : [];
+  if (!roleRows.length) {
+    const empty = document.createElement("div");
+    empty.className = "message-placeholder";
+    empty.textContent = "No roles found.";
+    serverSettingsRolesList.appendChild(empty);
+    return;
+  }
+  const pickerWrap = document.createElement("div");
+  pickerWrap.className = "server-role-picker-row";
+
+  const pickerLabel = document.createElement("label");
+  pickerLabel.textContent = "Role";
+  pickerLabel.setAttribute("for", "server-role-picker-select");
+
+  const pickerSelect = document.createElement("select");
+  pickerSelect.id = "server-role-picker-select";
+  pickerSelect.className = "member-role-select";
+  roleRows.forEach((role, idx) => {
+    const option = document.createElement("option");
+    option.value = role.public_id;
+    option.textContent = role.name || `role-${idx + 1}`;
+    pickerSelect.appendChild(option);
+  });
+
+  pickerWrap.appendChild(pickerLabel);
+  pickerWrap.appendChild(pickerSelect);
+  serverSettingsRolesList.appendChild(pickerWrap);
+
+  const editorHost = document.createElement("div");
+  editorHost.className = "server-role-editor-host";
+  serverSettingsRolesList.appendChild(editorHost);
+
+  const renderSelectedRoleEditor = () => {
+    const selectedId = String(pickerSelect.value || "");
+    const role = roleRows.find((row) => String(row.public_id || "") === selectedId) || roleRows[0];
+    editorHost.innerHTML = "";
+    if (!role) return;
+
+    const card = document.createElement("div");
+    card.className = "server-role-card";
+
+    const head = document.createElement("div");
+    head.className = "server-role-card-head";
+
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.maxLength = 30;
+    nameInput.value = role.name || "";
+    nameInput.placeholder = "Role name";
+    const locked = String(role.name || "").toLowerCase() === "owner";
+    if (locked) nameInput.disabled = true;
+
+    const saveBtn = document.createElement("button");
+    saveBtn.type = "button";
+    saveBtn.className = "server-role-save-btn";
+    saveBtn.textContent = "Save";
+    if (locked) saveBtn.disabled = true;
+
+    head.appendChild(nameInput);
+    head.appendChild(saveBtn);
+    card.appendChild(head);
+
+    const liveNamePreview = document.createElement("div");
+    liveNamePreview.className = "server-activity-meta";
+    const syncRoleNamePreview = () => {
+      const typed = String(nameInput.value || "").trim().toLowerCase();
+      liveNamePreview.textContent = `Live role name: ${typed || "(empty)"}`;
+    };
+    syncRoleNamePreview();
+    if (!locked) {
+      nameInput.addEventListener("input", syncRoleNamePreview);
+    }
+    card.appendChild(liveNamePreview);
+
+    const permsWrap = document.createElement("div");
+    permsWrap.className = "server-role-perms";
+    const permDefs = [
+      ["can_manage_server", "Manage Server"],
+      ["can_manage_channels", "Manage Channels"],
+      ["can_manage_members", "Manage Members"],
+      ["can_manage_roles", "Manage Roles"],
+      ["can_moderate_messages", "Moderate Messages"],
+    ];
+    const permInputs = new Map();
+    permDefs.forEach(([key, label]) => {
+      const row = document.createElement("label");
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.checked = Boolean(role[key]);
+      if (locked) input.disabled = true;
+      const text = document.createElement("span");
+      text.textContent = label;
+      row.appendChild(input);
+      row.appendChild(text);
+      permsWrap.appendChild(row);
+      permInputs.set(key, input);
+    });
+    card.appendChild(permsWrap);
+
+    saveBtn.addEventListener("click", async () => {
+      try {
+        await patchServerRole(activeServerId, role.public_id, {
+          name: String(nameInput.value || "").trim().toLowerCase(),
+          can_manage_server: Boolean(permInputs.get("can_manage_server")?.checked),
+          can_manage_channels: Boolean(permInputs.get("can_manage_channels")?.checked),
+          can_manage_members: Boolean(permInputs.get("can_manage_members")?.checked),
+          can_manage_roles: Boolean(permInputs.get("can_manage_roles")?.checked),
+          can_moderate_messages: Boolean(permInputs.get("can_moderate_messages")?.checked),
+        });
+        await loadServerSettingsModal();
+      } catch (err) {
+        alert(err.message || "Failed to update role");
+      }
+    });
+
+    editorHost.appendChild(card);
+  };
+
+  pickerSelect.addEventListener("change", renderSelectedRoleEditor);
+  renderSelectedRoleEditor();
+  enhanceCustomSelects(serverSettingsRolesList);
+  syncCustomSelects(serverSettingsRolesList);
+}
+
+async function loadServerSettingsModal() {
+  if (!activeServerId) throw new Error("Select a server first.");
+  const [server, members, roles] = await Promise.all([
+    fetchServerByPublicId(activeServerId),
+    fetchServerMembers(activeServerId),
+    fetchServerRoles(activeServerId),
+  ]);
+  const [diagnosticsResult, activityResult] = await Promise.allSettled([
+    fetchServerUploadDiagnostics(activeServerId),
+    fetchServerActivity(activeServerId),
+  ]);
+  cacheServerNicknames(activeServerId, members);
+
+  if (serverSettingsNameLabel) serverSettingsNameLabel.textContent = server?.name || "Server";
+  if (serverSettingsPublicId) serverSettingsPublicId.textContent = server?.public_id || "-";
+  if (serverSettingsMemberCount) serverSettingsMemberCount.textContent = String(Array.isArray(members) ? members.length : 0);
+  if (serverSettingsNameInput) serverSettingsNameInput.value = String(server?.name || "");
+  if (serverSettingsUploadLimitInput) serverSettingsUploadLimitInput.value = String(Number(server?.max_upload_size_mb || 0));
+  if (serverSettingsLogRetentionInput) serverSettingsLogRetentionInput.value = String(Number.isFinite(Number(server?.log_retention_days)) ? Number(server.log_retention_days) : 30);
+  if (serverSettingsMessageRetentionInput) serverSettingsMessageRetentionInput.value = String(Number.isFinite(Number(server?.message_retention_days)) ? Number(server.message_retention_days) : -1);
+  if (serverSettingsStripMetadataInput) serverSettingsStripMetadataInput.checked = Boolean(server?.strip_upload_metadata);
+  if (serverSettingsAutomodEnabled) serverSettingsAutomodEnabled.checked = Boolean(server?.automod_enabled);
+  if (serverSettingsAutomodBlockLinks) serverSettingsAutomodBlockLinks.checked = Boolean(server?.automod_block_external_links);
+  if (serverSettingsAutomodBlockInvites) serverSettingsAutomodBlockInvites.checked = Boolean(server?.automod_block_invite_links);
+  if (serverSettingsAutomodTerms) serverSettingsAutomodTerms.value = String(server?.automod_blocked_terms || "");
+  if (serverSettingsAutomodExtensions) serverSettingsAutomodExtensions.value = String(server?.automod_blocked_extensions || "");
+
+  renderServerSettingsRoles(roles);
+  renderServerUploadDiagnostics(diagnosticsResult.status === "fulfilled" ? diagnosticsResult.value : {});
+  renderServerActivity(activityResult.status === "fulfilled" ? activityResult.value : []);
+  applySettingsTooltips(serverSettingsModal || document);
+}
+
+function setUploadProgress(visible, pct = 0, label = "") {
+  if (!uploadProgressRow || !uploadProgressFill || !uploadProgressText) return;
+  uploadProgressRow.classList.toggle("hidden", !visible);
+  const clamped = Math.max(0, Math.min(100, Math.round(Number(pct) || 0)));
+  uploadProgressFill.style.width = `${clamped}%`;
+  uploadProgressText.textContent = label || (visible ? `Uploading... ${clamped}%` : "");
+}
+
+async function uploadMessageAttachment(file, channelPublicId, onProgress = null) {
+  const safeType = file?.type || "application/octet-stream";
+  const totalSize = Number(file?.size || 0);
+  let uploadId = null;
+  try {
+    const initRes = await fetch(`/api/uploads/message-file/init?channel_public_id=${encodeURIComponent(channelPublicId)}`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        filename: file?.name || "attachment",
+        content_type: safeType,
+        total_size: totalSize,
+      }),
+    });
+    const initPayload = await initRes.json().catch(() => ({}));
+    if (!initRes.ok) throw new Error(initPayload?.detail || "Failed to start upload");
+    uploadId = String(initPayload?.upload_id || "");
+    if (!uploadId) throw new Error("Upload session was not created");
+    const chunkSize = Math.max(512 * 1024, Number(initPayload?.chunk_size || 2 * 1024 * 1024));
+    let loaded = 0;
+    let index = 0;
+
+    if (totalSize <= 0) {
+      throw new Error("Empty files are not allowed");
+    }
+
+    while (loaded < totalSize) {
+      const next = Math.min(totalSize, loaded + chunkSize);
+      const chunk = file.slice(loaded, next);
+      let chunkDone = false;
+      let chunkErr = null;
+      for (let attempt = 0; attempt < 4 && !chunkDone; attempt += 1) {
+        try {
+          const chunkRes = await fetch(
+            `/api/uploads/message-file/chunk?upload_id=${encodeURIComponent(uploadId)}&index=${index}`,
+            {
+              method: "POST",
+              credentials: "include",
+              headers: { "Content-Type": "application/octet-stream" },
+              body: chunk,
+            },
+          );
+          const chunkPayload = await chunkRes.json().catch(() => ({}));
+          if (!chunkRes.ok) throw new Error(chunkPayload?.detail || "Failed to upload chunk");
+          chunkDone = true;
+          chunkErr = null;
+          break;
+        } catch (err) {
+          chunkErr = err;
+          if (attempt >= 3) break;
+          // Brief backoff for flaky WAN hops.
+          await new Promise((r) => setTimeout(r, 350 * (attempt + 1)));
+        }
+      }
+      if (!chunkDone) throw (chunkErr || new Error("Failed to upload chunk"));
+      loaded = next;
+      index += 1;
+      const pct = Math.max(0, Math.min(100, (loaded / totalSize) * 100));
+      if (typeof onProgress === "function") onProgress(pct, loaded, totalSize, true);
+    }
+
+    const completeRes = await fetch(`/api/uploads/message-file/complete?upload_id=${encodeURIComponent(uploadId)}`, {
+      method: "POST",
+      credentials: "include",
+    });
+    const completePayload = await completeRes.json().catch(() => ({}));
+    if (!completeRes.ok) throw new Error(completePayload?.detail || "Failed to finalize upload");
+    return completePayload;
+  } catch (err) {
+    if (uploadId) {
+      fetch(`/api/uploads/message-file/abort?upload_id=${encodeURIComponent(uploadId)}`, {
+        method: "POST",
+        credentials: "include",
+      }).catch(() => {});
+    }
+    throw err;
+  }
 }
 
 async function uploadUserAvatar(file) {
@@ -3245,7 +9827,14 @@ async function uploadUserAvatar(file) {
     credentials: "include",
     body: formData,
   });
-  if (!res.ok) throw new Error("Failed to upload avatar");
+  if (!res.ok) {
+    let detail = "Failed to upload avatar";
+    try {
+      const data = await res.json();
+      if (data?.detail) detail = data.detail;
+    } catch {}
+    throw new Error(detail);
+  }
   return res.json();
 }
 
@@ -3304,10 +9893,161 @@ function pickImageAsDataUrl(onDone) {
 function openInviteModal(serverPublicId, serverName) {
   inviteServerPublicId = serverPublicId;
   if (inviteServerName) inviteServerName.textContent = serverName || "Server";
-  if (inviteUserPublicIdInput) inviteUserPublicIdInput.value = "";
+  resetInviteFriendSelection();
+  ensureInviteFriendPickerDom();
+  populateInviteFriendPicker().catch((err) => {
+    console.error("Failed to load friends for invite picker:", err);
+    renderInviteFriendList([], { error: "Could not load friends" });
+    if (submitInviteMemberBtn) submitInviteMemberBtn.disabled = true;
+  });
   openModal(inviteMemberModal);
 }
 
+function ensureInviteFriendPickerDom() {
+  if (!inviteMemberModal) return;
+  const modalContent = inviteMemberModal.querySelector(".modal-content");
+  if (!modalContent) return;
+
+  inviteFriendPickerEl = document.getElementById("invite-friend-picker") || inviteFriendPickerEl;
+  inviteFriendSearchInput = document.getElementById("invite-friend-search-input") || inviteFriendSearchInput;
+  inviteFriendListEl = document.getElementById("invite-friend-list") || inviteFriendListEl;
+
+  if (!inviteFriendPickerEl) {
+    inviteFriendPickerEl = document.createElement("div");
+    inviteFriendPickerEl.id = "invite-friend-picker";
+    inviteFriendPickerEl.className = "invite-friend-picker";
+
+    inviteFriendSearchInput = document.createElement("input");
+    inviteFriendSearchInput.type = "text";
+    inviteFriendSearchInput.id = "invite-friend-search-input";
+    inviteFriendSearchInput.placeholder = "Search friends...";
+
+    inviteFriendListEl = document.createElement("div");
+    inviteFriendListEl.id = "invite-friend-list";
+    inviteFriendListEl.className = "invite-friend-list";
+    inviteFriendListEl.setAttribute("role", "listbox");
+    inviteFriendListEl.setAttribute("aria-label", "Friends to invite");
+
+    inviteFriendPickerEl.appendChild(inviteFriendSearchInput);
+    inviteFriendPickerEl.appendChild(inviteFriendListEl);
+
+    const subtitle = modalContent.querySelector(".settings-subtitle");
+    if (subtitle) modalContent.insertBefore(inviteFriendPickerEl, subtitle);
+    else if (submitInviteMemberBtn) modalContent.insertBefore(inviteFriendPickerEl, submitInviteMemberBtn);
+    else modalContent.appendChild(inviteFriendPickerEl);
+  }
+
+  if (inviteUserPublicIdInput) {
+    inviteUserPublicIdInput.hidden = true;
+    inviteUserPublicIdInput.style.display = "none";
+  }
+
+  if (inviteFriendSearchInput && !inviteFriendSearchInput.dataset.boundInviteSearch) {
+    inviteFriendSearchInput.dataset.boundInviteSearch = "1";
+    inviteFriendSearchInput.addEventListener("input", () => {
+      inviteFriendSearchQuery = inviteFriendSearchInput?.value || "";
+      renderInviteFriendList(Array.isArray(friendsCache) ? friendsCache : []);
+    });
+  }
+}
+
+function resetInviteFriendSelection() {
+  inviteSelectedFriendPublicId = "";
+  inviteFriendSearchQuery = "";
+  if (inviteUserPublicIdInput) inviteUserPublicIdInput.value = "";
+  if (inviteFriendSearchInput) inviteFriendSearchInput.value = "";
+  if (submitInviteMemberBtn) submitInviteMemberBtn.disabled = true;
+}
+
+function getFriendInviteCode(friend) {
+  const username = String(friend?.username || "friend");
+  const compactId = String(friend?.public_id || "").replace(/-/g, "");
+  const code = compactId.slice(0, 4);
+  return code ? `${username}:${code}` : username;
+}
+
+function selectInviteFriend(friend) {
+  inviteSelectedFriendPublicId = String(friend?.public_id || "");
+  if (inviteUserPublicIdInput) inviteUserPublicIdInput.value = inviteSelectedFriendPublicId;
+  if (submitInviteMemberBtn) submitInviteMemberBtn.disabled = !inviteSelectedFriendPublicId;
+  renderInviteFriendList(Array.isArray(friendsCache) ? friendsCache : []);
+}
+
+function renderInviteFriendList(rows, options = {}) {
+  ensureInviteFriendPickerDom();
+  if (!inviteFriendListEl) return;
+  const allRows = Array.isArray(rows) ? rows : [];
+  const q = String(inviteFriendSearchQuery || "").trim().toLowerCase();
+  const normalized = allRows
+    .filter((friend) => friend && friend.public_id && friend.username)
+    .slice()
+    .sort((a, b) => String(a.username || "").localeCompare(String(b.username || "")));
+  const filtered = q
+    ? normalized.filter((friend) => {
+        const username = String(friend.username || "").toLowerCase();
+        const code = getFriendInviteCode(friend).toLowerCase();
+        return username.includes(q) || code.includes(q);
+      })
+    : normalized;
+
+  inviteFriendListEl.innerHTML = "";
+
+  const empty = document.createElement("div");
+  empty.className = "invite-friend-list-empty";
+  if (options.error) {
+    empty.textContent = options.error;
+    inviteFriendListEl.appendChild(empty);
+    return;
+  }
+  if (!normalized.length) {
+    empty.textContent = "No friends available";
+    inviteFriendListEl.appendChild(empty);
+    return;
+  }
+  if (!filtered.length) {
+    empty.textContent = "No matching friends";
+    inviteFriendListEl.appendChild(empty);
+    return;
+  }
+
+  filtered.forEach((friend) => {
+    const rowBtn = document.createElement("button");
+    rowBtn.type = "button";
+    rowBtn.className = "invite-friend-row";
+    const isSelected = String(friend.public_id) === inviteSelectedFriendPublicId;
+    rowBtn.classList.toggle("active", isSelected);
+    rowBtn.setAttribute("role", "option");
+    rowBtn.setAttribute("aria-selected", isSelected ? "true" : "false");
+
+    const nameEl = document.createElement("span");
+    nameEl.className = "invite-friend-row-name";
+    nameEl.textContent = String(friend.username || "Friend");
+
+    const codeEl = document.createElement("span");
+    codeEl.className = "invite-friend-row-code";
+    codeEl.textContent = getFriendInviteCode(friend);
+
+    rowBtn.appendChild(nameEl);
+    rowBtn.appendChild(codeEl);
+    rowBtn.addEventListener("click", () => selectInviteFriend(friend));
+    inviteFriendListEl.appendChild(rowBtn);
+  });
+}
+
+async function populateInviteFriendPicker() {
+  ensureInviteFriendPickerDom();
+  if (!inviteUserPublicIdInput) return;
+  let rows = Array.isArray(friendsCache) ? friendsCache : [];
+  if (rows.length === 0) {
+    rows = await fetchFriends();
+    friendsCache = Array.isArray(rows) ? rows : [];
+    rows = friendsCache;
+  }
+  inviteUserPublicIdInput.value = "";
+  renderInviteFriendList(rows);
+  if (submitInviteMemberBtn) submitInviteMemberBtn.disabled = rows.length === 0;
+  if (inviteFriendSearchInput) inviteFriendSearchInput.focus();
+}
 function openDeleteServerModal(serverPublicId, serverName) {
   deleteServerTarget = { publicId: serverPublicId, name: serverName };
   if (deleteServerNameLabel) deleteServerNameLabel.textContent = serverName || "";
@@ -3329,13 +10069,30 @@ function getServerNickname(serverPublicId, userId) {
   return typeof nickname === "string" ? nickname : "";
 }
 
+function getServerRole(serverPublicId, userId) {
+  const byUserId = serverRolesByServer.get(serverPublicId);
+  if (!byUserId) return "";
+  const role = byUserId.get(Number(userId));
+  return typeof role === "string" ? role : "";
+}
+
+function formatServerRoleLabel(roleName) {
+  const raw = String(roleName || "").trim();
+  if (!raw) return "";
+  return raw
+    .split(/\s+/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
 function getDisplayMessageAuthor(msg) {
   if (activeMode !== "server" || !activeServerId) {
-    return { name: msg.username || "Unknown", isNickname: false };
+    return { name: msg.username || "Unknown", isNickname: false, role: "" };
   }
   const nickname = getServerNickname(activeServerId, msg.user_id);
-  if (nickname) return { name: nickname, isNickname: true };
-  return { name: msg.username || "Unknown", isNickname: false };
+  const role = String(msg.server_role || "").trim().toLowerCase() || getServerRole(activeServerId, msg.user_id);
+  if (nickname) return { name: nickname, isNickname: true, role };
+  return { name: msg.username || "Unknown", isNickname: false, role };
 }
 
 function buildMessageElement(msg, options = {}) {
@@ -3343,12 +10100,20 @@ function buildMessageElement(msg, options = {}) {
   const isThreadContext = context === "thread";
   const isServerMessage = activeMode === "server";
   const wrapper = document.createElement("div");
+  const avatar = document.createElement("img");
+  const main = document.createElement("div");
+  const header = document.createElement("div");
   const author = document.createElement("span");
   const content = document.createElement("span");
 
   wrapper.classList.add("message");
   wrapper.dataset.messageId = msg.public_id;
   wrapper.title = `Sent: ${formatTimestamp(msg.created_at) || "Unknown time"}`;
+  avatar.classList.add("message-user-avatar");
+  bindUserAvatarImage(avatar, msg.user_public_id, { alt: `${msg.username || "User"} avatar` });
+  attachPublicUserProfileTrigger(avatar, msg.user_public_id);
+  main.classList.add("message-main");
+  header.classList.add("message-header");
   author.classList.add("message-author");
   content.classList.add("message-content");
 
@@ -3356,26 +10121,40 @@ function buildMessageElement(msg, options = {}) {
     const replyContext = document.createElement("span");
     replyContext.classList.add("message-reply-context");
     replyContext.textContent = `Reply to ${msg.parent_message_public_id.slice(0, 8)}...`;
-    wrapper.appendChild(replyContext);
+    main.appendChild(replyContext);
   }
 
   const displayAuthor = getDisplayMessageAuthor(msg);
-  author.textContent = `${displayAuthor.name}:`;
+  const nameEmoji = normalizeNameEmojiInput(msg.name_emoji || "");
+  author.textContent = `${nameEmoji ? `${nameEmoji} ` : ""}${displayAuthor.name}:`;
+  const nameColor = normalizeHexColor(msg.username_color || "");
+  if (nameColor) author.style.color = nameColor;
   if (displayAuthor.isNickname && msg.username) {
     author.title = `@${msg.username}`;
   }
+  attachPublicUserProfileTrigger(author, msg.user_public_id);
+  const roleLabel = formatServerRoleLabel(displayAuthor.role);
   const mentionState = getMentionHighlightState(msg.content || "");
   if (mentionState.everyone) wrapper.classList.add("mentioned-everyone");
   if (mentionState.user) wrapper.classList.add("mentioned-user");
-  content.innerHTML = applyMentionHighlightsToRenderedHtml(renderMarkdown(msg.content || ""));
+  content.innerHTML = applyMentionHighlightsToRenderedHtml(
+    renderMarkdown(msg.content || "", { enableWikiLinks: activeChannelType === "notes" })
+  );
   const rollData = parseRollMessage(msg.content || "");
 
-  wrapper.appendChild(author);
-  wrapper.appendChild(document.createTextNode(" "));
-  wrapper.appendChild(content);
+  wrapper.appendChild(avatar);
+  main.appendChild(header);
+  header.appendChild(author);
+  if (roleLabel && context !== "dm") {
+    const roleBadge = document.createElement("span");
+    roleBadge.className = "message-role-badge";
+    roleBadge.textContent = roleLabel;
+    header.appendChild(roleBadge);
+  }
+  main.appendChild(content);
   if (isServerMessage && rollData && rollAnimationsEnabled) {
     const rollEl = buildRollAnimationElement(rollData);
-    if (rollEl) wrapper.appendChild(rollEl);
+    if (rollEl) main.appendChild(rollEl);
   }
 
   const meta = document.createElement("span");
@@ -3386,6 +10165,13 @@ function buildMessageElement(msg, options = {}) {
   timeBadge.textContent = formatTimestamp(msg.created_at) || "Unknown time";
   meta.appendChild(timeBadge);
 
+  if (msg.is_pinned) {
+    const pinnedLabel = document.createElement("span");
+    pinnedLabel.classList.add("message-pinned-badge");
+    pinnedLabel.textContent = "Pinned";
+    meta.appendChild(pinnedLabel);
+  }
+
   if (msg.edited_at) {
     const editedLabel = document.createElement("span");
     editedLabel.classList.add("message-edited");
@@ -3393,7 +10179,8 @@ function buildMessageElement(msg, options = {}) {
     meta.appendChild(editedLabel);
   }
 
-  wrapper.appendChild(meta);
+  header.appendChild(meta);
+  wrapper.appendChild(main);
 
   if (isServerMessage && Array.isArray(msg.reactions) && msg.reactions.length > 0) {
     const reactionsEl = document.createElement("div");
@@ -3418,19 +10205,20 @@ function buildMessageElement(msg, options = {}) {
       });
       reactionsEl.appendChild(chip);
     });
-    wrapper.appendChild(reactionsEl);
+    main.appendChild(reactionsEl);
   }
 
   if (isServerMessage && msg.thread_reply_count > 0 && !isThreadContext) {
     const threadSummary = document.createElement("div");
     threadSummary.classList.add("message-thread-summary");
     threadSummary.textContent = `${msg.thread_reply_count} repl${msg.thread_reply_count === 1 ? "y" : "ies"}`;
-    wrapper.appendChild(threadSummary);
+    main.appendChild(threadSummary);
   }
 
   if (isServerMessage || msg.user_id === currentUserId) {
     const actions = document.createElement("div");
     actions.classList.add("message-actions");
+    let openMessageReactionMenu = null;
     if (isServerMessage) {
       const replyBtn = document.createElement("button");
       replyBtn.classList.add("message-action-btn");
@@ -3457,14 +10245,13 @@ function buildMessageElement(msg, options = {}) {
       reactBtn.classList.add("message-action-btn", "message-react-trigger");
       reactBtn.type = "button";
       reactBtn.textContent = "React";
-      reactBtn.addEventListener("click", (event) => {
-        event.stopPropagation();
-        const existing = reactBtn.querySelector(".message-emoji-picker");
+      openMessageReactionMenu = (anchorEl) => {
+        const existing = (anchorEl || wrapper).querySelector?.(".message-emoji-picker");
         if (existing) {
           closeActiveReactionPicker();
           return;
         }
-        openReactionPicker(reactBtn, async (emoji) => {
+        openReactionPicker(anchorEl || wrapper, async (emoji) => {
           try {
             await toggleMessageReaction(msg.public_id, emoji.trim());
             if (isThreadContext) {
@@ -3476,8 +10263,33 @@ function buildMessageElement(msg, options = {}) {
             alert(err.message || "Failed to react");
           }
         });
+      };
+      reactBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openMessageReactionMenu(reactBtn);
       });
       actions.appendChild(reactBtn);
+
+      if (!isThreadContext) {
+        const pinBtn = document.createElement("button");
+        pinBtn.classList.add("message-action-btn");
+        pinBtn.type = "button";
+        pinBtn.textContent = msg.is_pinned ? "Unpin" : "Pin";
+        pinBtn.addEventListener("click", async () => {
+          try {
+            if (msg.is_pinned) await unpinMessageByPublicId(msg.public_id);
+            else await pinMessageByPublicId(msg.public_id);
+            if (isThreadContext) {
+              await loadThreadMessages(false);
+            } else if (activeChannelId) {
+              await loadMessages(activeChannelId, false);
+            }
+          } catch (err) {
+            alert(err.message || "Failed to update pin");
+          }
+        });
+        actions.appendChild(pinBtn);
+      }
 
       const copyIdBtn = document.createElement("button");
       copyIdBtn.classList.add("message-action-btn");
@@ -3517,79 +10329,126 @@ function buildMessageElement(msg, options = {}) {
       actions.appendChild(copyLinkBtn);
     }
 
-    if (msg.user_id === currentUserId && !isThreadContext && isServerMessage) {
-      const editBtn = document.createElement("button");
+    if (msg.user_id === currentUserId && !isThreadContext) {
       const deleteBtn = document.createElement("button");
-      editBtn.classList.add("message-action-btn");
       deleteBtn.classList.add("message-action-btn", "danger");
-      editBtn.type = "button";
       deleteBtn.type = "button";
-      editBtn.textContent = "Edit";
       deleteBtn.textContent = "Delete";
-      actions.appendChild(editBtn);
       actions.appendChild(deleteBtn);
 
-      editBtn.addEventListener("click", () => {
-        if (wrapper.classList.contains("editing")) return;
-        wrapper.classList.add("editing");
+      if (isServerMessage) {
+        const editBtn = document.createElement("button");
+        editBtn.classList.add("message-action-btn");
+        editBtn.type = "button";
+        editBtn.textContent = "Edit";
+        actions.insertBefore(editBtn, deleteBtn);
 
-        const editor = document.createElement("div");
-        const input = document.createElement("textarea");
-        const controls = document.createElement("div");
-        const saveBtn = document.createElement("button");
-        const cancelBtn = document.createElement("button");
+        editBtn.addEventListener("click", () => {
+          if (wrapper.classList.contains("editing")) return;
+          closeActiveReactionPicker();
+          wrapper.classList.add("editing");
 
-        editor.classList.add("message-editor");
-        input.classList.add("message-edit-input");
-        controls.classList.add("message-edit-controls");
-        saveBtn.classList.add("message-edit-save");
-        cancelBtn.classList.add("message-edit-cancel");
+          const editor = document.createElement("div");
+          const input = document.createElement("textarea");
+          const controls = document.createElement("div");
+          const saveBtn = document.createElement("button");
+          const cancelBtn = document.createElement("button");
 
-        input.value = msg.content || "";
-        saveBtn.type = "button";
-        cancelBtn.type = "button";
-        saveBtn.textContent = "Save";
-        cancelBtn.textContent = "Cancel";
+          editor.classList.add("message-editor");
+          input.classList.add("message-edit-input");
+          controls.classList.add("message-edit-controls");
+          saveBtn.classList.add("message-edit-save");
+          cancelBtn.classList.add("message-edit-cancel");
 
-        controls.appendChild(saveBtn);
-        controls.appendChild(cancelBtn);
-        editor.appendChild(input);
-        editor.appendChild(controls);
-        wrapper.appendChild(editor);
-        input.focus();
+          input.value = msg.content || "";
+          saveBtn.type = "button";
+          cancelBtn.type = "button";
+          saveBtn.textContent = "Save";
+          cancelBtn.textContent = "Cancel";
 
-        cancelBtn.addEventListener("click", () => {
-          wrapper.classList.remove("editing");
-          editor.remove();
-        });
-
-        saveBtn.addEventListener("click", async () => {
-          const nextContent = input.value.trim();
-          if (!nextContent) return;
-          saveBtn.disabled = true;
+          controls.appendChild(saveBtn);
+          controls.appendChild(cancelBtn);
+          editor.appendChild(input);
+          editor.appendChild(controls);
+          main.appendChild(editor);
+          input.focus();
           try {
-            await patchMessageContent(msg.public_id, nextContent);
-            if (activeChannelId) await loadMessages(activeChannelId, false);
-          } catch (err) {
-            alert(err.message || "Failed to update message");
-            saveBtn.disabled = false;
-          }
+            input.setSelectionRange(input.value.length, input.value.length);
+            input.style.height = "auto";
+            input.style.height = `${Math.min(280, Math.max(84, input.scrollHeight))}px`;
+          } catch {}
+
+          cancelBtn.addEventListener("click", () => {
+            wrapper.classList.remove("editing");
+            editor.remove();
+          });
+
+          saveBtn.addEventListener("click", async () => {
+            const nextContent = input.value.trim();
+            if (!nextContent) return;
+            saveBtn.disabled = true;
+            try {
+              await patchMessageContent(msg.public_id, nextContent);
+              if (activeChannelId) await loadMessages(activeChannelId, false);
+            } catch (err) {
+              alert(err.message || "Failed to update message");
+              saveBtn.disabled = false;
+            }
+          });
+          input.addEventListener("input", () => {
+            input.style.height = "auto";
+            input.style.height = `${Math.min(280, Math.max(84, input.scrollHeight))}px`;
+          });
+          input.addEventListener("keydown", (event) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              cancelBtn.click();
+              return;
+            }
+            if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+              event.preventDefault();
+              saveBtn.click();
+            }
+          });
         });
-      });
+      }
 
       deleteBtn.addEventListener("click", async () => {
         const ok = window.confirm("Delete this message?");
         if (!ok) return;
         try {
           await deleteMessageByPublicId(msg.public_id);
-          if (activeChannelId) await loadMessages(activeChannelId, false);
+          if (activeMode === "dm" && activeDmConversationId) {
+            await loadDmMessages(activeDmConversationId, false);
+          } else if (activeChannelId) {
+            await loadMessages(activeChannelId, false);
+          }
         } catch (err) {
           alert(err.message || "Failed to delete message");
         }
       });
     }
 
-    if (actions.children.length > 0) wrapper.appendChild(actions);
+    if (actions.children.length > 0) {
+      wrapper.addEventListener("contextmenu", (event) => {
+        if (event.target.closest(".message-emoji-picker")) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const items = [...actions.querySelectorAll(".message-action-btn")].map((btn) => ({
+          label: btn.textContent || "Action",
+          danger: btn.classList.contains("danger"),
+          onClick: () => {
+            if ((btn.textContent || "").trim() === "React" && typeof openMessageReactionMenu === "function") {
+              openMessageReactionMenu(wrapper);
+              return;
+            }
+            btn.click();
+          },
+        }));
+        if (!items.length) return;
+        showContextMenu(event.clientX, event.clientY, items);
+      });
+    }
   }
 
   return wrapper;
@@ -3621,7 +10480,12 @@ function getStoredObject(storageKey, fallback = {}) {
 }
 
 function saveObject(storageKey, value) {
-  localStorage.setItem(storageKey, JSON.stringify(value));
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(value));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function sortByStoredOrder(items, storageKey, getId) {
@@ -3693,8 +10557,74 @@ function getChannelSeparatorsStorageKey(serverId) {
   return `${CHANNEL_SEPARATORS_STORAGE_PREFIX}${serverId}`;
 }
 
+function getChannelSeparatorCollapseStorageKey(serverId) {
+  return `${CHANNEL_SEPARATOR_COLLAPSE_STORAGE_PREFIX}${serverId}`;
+}
+
 function getChannelIconsStorageKey(serverId) {
   return `${CHANNEL_ICON_STORAGE_PREFIX}${serverId}`;
+}
+
+function normalizeChannelIconEntry(entry) {
+  if (!entry) return null;
+  if (typeof entry === "string") {
+    if (/^data:image\//i.test(entry)) return { type: "image", value: entry };
+    const trimmed = entry.trim();
+    if (!trimmed) return null;
+    return { type: "text", value: trimmed.slice(0, 3) };
+  }
+  if (typeof entry !== "object") return null;
+  const type = String(entry.type || "").trim().toLowerCase();
+  const value = String(entry.value || "").trim();
+  const glyphs = Array.from(value);
+  if (!value) return null;
+  if (type === "image" && /^data:image\//i.test(value)) return { type, value };
+  if (type === "emoji") return { type, value: glyphs.slice(0, 1).join("") };
+  if (type === "text") return { type, value: glyphs.slice(0, 3).join("").toUpperCase() };
+  return null;
+}
+
+function setStoredChannelIcon(serverPublicId, channelPublicId, iconEntry) {
+  if (!serverPublicId || !channelPublicId) return;
+  const icons = getStoredObject(getChannelIconsStorageKey(serverPublicId), {});
+  const normalized = normalizeChannelIconEntry(iconEntry);
+  if (normalized) icons[channelPublicId] = normalized;
+  else delete icons[channelPublicId];
+  saveObject(getChannelIconsStorageKey(serverPublicId), icons);
+}
+
+function renderChannelPrefixIcon(channelPrefix, channel, customIconEntry) {
+  if (!channelPrefix) return;
+  channelPrefix.textContent = "";
+  channelPrefix.innerHTML = "";
+  const iconEntry = normalizeChannelIconEntry(customIconEntry);
+  if (iconEntry?.type === "image") {
+    const iconImg = document.createElement("img");
+    iconImg.classList.add("channel-custom-icon");
+    iconImg.alt = `${channel.name} icon`;
+    iconImg.src = iconEntry.value;
+    channelPrefix.appendChild(iconImg);
+    return;
+  }
+  if (iconEntry?.type === "emoji" || iconEntry?.type === "text") {
+    const iconBadge = document.createElement("span");
+    iconBadge.className = "channel-custom-icon-text";
+    iconBadge.textContent = iconEntry.value;
+    if (iconEntry.type === "emoji") iconBadge.classList.add("emoji");
+    channelPrefix.appendChild(iconBadge);
+    return;
+  }
+  channelPrefix.textContent = channel.type === "voice"
+    ? "[V]"
+    : channel.type === "notes"
+      ? "[N]"
+      : channel.type === "battlemap"
+        ? "[B]"
+      : "#";
+}
+
+function getBattlemapStateStorageKey(channelId) {
+  return `${BATTLEMAP_STATE_STORAGE_PREFIX}${channelId}`;
 }
 
 function persistChannelOrder() {
@@ -3712,6 +10642,11 @@ async function loadDmConversations() {
     throw new Error(`Failed to load DMs: ${res.status}`);
   }
   dmConversations = await res.json();
+  dmConversations.sort((a, b) => {
+    const aTs = Date.parse(String(a?.last_message_at || a?.created_at || 0)) || 0;
+    const bTs = Date.parse(String(b?.last_message_at || b?.created_at || 0)) || 0;
+    return bTs - aTs;
+  });
   channelsPanel.innerHTML = "";
   dmConversations.forEach((dm) => {
     const li = document.createElement("li");
@@ -3721,12 +10656,20 @@ async function loadDmConversations() {
     li.dataset.layoutToken = `dm:${dm.public_id}`;
     const nameEl = document.createElement("span");
     nameEl.classList.add("channel-name");
+    const avatarEl = document.createElement("img");
+    avatarEl.className = "dm-item-avatar";
+    bindUserAvatarImage(avatarEl, dm.other_user_public_id, { alt: `${dm.other_username || "User"} avatar` });
     const presenceDot = document.createElement("span");
     presenceDot.className = "dm-presence-dot";
     const nameText = document.createElement("span");
     nameText.textContent = `@ ${dm.other_username}`;
+    const statusText = document.createElement("span");
+    statusText.className = "dm-item-status";
+    hydrateUserStatusElement(statusText, dm.other_user_public_id, { prefix: "- ", emptyText: "", hiddenWhenEmpty: true });
+    nameEl.appendChild(avatarEl);
     nameEl.appendChild(presenceDot);
     nameEl.appendChild(nameText);
+    nameEl.appendChild(statusText);
     li.appendChild(nameEl);
     li.addEventListener("click", async () => {
       stopTypingNow();
@@ -3747,10 +10690,29 @@ async function loadDmConversations() {
       applyDraftToComposer();
       persistActiveChatState();
     });
+    li.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      showContextMenu(event.clientX, event.clientY, [
+        {
+          label: "Open DM",
+          onClick: () => li.click(),
+        },
+        {
+          label: "View Profile",
+          onClick: () => {
+            openPublicUserProfileModal(dm.other_user_public_id).catch((err) => {
+              showToast(err?.message || "Failed to open user profile");
+            });
+          },
+        },
+      ]);
+    });
     channelsPanel.appendChild(li);
   });
   highlightActiveChannel();
   applyDmPresenceIndicators();
+  updateDmQuickButtonState();
 }
 
 async function createOrOpenDmConversation(otherUserPublicId) {
@@ -3767,19 +10729,38 @@ async function createOrOpenDmConversation(otherUserPublicId) {
 }
 
 async function fetchFriends() {
-  const res = await fetch("/users/friends", { credentials: "include" });
-  if (!res.ok) throw new Error(`Failed to load friends: ${res.status}`);
+  const res = await fetch(`/users/friends?_=${Date.now()}`, {
+    credentials: "include",
+    cache: "no-store",
+    headers: { "Cache-Control": "no-cache" },
+  });
+  if (!res.ok) throw new Error(await readApiErrorDetail(res, "Failed to load friends"));
   return res.json();
 }
 
 async function fetchFriendRequests() {
-  const res = await fetch("/users/friend-requests", { credentials: "include" });
-  if (!res.ok) throw new Error(`Failed to load friend requests: ${res.status}`);
+  const res = await fetch(`/users/friend-requests?_=${Date.now()}`, {
+    credentials: "include",
+    cache: "no-store",
+    headers: { "Cache-Control": "no-cache" },
+  });
+  if (!res.ok) throw new Error(await readApiErrorDetail(res, "Failed to load friend requests"));
+  return res.json();
+}
+
+async function fetchFriendRequestHistory() {
+  const res = await fetch(`/users/friend-requests/history?limit=120&_=${Date.now()}`, {
+    credentials: "include",
+    cache: "no-store",
+    headers: { "Cache-Control": "no-cache" },
+  });
+  if (!res.ok) throw new Error(await readApiErrorDetail(res, "Failed to load friend request history"));
   return res.json();
 }
 
 async function sendFriendRequest(targetPublicId) {
-  const res = await fetch(`/users/friend-requests/${targetPublicId}`, {
+  const targetToken = encodeURIComponent(String(targetPublicId || "").trim());
+  const res = await fetch(`/users/friend-requests/${targetToken}`, {
     method: "POST",
     credentials: "include",
   });
@@ -3794,12 +10775,42 @@ async function sendFriendRequest(targetPublicId) {
   return res.json();
 }
 
+async function readApiErrorDetail(res, fallback) {
+  let detail = fallback;
+  try {
+    const data = await res.clone().json();
+    if (typeof data?.detail === "string" && data.detail.trim()) {
+      detail = data.detail.trim();
+    }
+  } catch {}
+  return `${detail} (${res.status})`;
+}
+
+async function fetchWithTimeout(input, init = {}, timeoutMs = 15000) {
+  const timeout = Math.max(1000, Number(timeoutMs) || 15000);
+  const controller = new AbortController();
+  const existingSignal = init?.signal;
+  const onAbort = () => controller.abort();
+  if (existingSignal) {
+    if (existingSignal.aborted) controller.abort();
+    else existingSignal.addEventListener("abort", onAbort, { once: true });
+  }
+  const timer = window.setTimeout(() => controller.abort(), timeout);
+  try {
+    return await fetch(input, { ...(init || {}), signal: controller.signal });
+  } finally {
+    window.clearTimeout(timer);
+    if (existingSignal) existingSignal.removeEventListener("abort", onAbort);
+  }
+}
+
 async function acceptFriendRequest(requestPublicId) {
   const res = await fetch(`/users/friend-requests/${requestPublicId}/accept`, {
     method: "POST",
     credentials: "include",
   });
-  if (!res.ok) throw new Error("Failed to accept friend request");
+  if (!res.ok) throw new Error(await readApiErrorDetail(res, "Failed to accept friend request"));
+  return res.json();
 }
 
 async function removeFriendRequest(requestPublicId) {
@@ -3807,7 +10818,7 @@ async function removeFriendRequest(requestPublicId) {
     method: "DELETE",
     credentials: "include",
   });
-  if (!res.ok) throw new Error("Failed to remove friend request");
+  if (!res.ok) throw new Error(await readApiErrorDetail(res, "Failed to remove friend request"));
 }
 
 async function removeFriend(friendPublicId) {
@@ -3815,7 +10826,7 @@ async function removeFriend(friendPublicId) {
     method: "DELETE",
     credentials: "include",
   });
-  if (!res.ok) throw new Error("Failed to remove friend");
+  if (!res.ok) throw new Error(await readApiErrorDetail(res, "Failed to remove friend"));
 }
 
 function renderFriendRows(container, rows, buildActions) {
@@ -3835,7 +10846,7 @@ function renderFriendRows(container, rows, buildActions) {
     item.className = "friend-row";
     const name = document.createElement("span");
     name.className = "friend-row-name";
-    name.textContent = row.username || row.requester_username || row.addressee_username;
+    name.textContent = row.username || row.requester_username || row.addressee_username || row.other_username || "Unknown";
     const actions = document.createElement("div");
     actions.className = "friend-row-actions";
     buildActions(row).forEach((btn) => actions.appendChild(btn));
@@ -3906,7 +10917,7 @@ function renderDmFriendPicker(filter = "") {
 }
 
 async function refreshFriendsModal() {
-  const [friends, requests] = await Promise.all([fetchFriends(), fetchFriendRequests()]);
+  const [friends, requests, history] = await Promise.all([fetchFriends(), fetchFriendRequests(), fetchFriendRequestHistory()]);
   friendsCache = Array.isArray(friends) ? friends : [];
 
   renderFriendRows(friendsListEl, friendsCache, (friend) => {
@@ -3954,11 +10965,17 @@ async function refreshFriendsModal() {
     acceptBtn.type = "button";
     acceptBtn.textContent = "Accept";
     acceptBtn.addEventListener("click", async () => {
+      if (acceptBtn.disabled) return;
+      acceptBtn.disabled = true;
+      acceptBtn.textContent = "Accepting...";
       try {
         await acceptFriendRequest(req.public_id);
         await refreshFriendsModal();
       } catch (err) {
         alert(err.message || "Failed to accept request");
+      } finally {
+        acceptBtn.disabled = false;
+        acceptBtn.textContent = "Accept";
       }
     });
     const declineBtn = document.createElement("button");
@@ -3990,6 +11007,15 @@ async function refreshFriendsModal() {
       }
     });
     return [cancelBtn];
+  });
+
+  renderFriendRows(friendRequestsHistoryEl, history || [], (row) => {
+    const metaBtn = document.createElement("button");
+    metaBtn.type = "button";
+    metaBtn.textContent = `${row.direction || "unknown"} - ${row.status || "unknown"}`;
+    metaBtn.title = formatTimestamp(row.updated_at) || "";
+    metaBtn.disabled = true;
+    return [metaBtn];
   });
 }
 
@@ -4091,12 +11117,12 @@ function renderAdminAudit(events) {
     meta.className = "admin-user-meta";
     const name = document.createElement("div");
     name.className = "admin-user-name";
-    name.textContent = `${evt.event_type || "event"} · ${formatTimestamp(evt.ts) || evt.ts || "-"}`;
+    name.textContent = `${evt.event_type || "event"} \u00B7 ${formatTimestamp(evt.ts) || evt.ts || "-"}`;
     const detail = document.createElement("div");
     detail.className = "admin-user-email";
     const actor = evt.actor_public_id ? `actor: ${evt.actor_public_id}` : "actor: system";
     const target = evt.target?.user_public_id || evt.target?.server_public_id || evt.target?.channel_public_id || "-";
-    detail.textContent = `${actor} · target: ${target}`;
+    detail.textContent = `${actor} \u00B7 target: ${target}`;
     meta.appendChild(name);
     meta.appendChild(detail);
     row.appendChild(meta);
@@ -4211,6 +11237,10 @@ async function loadDmMessages(conversationPublicId, shouldScrollToBottom = false
     throw new Error(`Failed to load DM messages: ${res.status}`);
   }
   const messages = await res.json();
+  const latest = messages[messages.length - 1];
+  if (latest?.public_id) {
+    cacheLatestMessageId("dm", conversationPublicId, latest);
+  }
   renderMessagesIncrementally(messages, (msg) => buildMessageElement(msg, { context: "dm" }), shouldScrollToBottom);
   if (messageSearchCount) messageSearchCount.textContent = "0";
   if (messageSearchInput) messageSearchInput.value = "";
@@ -4280,10 +11310,20 @@ async function loadDashboard() {
     const data = await res.json();
     currentUser = data.user || null;
     currentUserId = data.user?.id ?? null;
-    if (adminBtn) adminBtn.classList.toggle("hidden", !data.user?.is_superadmin);
-    if (userDisplay) {
-      userDisplay.textContent = `Logged in as: ${data.user.username}`;
+    if (data.user?.appearance_settings && typeof data.user.appearance_settings === "object") {
+      applyAccountAppearanceSettings(data.user.appearance_settings);
+    } else {
+      queueAppearanceSettingsAccountSync();
     }
+    // Fresh dashboard load indicates authenticated session; clear WS auth-failure blocks.
+    presenceSocketBlocked = false;
+    presenceSocketFailureCount = 0;
+    dmSocketBlocked = false;
+    dmSocketFailureCount = 0;
+    blockedChannelSocketIds.clear();
+    channelSocketFailureCounts.clear();
+    if (adminBtn) adminBtn.classList.toggle("hidden", !data.user?.is_superadmin);
+    refreshUserDisplaySummary();
 
     if (data.user?.must_reset_password) {
       alert("This account must reset password before use. Please log out and complete first-use reset from login.");
@@ -4293,6 +11333,11 @@ async function loadDashboard() {
     updateSidebarModeUI();
     await loadServers();
     await restoreLastActiveChat();
+    if (data.user && !data.user.has_seen_tutorial && !isTutorialDismissedLocally()) {
+      setTimeout(() => {
+        startOnboardingTutorial();
+      }, 250);
+    }
   } catch (err) {
     console.error("Network or other error loading dashboard:", err);
   }
@@ -4327,7 +11372,7 @@ async function loadServers() {
       const avatarEl = document.createElement("img");
       avatarEl.classList.add("server-avatar");
       avatarEl.alt = `${server.name} avatar`;
-      avatarEl.src = `/api/servers/${server.public_id}/avatar`;
+      avatarEl.src = resolveMediaUrl(`/api/servers/${server.public_id}/avatar`);
       avatarEl.onerror = () => {
         avatarEl.style.display = "none";
       };
@@ -4336,6 +11381,7 @@ async function loadServers() {
       li.draggable = true;
 
       li.addEventListener("click", () => {
+        closeServerSwitcherOverlay();
         activeMode = "server";
         activeServerId = server.public_id;
         activeChannelId = null;
@@ -4367,8 +11413,41 @@ async function loadServers() {
             onClick: () =>
               promptServerAvatarUpload(server.public_id, () => {
                 avatarEl.style.display = "block";
-                avatarEl.src = `/api/servers/${server.public_id}/avatar?ts=${Date.now()}`;
+                avatarEl.src = resolveMediaUrl(`/api/servers/${server.public_id}/avatar?ts=${Date.now()}`);
               }),
+          },
+          {
+            label: "Set Upload Limit",
+            onClick: async () => {
+              const currentLimit = Number(server.max_upload_size_mb || 0);
+              const raw = window.prompt(
+                `Upload limit for ${server.name} in MB (0 = unlimited):`,
+                String(currentLimit),
+              );
+              if (raw === null) return;
+              const parsed = Math.floor(Number(raw));
+              if (!Number.isFinite(parsed) || parsed < 0) {
+                alert("Enter a number 0 or greater.");
+                return;
+              }
+              const updated = await patchServerUploadLimit(server.public_id, parsed);
+              server.max_upload_size_mb = updated?.max_upload_size_mb ?? null;
+              const nextLabel = server.max_upload_size_mb ? `${server.max_upload_size_mb}MB` : "unlimited";
+              showToast(`Upload limit set to ${nextLabel}`);
+            },
+          },
+          {
+            label: "Server Settings",
+            onClick: async () => {
+              activeMode = "server";
+              activeServerId = server.public_id;
+              try {
+                await loadServerSettingsModal();
+                openModal(serverSettingsModal);
+              } catch (err) {
+                alert(err.message || "Failed to load server settings");
+              }
+            },
           },
           {
             label: "Delete Server",
@@ -4379,6 +11458,7 @@ async function loadServers() {
       });
       serversPanel.appendChild(li);
     });
+    updateSidebarModeUI();
     applyUnreadStyles();
     await syncRealtimeSubscriptions();
   } catch (err) {
@@ -4409,6 +11489,7 @@ async function loadChannels(serverPublicId, options = {}) {
     const channelIcons = getStoredObject(getChannelIconsStorageKey(serverPublicId), {});
     const channelsById = new Map(channels.map((ch) => [ch.public_id, ch]));
     const separators = getStoredObject(getChannelSeparatorsStorageKey(serverPublicId), {});
+    const collapsedSeparators = getStoredObject(getChannelSeparatorCollapseStorageKey(serverPublicId), {});
     const layoutKey = getChannelLayoutStorageKey(serverPublicId);
     let layout = getStoredOrder(layoutKey);
     if (layout.length === 0) {
@@ -4426,18 +11507,39 @@ async function loadChannels(serverPublicId, options = {}) {
     saveOrder(layoutKey, layout);
 
     channelsPanel.innerHTML = "";
+    let hideFollowingChannels = false;
     layout.forEach((token) => {
       if (token.startsWith("sep:")) {
         const separatorId = token.slice(4);
         const label = separators[separatorId];
         if (!label) return;
+        const isCollapsed = !!collapsedSeparators[separatorId];
+        hideFollowingChannels = isCollapsed;
         const sepLi = document.createElement("li");
         sepLi.classList.add("channel-separator-item");
+        if (isCollapsed) sepLi.classList.add("collapsed");
         sepLi.dataset.layoutToken = token;
         sepLi.draggable = true;
+        sepLi.dataset.separatorId = separatorId;
+        const sepToggle = document.createElement("button");
+        sepToggle.type = "button";
+        sepToggle.classList.add("channel-separator-toggle");
+        sepToggle.setAttribute("aria-label", isCollapsed ? "Expand section" : "Collapse section");
+        sepToggle.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
+        sepToggle.innerHTML = `<i class="fas fa-chevron-${isCollapsed ? "right" : "down"}"></i>`;
         const sepLabel = document.createElement("span");
         sepLabel.classList.add("channel-separator-label");
         sepLabel.innerHTML = renderSeparatorContent(label);
+        const toggleSeparatorCollapsed = (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          const nextCollapsed = getStoredObject(getChannelSeparatorCollapseStorageKey(serverPublicId), {});
+          nextCollapsed[separatorId] = !isCollapsed;
+          saveObject(getChannelSeparatorCollapseStorageKey(serverPublicId), nextCollapsed);
+          loadChannels(serverPublicId, options);
+        };
+        sepToggle.addEventListener("click", toggleSeparatorCollapsed);
+        sepLabel.addEventListener("click", toggleSeparatorCollapsed);
         const sepDelete = document.createElement("button");
         sepDelete.type = "button";
         sepDelete.classList.add("channel-separator-delete");
@@ -4448,10 +11550,16 @@ async function loadChannels(serverPublicId, options = {}) {
           const next = getStoredObject(getChannelSeparatorsStorageKey(serverPublicId), {});
           delete next[separatorId];
           saveObject(getChannelSeparatorsStorageKey(serverPublicId), next);
+          const nextCollapsed = getStoredObject(getChannelSeparatorCollapseStorageKey(serverPublicId), {});
+          if (separatorId in nextCollapsed) {
+            delete nextCollapsed[separatorId];
+            saveObject(getChannelSeparatorCollapseStorageKey(serverPublicId), nextCollapsed);
+          }
           const nextLayout = getStoredOrder(layoutKey).filter((t) => t !== token);
           saveOrder(layoutKey, nextLayout);
           loadChannels(serverPublicId);
         });
+        sepLi.appendChild(sepToggle);
         sepLi.appendChild(sepLabel);
         sepLi.appendChild(sepDelete);
         channelsPanel.appendChild(sepLi);
@@ -4465,15 +11573,7 @@ async function loadChannels(serverPublicId, options = {}) {
       const channelPrefix = document.createElement("span");
       channelPrefix.classList.add("channel-prefix");
       const customIcon = channelIcons[channel.public_id];
-      if (customIcon) {
-        const iconImg = document.createElement("img");
-        iconImg.classList.add("channel-custom-icon");
-        iconImg.alt = `${channel.name} icon`;
-        iconImg.src = customIcon;
-        channelPrefix.appendChild(iconImg);
-      } else {
-        channelPrefix.textContent = channel.type === "voice" ? "[V]" : "#";
-      }
+      renderChannelPrefixIcon(channelPrefix, channel, customIcon);
       const channelText = document.createElement("span");
       channelText.textContent = channel.name;
       nameEl.appendChild(channelPrefix);
@@ -4484,6 +11584,11 @@ async function loadChannels(serverPublicId, options = {}) {
       li.dataset.channelType = channel.type;
       li.dataset.layoutToken = token;
       li.classList.add("channel-item");
+      if ((channel.type || "text") === "voice") li.classList.add("voice-channel-item");
+      if (hideFollowingChannels) {
+        li.classList.add("channel-collapsed-hidden");
+        li.hidden = true;
+      }
       li.appendChild(nameEl);
 
       channelToServer.set(channel.public_id, serverPublicId);
@@ -4510,11 +11615,25 @@ async function loadChannels(serverPublicId, options = {}) {
             setVoiceStatus("Mic permission or voice connection failed");
           });
         } else {
-          updateTopbar(`# ${channel.name}`, false);
-          leaveVoiceChannel();
+          updateTopbar(
+            activeChannelType === "notes"
+              ? `[N] ${channel.name}`
+              : activeChannelType === "battlemap"
+                ? `[B] ${channel.name}`
+                : `# ${channel.name}`,
+            false
+          );
           await ensureServerNicknames(serverPublicId);
-          loadMessages(channel.public_id, true);
-          applyDraftToComposer();
+          if (activeChannelType === "notes") {
+            await loadNotesPage(channel.public_id);
+          } else if (activeChannelType === "battlemap") {
+            loadBattlemapPage(channel.public_id);
+            await loadMessages(channel.public_id, true);
+            applyDraftToComposer();
+          } else {
+            loadMessages(channel.public_id, true);
+            applyDraftToComposer();
+          }
         }
         persistActiveChatState();
       });
@@ -4531,22 +11650,45 @@ async function loadChannels(serverPublicId, options = {}) {
             label: "Set Channel Picture",
             onClick: () =>
               pickImageAsDataUrl((dataUrl) => {
-                const icons = getStoredObject(getChannelIconsStorageKey(serverPublicId), {});
-                icons[channel.public_id] = dataUrl;
-                saveObject(getChannelIconsStorageKey(serverPublicId), icons);
+                setStoredChannelIcon(serverPublicId, channel.public_id, { type: "image", value: dataUrl });
                 loadChannels(serverPublicId);
               }),
           },
           {
-            label: `Notifications: All${currentNotif === "all" ? " ✓" : ""}`,
+            label: "Set Channel Emoji",
+            onClick: () => {
+              const value = (window.prompt("Channel emoji (example: fire or dice):", "") || "").trim();
+              if (!value) return;
+              setStoredChannelIcon(serverPublicId, channel.public_id, { type: "emoji", value });
+              loadChannels(serverPublicId);
+            },
+          },
+          {
+            label: "Set Channel Text",
+            onClick: () => {
+              const value = (window.prompt("Channel text badge (1-3 chars):", "") || "").trim();
+              if (!value) return;
+              setStoredChannelIcon(serverPublicId, channel.public_id, { type: "text", value });
+              loadChannels(serverPublicId);
+            },
+          },
+          {
+            label: "Remove Channel Picture/Icon",
+            onClick: () => {
+              setStoredChannelIcon(serverPublicId, channel.public_id, null);
+              loadChannels(serverPublicId);
+            },
+          },
+          {
+            label: `Notifications: All${currentNotif === "all" ? " \u2713" : ""}`,
             onClick: () => setChannelNotificationMode(channel.public_id, "all"),
           },
           {
-            label: `Notifications: Mentions${currentNotif === "mentions" ? " ✓" : ""}`,
+            label: `Notifications: Mentions${currentNotif === "mentions" ? " \u2713" : ""}`,
             onClick: () => setChannelNotificationMode(channel.public_id, "mentions"),
           },
           {
-            label: `Notifications: Muted${currentNotif === "muted" ? " ✓" : ""}`,
+            label: `Notifications: Muted${currentNotif === "muted" ? " \u2713" : ""}`,
             onClick: () => setChannelNotificationMode(channel.public_id, "muted"),
           },
           {
@@ -4558,6 +11700,7 @@ async function loadChannels(serverPublicId, options = {}) {
       });
       channelsPanel.appendChild(li);
     });
+    renderVoiceUsersInChannelsPanel();
     applyUnreadStyles();
     await syncRealtimeSubscriptions();
     if (options.preferredChannelId) {
@@ -4585,6 +11728,15 @@ function highlightActiveChannel() {
 // --------------------
 async function loadMessages(channelPublicId, shouldScrollToBottom = false) {
   try {
+    const channelType = channelTypeById.get(channelPublicId) || (channelPublicId === activeChannelId ? activeChannelType : "text");
+    if (channelType === "notes") {
+      await loadNotesPage(channelPublicId);
+      return;
+    }
+    if (channelType === "battlemap") {
+      loadBattlemapPage(channelPublicId);
+      updateTextVsVoiceUI();
+    }
     if (activeServerId) await ensureServerNicknames(activeServerId);
     const res = await fetch(`/messages/${channelPublicId}`, { credentials: "include" });
     if (!res.ok) {
@@ -4598,6 +11750,9 @@ async function loadMessages(channelPublicId, shouldScrollToBottom = false) {
     if (messageSearchInput) messageSearchInput.value = "";
 
     const latest = messages[messages.length - 1];
+    if (latest?.public_id) {
+      cacheLatestMessageId("server", channelPublicId, latest);
+    }
     if (latest?.created_at) {
       channelLastSeen.set(channelPublicId, new Date(latest.created_at).getTime());
     } else {
@@ -4617,8 +11772,10 @@ async function loadMessages(channelPublicId, shouldScrollToBottom = false) {
 // --------------------
 // Create Server Modal
 // --------------------
-if (openCreateServerBtn && createServerModal && submitServerBtn) {
-  openCreateServerBtn.addEventListener("click", () => openModal(createServerModal));
+if (createServerModal && submitServerBtn) {
+  if (openCreateServerBtn) {
+    openCreateServerBtn.addEventListener("click", () => openModal(createServerModal));
+  }
   submitServerBtn.addEventListener("click", async () => {
     const name = serverNameInput.value.trim();
     if (!name) return;
@@ -4642,11 +11799,13 @@ if (openCreateServerBtn && createServerModal && submitServerBtn) {
 // --------------------
 // Create Channel Modal
 // --------------------
-if (openCreateChannelBtn && createChannelModal && submitChannelBtn) {
-  openCreateChannelBtn.addEventListener("click", () => {
-    if (!activeServerId) return alert("Select a server first!");
-    openModal(createChannelModal);
-  });
+if (createChannelModal && submitChannelBtn) {
+  if (openCreateChannelBtn) {
+    openCreateChannelBtn.addEventListener("click", () => {
+      if (!activeServerId) return alert("Select a server first!");
+      openModal(createChannelModal);
+    });
+  }
   submitChannelBtn.addEventListener("click", async () => {
     const name = channelNameInput.value.trim();
     const type = (channelTypeInput?.value || "text").trim().toLowerCase();
@@ -4671,6 +11830,12 @@ if (openCreateChannelBtn && createChannelModal && submitChannelBtn) {
       const createdChannel = await res.json();
       if (type === "voice" && createdChannel?.type !== "voice") {
         throw new Error("Voice type was not applied. Restart backend to load latest channel-type support.");
+      }
+      if (type === "notes" && createdChannel?.type !== "notes") {
+        throw new Error("Notes type was not applied. Restart backend to load latest channel-type support.");
+      }
+      if (type === "battlemap" && createdChannel?.type !== "battlemap") {
+        throw new Error("Battlemap type was not applied. Restart backend to load latest channel-type support.");
       }
       channelNameInput.value = "";
       if (channelTypeInput) channelTypeInput.value = "text";
@@ -4710,6 +11875,7 @@ if (editorInsertBtn) {
 
 if (homeDmBtn) {
   homeDmBtn.addEventListener("click", async () => {
+    closeServerSwitcherOverlay();
     stopTypingNow();
     activeMode = "dm";
     activeServerId = null;
@@ -4734,6 +11900,66 @@ if (homeDmBtn) {
   });
 }
 
+if (openServerSwitcherBtn) {
+  openServerSwitcherBtn.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (serverSwitcherOverlay?.classList.contains("hidden")) {
+      openServerSwitcherOverlay();
+    } else {
+      closeServerSwitcherOverlay();
+    }
+  });
+}
+
+if (closeServerSwitcherBtn) {
+  closeServerSwitcherBtn.addEventListener("click", () => {
+    closeServerSwitcherOverlay();
+  });
+}
+
+if (serverSwitcherOverlay) {
+  serverSwitcherOverlay.addEventListener("click", (event) => {
+    if (event.target === serverSwitcherOverlay) closeServerSwitcherOverlay();
+  });
+}
+
+if (openCreateItemBtn) {
+  openCreateItemBtn.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const rect = openCreateItemBtn.getBoundingClientRect();
+    const menuItems = [];
+    if (activeMode === "server" && activeServerId) {
+      menuItems.push({
+        label: "Create Channel",
+        onClick: () => openModal(createChannelModal),
+      });
+      menuItems.push({
+        label: "Server Settings",
+        onClick: async () => {
+          try {
+            await loadServerSettingsModal();
+            openModal(serverSettingsModal);
+          } catch (err) {
+            alert(err.message || "Failed to load server settings");
+          }
+        },
+      });
+    } else {
+      menuItems.push({
+        label: "Create Channel",
+        onClick: () => alert("Select a space first."),
+      });
+    }
+    menuItems.push({
+      label: "Create Space",
+      onClick: () => openModal(createServerModal),
+    });
+    showContextMenu(Math.round(rect.left), Math.round(rect.top - 10), menuItems);
+  });
+}
+
 if (openServerMembersBtn && serverMembersModal) {
   openServerMembersBtn.addEventListener("click", async () => {
     if (activeMode !== "server" || !activeServerId) {
@@ -4746,6 +11972,95 @@ if (openServerMembersBtn && serverMembersModal) {
       openModal(serverMembersModal);
     } catch (err) {
       alert(err.message || "Failed to load members");
+    }
+  });
+}
+
+if (openServerSettingsBtn && serverSettingsModal) {
+  openServerSettingsBtn.addEventListener("click", async () => {
+    if (activeMode !== "server" || !activeServerId) {
+      alert("Select a server first.");
+      return;
+    }
+    try {
+      await loadServerSettingsModal();
+      openModal(serverSettingsModal);
+    } catch (err) {
+      alert(err.message || "Failed to load server settings");
+    }
+  });
+}
+
+if (serverSettingsSaveBtn) {
+  serverSettingsSaveBtn.addEventListener("click", async () => {
+    if (!activeServerId) return;
+    const name = String(serverSettingsNameInput?.value || "").trim();
+    if (!name) {
+      alert("Server name is required.");
+      return;
+    }
+    const limitRaw = Number(serverSettingsUploadLimitInput?.value || 0);
+    const limit = Math.max(0, Math.floor(Number.isFinite(limitRaw) ? limitRaw : 0));
+    const logRetentionRaw = Number(serverSettingsLogRetentionInput?.value || 0);
+    const logRetentionDays = Math.max(0, Math.floor(Number.isFinite(logRetentionRaw) ? logRetentionRaw : 0));
+    const messageRetentionRaw = Number(serverSettingsMessageRetentionInput?.value ?? -1);
+    const messageRetentionDays = Math.max(-1, Math.floor(Number.isFinite(messageRetentionRaw) ? messageRetentionRaw : -1));
+    const stripUploadMetadata = Boolean(serverSettingsStripMetadataInput?.checked);
+    const automodEnabled = Boolean(serverSettingsAutomodEnabled?.checked);
+    const automodBlockLinks = Boolean(serverSettingsAutomodBlockLinks?.checked);
+    const automodBlockInvites = Boolean(serverSettingsAutomodBlockInvites?.checked);
+    const automodTerms = String(serverSettingsAutomodTerms?.value || "").trim();
+    const automodExtensions = String(serverSettingsAutomodExtensions?.value || "").trim();
+    try {
+      await fetch(`/servers/${activeServerId}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          max_upload_size_mb: limit,
+          log_retention_days: logRetentionDays,
+          message_retention_days: messageRetentionDays,
+          strip_upload_metadata: stripUploadMetadata,
+          automod_enabled: automodEnabled,
+          automod_block_external_links: automodBlockLinks,
+          automod_block_invite_links: automodBlockInvites,
+          automod_blocked_terms: automodTerms,
+          automod_blocked_extensions: automodExtensions,
+        }),
+      }).then(async (res) => {
+        if (res.ok) return res.json();
+        let detail = "Failed to save server settings";
+        try {
+          const data = await res.json();
+          if (data?.detail) detail = data.detail;
+        } catch {}
+        throw new Error(detail);
+      });
+      await loadServers();
+      await loadServerSettingsModal();
+      showToast("Server settings saved");
+    } catch (err) {
+      alert(err.message || "Failed to save server settings");
+    }
+  });
+}
+
+if (serverSettingsCreateRoleBtn) {
+  serverSettingsCreateRoleBtn.addEventListener("click", async () => {
+    if (!activeServerId) return;
+    const roleName = String(serverSettingsNewRoleName?.value || "").trim();
+    if (!roleName) {
+      alert("Role name is required.");
+      return;
+    }
+    try {
+      await createServerRole(activeServerId, roleName);
+      if (serverSettingsNewRoleName) serverSettingsNewRoleName.value = "";
+      await loadServerSettingsModal();
+      showToast("Role created");
+    } catch (err) {
+      alert(err.message || "Failed to create role");
     }
   });
 }
@@ -4822,14 +12137,14 @@ if (openAddSeparatorBtn) {
 
 if (submitInviteMemberBtn && inviteMemberModal) {
   submitInviteMemberBtn.addEventListener("click", async () => {
-    const userPublicId = inviteUserPublicIdInput?.value.trim();
+    const userPublicId = (inviteSelectedFriendPublicId || inviteUserPublicIdInput?.value || "").trim();
     if (!inviteServerPublicId || !userPublicId) return;
     try {
       await inviteMemberToServer(inviteServerPublicId, userPublicId);
       closeModal(inviteMemberModal);
       inviteServerPublicId = null;
-      if (inviteUserPublicIdInput) inviteUserPublicIdInput.value = "";
-      alert("Member invited successfully.");
+      resetInviteFriendSelection();
+      showToast("Member invited successfully.");
     } catch (err) {
       alert(err.message || "Failed to invite member");
     }
@@ -4902,11 +12217,16 @@ if (confirmDeleteChannelBtn && deleteChannelModal) {
   });
 }
 
-[createServerModal, createChannelModal, inviteMemberModal, deleteServerModal, deleteChannelModal, userSettingsModal, richEditorModal, threadModal, friendsModal, createDmModal, adminModal, serverMembersModal, launchChecklistModal, quickSwitcherModal, shortcutsModal, imagePreprocessModal].forEach((modal) => {
+[createServerModal, createChannelModal, inviteMemberModal, deleteServerModal, deleteChannelModal, userSettingsModal, publicUserProfileModal, richEditorModal, threadModal, pinsModal, friendsModal, createDmModal, adminModal, serverMembersModal, serverSettingsModal, launchChecklistModal, quickSwitcherModal, shortcutsModal, onboardingTutorialModal, imagePreprocessModal].forEach((modal) => {
   if (!modal) return;
   modal.addEventListener("click", (event) => {
     if (event.target === modal) {
       if (modal === imagePreprocessModal) resolveImagePreprocessWithOriginal();
+      if (modal === userSettingsModal) stopMicSelfTest();
+      if (modal === onboardingTutorialModal) {
+        clearTutorialHighlight();
+        markTutorialComplete();
+      }
       closeModal(modal);
       if (modal === threadModal) activeThreadParentMessageId = null;
       if (modal === serverMembersModal) memberNicknameDrafts = new Map();
@@ -4917,12 +12237,47 @@ if (confirmDeleteChannelBtn && deleteChannelModal) {
   if (closeBtn) {
     closeBtn.addEventListener("click", () => {
       if (modal === imagePreprocessModal) resolveImagePreprocessWithOriginal();
+      if (modal === userSettingsModal) stopMicSelfTest();
+      if (modal === onboardingTutorialModal) {
+        clearTutorialHighlight();
+        markTutorialComplete();
+      }
       closeModal(modal);
       if (modal === threadModal) activeThreadParentMessageId = null;
       if (modal === serverMembersModal) memberNicknameDrafts = new Map();
     });
   }
 });
+
+if (tutorialNextBtn) {
+  tutorialNextBtn.addEventListener("click", () => {
+    if (tutorialStepIndex < ONBOARDING_TUTORIAL_STEPS.length - 1) {
+      tutorialStepIndex += 1;
+      renderTutorialStep();
+    }
+  });
+}
+
+if (tutorialPrevBtn) {
+  tutorialPrevBtn.addEventListener("click", () => {
+    if (tutorialStepIndex > 0) {
+      tutorialStepIndex -= 1;
+      renderTutorialStep();
+    }
+  });
+}
+
+if (tutorialFinishBtn) {
+  tutorialFinishBtn.addEventListener("click", () => {
+    finishOnboardingTutorial();
+  });
+}
+
+if (tutorialSkipBtn) {
+  tutorialSkipBtn.addEventListener("click", () => {
+    finishOnboardingTutorial();
+  });
+}
 
 document.addEventListener("keydown", (event) => {
   trackKonami(event);
@@ -4934,6 +12289,22 @@ document.addEventListener("keydown", (event) => {
     if (quickSwitcherInput) quickSwitcherInput.value = "";
     openModal(quickSwitcherModal);
     quickSwitcherInput?.focus();
+    return;
+  }
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+    if (activeMode === "server" && activeChannelType === "notes") {
+      event.preventDefault();
+      saveActiveNotesPage({ showSavedToast: true }).catch((err) => {
+        alert(err.message || "Failed to save note");
+      });
+      return;
+    }
+  }
+  if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === "d") {
+    event.preventDefault();
+    toggleRuntimeDiagnosticsPanel().catch((err) => {
+      showToast(err?.message || "Failed to open diagnostics");
+    });
     return;
   }
   if (!typingIntoField && !event.ctrlKey && !event.metaKey && event.key === "?") {
@@ -4950,6 +12321,7 @@ document.addEventListener("keydown", (event) => {
     closeModal(deleteServerModal);
     closeModal(deleteChannelModal);
     closeModal(userSettingsModal);
+    closeModal(publicUserProfileModal);
     closeModal(richEditorModal);
     closeModal(threadModal);
     closeModal(friendsModal);
@@ -4960,13 +12332,22 @@ document.addEventListener("keydown", (event) => {
     closeModal(launchChecklistModal);
     closeModal(quickSwitcherModal);
     closeModal(shortcutsModal);
+    if (onboardingTutorialModal?.classList.contains("open")) {
+      clearTutorialHighlight();
+      markTutorialComplete();
+    }
+    closeModal(onboardingTutorialModal);
     if (imagePreprocessModal?.classList.contains("open")) resolveImagePreprocessWithOriginal();
     closeModal(imagePreprocessModal);
     activeThreadParentMessageId = null;
   }
 });
 
-document.addEventListener("click", () => {
+document.addEventListener("click", (event) => {
+  if (suppressNextMessageUiAutoClose) return;
+  if (event.target?.closest?.("#context-menu")) return;
+  if (event.target?.closest?.(".message-emoji-picker")) return;
+  if (event.target?.closest?.(".message-react-trigger")) return;
   hideContextMenu();
   closeActiveReactionPicker();
 });
@@ -4987,14 +12368,19 @@ document.addEventListener("contextmenu", (event) => {
 // --------------------
 if (sendMessageBtn) {
   const sendCurrentMessage = async () => {
-    if (activeChannelType === "voice") return;
+    if (sendMessageInFlight) return;
+    if (activeChannelType === "voice" || activeChannelType === "notes") return;
     let content = messageInput.value.trim();
     if (!content) return;
+    sendMessageInFlight = true;
     setSendStatus("Sending...", "sending");
+    if (sendMessageBtn) sendMessageBtn.disabled = true;
     const commandResult = handleComposerCommand(content);
     if (commandResult.handled) {
       messageInput.value = "";
       clearActiveDraft();
+      sendMessageInFlight = false;
+      if (sendMessageBtn) sendMessageBtn.disabled = false;
       return;
     }
     content = commandResult.rewrite || content;
@@ -5005,15 +12391,15 @@ if (sendMessageBtn) {
       let res;
       if (activeMode === "dm") {
         if (!activeDmConversationId) return;
-        res = await fetch(`/dms/${activeDmConversationId}/messages`, {
+        res = await fetchWithTimeout(`/dms/${activeDmConversationId}/messages`, {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ content }),
-        });
+        }, 15000);
       } else {
         if (!activeChannelId) return;
-        res = await fetch(`/messages/${activeChannelId}`, {
+        res = await fetchWithTimeout(`/messages/${activeChannelId}`, {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
@@ -5021,9 +12407,9 @@ if (sendMessageBtn) {
             content,
             parent_message_public_id: pendingReplyTo?.public_id || null,
           }),
-        });
+        }, 15000);
       }
-      if (!res.ok) throw new Error("Failed to send message");
+      if (!res.ok) throw new Error(await readApiErrorDetail(res, "Failed to send message"));
       const createdMessage = await res.json().catch(() => null);
       messageInput.value = "";
       clearActiveDraft();
@@ -5036,6 +12422,10 @@ if (sendMessageBtn) {
         await loadMessages(activeChannelId, true);
       }
     } catch (err) {
+      const isTimeout = err?.name === "AbortError";
+      const sendErr = isTimeout
+        ? "Send timed out after 15s. Check network/backend and retry."
+        : (err.message || "Send failed");
       failedSendQueue.push({
         mode: activeMode,
         channelId: activeChannelId,
@@ -5043,8 +12433,11 @@ if (sendMessageBtn) {
         content,
       });
       updateRetrySendUi();
-      setSendStatus(err.message || "Send failed", "error");
+      setSendStatus(sendErr, "error");
       console.error(err);
+    } finally {
+      sendMessageInFlight = false;
+      if (sendMessageBtn) sendMessageBtn.disabled = false;
     }
   };
 
@@ -5061,7 +12454,7 @@ if (sendMessageBtn) {
     messageInput.addEventListener("input", () => {
       updateDraftFromComposer();
       if (sendStatusText?.dataset?.kind === "error") setSendStatus("", "muted");
-      if (activeMode !== "server" || !activeChannelId || activeChannelType === "voice") return;
+      if (activeMode !== "server" || !activeChannelId || activeChannelType === "voice" || activeChannelType === "notes") return;
       const now = Date.now();
       if (typingActiveChannelId !== activeChannelId || now - typingLastStartSentAt > 850) {
         sendTypingEvent("typing_start");
@@ -5103,7 +12496,7 @@ if (threadSendBtn && threadMessageInput) {
     const content = threadMessageInput.value.trim();
     if (!content) return;
     try {
-      const res = await fetch(`/messages/${activeChannelId}`, {
+      const res = await fetchWithTimeout(`/messages/${activeChannelId}`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -5111,13 +12504,17 @@ if (threadSendBtn && threadMessageInput) {
           content,
           parent_message_public_id: activeThreadParentMessageId,
         }),
-      });
-      if (!res.ok) throw new Error("Failed to send thread reply");
+      }, 15000);
+      if (!res.ok) throw new Error(await readApiErrorDetail(res, "Failed to send thread reply"));
       threadMessageInput.value = "";
       await loadThreadMessages(true);
       await loadMessages(activeChannelId, false);
     } catch (err) {
-      alert(err.message || "Failed to send thread reply");
+      if (err?.name === "AbortError") {
+        alert("Thread reply timed out after 15s. Check network/backend and retry.");
+      } else {
+        alert(err.message || "Failed to send thread reply");
+      }
     }
   };
 
@@ -5139,16 +12536,35 @@ if (uploadImageBtn && imageUploadInput) {
     const file = imageUploadInput.files?.[0];
     if (!file) return;
     try {
-      const processed = await preprocessImageFile(file);
-      const result = await uploadMessageImage(processed);
-      const markdownImage = `![${file.name}](${result.url})`;
+      if (!activeChannelId || activeMode !== "server" || activeChannelType !== "text") {
+        throw new Error("Files can only be uploaded in server text channels");
+      }
+      const isImage = String(file.type || "").startsWith("image/");
+      const uploadFile = isImage ? await preprocessImageFile(file) : file;
+      const labelBase = `Uploading ${uploadFile?.name || file.name || "file"}...`;
+      setUploadProgress(true, 0, `${labelBase} 0%`);
+      const result = await uploadMessageAttachment(uploadFile, activeChannelId, (pct, loaded, total, computable) => {
+        if (computable && pct != null) {
+          setUploadProgress(true, pct, `${labelBase} ${Math.round(pct)}%`);
+          return;
+        }
+        const loadedMb = Number(loaded || 0) / (1024 * 1024);
+        setUploadProgress(true, 12, `${labelBase} ${loadedMb.toFixed(1)}MB sent`);
+      });
+      setUploadProgress(true, 100, "Upload complete");
+      window.setTimeout(() => setUploadProgress(false), 500);
+      const mediaUrl = resolveMediaUrl(result.url);
+      const markdown = isImage
+        ? `![${file.name}](${mediaUrl})`
+        : `[${result.name || file.name}](${mediaUrl})`;
       messageInput.value = messageInput.value.trim()
-        ? `${messageInput.value}\n${markdownImage}`
-        : markdownImage;
+        ? `${messageInput.value}\n${markdown}`
+        : markdown;
       imageUploadInput.value = "";
       messageInput.focus();
     } catch (err) {
-      alert(err.message || "Image upload failed");
+      setUploadProgress(false);
+      alert(err.message || "File upload failed");
     }
   });
 }
@@ -5159,6 +12575,7 @@ if (uploadImageBtn && imageUploadInput) {
 if (logoutBtn) {
   logoutBtn.addEventListener("click", async () => {
     stopTypingNow();
+    stopMicSelfTest();
     closePresenceSocket();
     closeDmMessageSocket();
     leaveVoiceChannel();
@@ -5172,36 +12589,189 @@ if (logoutBtn) {
 // Theme toggle
 // --------------------
 if (themeToggle) {
-  themeToggle.addEventListener("click", () => {
-    const currentPreset = getThemeById(appearanceSettings.themeId);
-    if (currentPreset.mode === "dark") {
-      appearanceSettings.themeId = appearanceSettings.lastLightThemeId || DEFAULT_APPEARANCE.lastLightThemeId;
-    } else {
-      appearanceSettings.themeId = appearanceSettings.lastDarkThemeId || DEFAULT_APPEARANCE.lastDarkThemeId;
+  themeToggle.setAttribute("role", "button");
+  themeToggle.setAttribute("tabindex", "0");
+  themeToggle.setAttribute("title", "Cycle theme mode (light/medium/dark)");
+  themeToggle.addEventListener("click", cycleThemeMode);
+  themeToggle.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      cycleThemeMode();
     }
-    applyAppearanceSettings();
-    saveAppearanceSettings();
-    renderThemePresetGrid();
-    updateAppearanceControlValues();
   });
 }
 
 if (settingsBtn && userSettingsModal) {
   settingsBtn.addEventListener("click", () => {
     if (settingsPublicId) settingsPublicId.textContent = currentUser?.public_id || "-";
+    if (settingsFriendInviteCode) settingsFriendInviteCode.textContent = buildFriendInviteCode(currentUser);
     if (settingsUsername) settingsUsername.textContent = currentUser?.username || "-";
+    if (settingsUsernameColorInput) settingsUsernameColorInput.value = normalizeHexColor(currentUser?.username_color) || "#4f8fcf";
+    if (settingsNameEmojiInput) settingsNameEmojiInput.value = currentUser?.name_emoji || "";
+    if (settingsCustomStatusInput) settingsCustomStatusInput.value = currentUser?.custom_status || "";
+    if (settingsStripUploadMetadataInput) settingsStripUploadMetadataInput.checked = Boolean(currentUser?.strip_upload_metadata);
     if (settingsEmail) settingsEmail.textContent = currentUser?.email || "-";
     if (settingsUserId) settingsUserId.textContent = String(currentUser?.id ?? "-");
     if (settingsCreatedAt) settingsCreatedAt.textContent = formatTimestamp(currentUser?.created_at) || "-";
     if (settingsUpdatedAt) settingsUpdatedAt.textContent = formatTimestamp(currentUser?.updated_at) || "-";
+    refreshSettingsAvatarPreview();
     updateAppearanceControlValues();
     updateLabsControlValues();
+    updateVoiceControlValues();
+    updateMicSelfTestUi();
     applySafeModeState();
     renderThemePresetGrid();
     populateThemeTemplateEditor(getThemeById(appearanceSettings.themeId));
+    refreshPushButtonState();
+    setActiveSettingsTab(activeSettingsTab || "profile");
+    refreshConnectionsSettingsPanel().catch(() => {});
+    applySettingsTooltips(userSettingsModal || document);
     openModal(userSettingsModal);
   });
 
+}
+
+if (settingsCopyFriendInviteBtn) {
+  settingsCopyFriendInviteBtn.addEventListener("click", async () => {
+    const code = buildFriendInviteCode(currentUser);
+    if (!code || code === "-") {
+      showToast("Friend invite code unavailable");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(code);
+      showToast("Friend invite copied!");
+    } catch {
+      showToast("Could not copy friend invite");
+    }
+  });
+}
+
+if (messagesPanel) {
+  messagesPanel.addEventListener("click", async (event) => {
+    const link = event.target.closest("a[href^='#note:']");
+    if (!link) return;
+    event.preventDefault();
+    if (activeMode !== "server" || activeChannelType !== "notes") return;
+    const href = link.getAttribute("href") || "";
+    const encodedName = href.slice("#note:".length);
+    const noteName = decodeURIComponent(encodedName || "").trim();
+    if (!noteName) return;
+    try {
+      await openOrCreateNotesChannelByName(noteName);
+    } catch (err) {
+      alert(err.message || "Failed to open note");
+    }
+  });
+}
+
+if (settingsOpenTutorialBtn) {
+  settingsOpenTutorialBtn.addEventListener("click", () => {
+    setTutorialDismissedLocally(false);
+    startOnboardingTutorial();
+  });
+}
+
+if (settingsTestNotificationBtn) {
+  settingsTestNotificationBtn.addEventListener("click", async () => {
+    const title = "Tavern Notification Test";
+    const body = "If you can see this, notification plumbing is working.";
+    showToast(`${title}: ${body}`);
+
+    if (isDesktopTauriRuntime()) {
+      const shown = await showDesktopNativeNotification(title, body);
+      if (!shown) {
+        alert("Desktop notification bridge failed. Open DevTools/terminal and check for '[Tavern desktop] invoke failed'.");
+      }
+      return;
+    }
+
+    if (!canUseBrowserNotifications()) {
+      alert("Browser notifications are not supported in this browser.");
+      return;
+    }
+    if (!window.isSecureContext) {
+      alert("Browser notifications require HTTPS (or localhost).");
+      return;
+    }
+
+    try {
+      if (Notification.permission === "default") {
+        await Notification.requestPermission();
+      }
+      if (Notification.permission !== "granted") {
+        alert("Browser notification permission is blocked. Enable it in site settings.");
+        return;
+      }
+      const shown = await showBrowserNotification(
+        title,
+        body,
+        `tavern-test-${Date.now()}`,
+        "/dashboard"
+      );
+      if (!shown) {
+        alert("Service worker notification could not be created. Check push permission and service worker status.");
+      }
+    } catch {
+      alert("Notification test failed. Check browser/site notification settings.");
+    }
+  });
+}
+
+if (settingsEnablePushBtn) {
+  settingsEnablePushBtn.addEventListener("click", async () => {
+    if (isDesktopTauriRuntime()) {
+      showToast("Desktop client uses desktop notifications instead of web push");
+      return;
+    }
+    try {
+      settingsEnablePushBtn.disabled = true;
+      settingsEnablePushBtn.textContent = "Enabling...";
+      await subscribePushNotifications({ promptPermission: true });
+      showToast("Push notifications enabled.");
+    } catch (err) {
+      alert(err?.message || "Failed to enable push notifications.");
+    } finally {
+      settingsEnablePushBtn.disabled = false;
+      refreshPushButtonState();
+    }
+  });
+}
+
+if (settingsOpenDiagnosticsBtn) {
+  settingsOpenDiagnosticsBtn.addEventListener("click", () => {
+    toggleRuntimeDiagnosticsPanel().catch((err) => {
+      showToast(err?.message || "Failed to open diagnostics");
+    });
+  });
+}
+
+if (settingsRefreshConnectionsBtn) {
+  settingsRefreshConnectionsBtn.addEventListener("click", () => {
+    refreshConnectionsSettingsPanel().catch(() => {});
+  });
+}
+
+if (settingsRunNotificationPollBtn) {
+  settingsRunNotificationPollBtn.addEventListener("click", async () => {
+    await pollNotificationFallback({ force: true });
+    refreshConnectionsSettingsPanel().catch(() => {});
+    showToast("Notification poll completed");
+  });
+}
+
+if (settingsResyncRealtimeBtn) {
+  settingsResyncRealtimeBtn.addEventListener("click", async () => {
+    await syncRealtimeSubscriptions();
+    refreshConnectionsSettingsPanel().catch(() => {});
+    showToast("Realtime subscriptions synced");
+  });
+}
+
+if (publicUserProfileDmBtn) {
+  publicUserProfileDmBtn.addEventListener("click", () => {
+    openDmFromPublicProfileModal().catch(() => {});
+  });
 }
 
 if (adminBtn && adminModal) {
@@ -5250,8 +12820,14 @@ if (settingsAvatarUploadBtn && settingsAvatarInput) {
     }
     try {
       const processed = await preprocessImageFile(file);
-      await uploadUserAvatar(processed);
+      const optimized = await optimizeAvatarFile(processed);
+      const uploadResult = await uploadUserAvatar(optimized);
       settingsAvatarInput.value = "";
+      if (uploadResult?.url && settingsAvatarPreview) {
+        settingsAvatarPreview.src = resolveMediaUrl(uploadResult.url);
+      } else {
+        refreshSettingsAvatarPreview({ bustCache: true });
+      }
       alert("Avatar uploaded.");
       renderVoiceUsers();
     } catch (err) {
@@ -5308,6 +12884,169 @@ if (deafenVoiceBtn) {
   });
 }
 
+if (settingsClearUsernameColorBtn && settingsUsernameColorInput) {
+  settingsClearUsernameColorBtn.addEventListener("click", async () => {
+    try {
+      settingsClearUsernameColorBtn.disabled = true;
+      await saveCurrentUserNameStyle({
+        usernameColor: "",
+        nameEmoji: normalizeNameEmojiInput(settingsNameEmojiInput?.value || currentUser?.name_emoji || ""),
+      });
+      settingsUsernameColorInput.value = "#4f8fcf";
+      showToast("Name color reset");
+      if (activeChannelId && activeChannelType !== "voice" && activeChannelType !== "notes" && activeMode === "server") {
+        loadMessages(activeChannelId, false).catch(() => {});
+      }
+    } catch (err) {
+      alert(err?.message || "Failed to reset name color");
+    } finally {
+      settingsClearUsernameColorBtn.disabled = false;
+    }
+  });
+}
+
+if (settingsSaveNameStyleBtn) {
+  settingsSaveNameStyleBtn.addEventListener("click", async () => {
+    try {
+      settingsSaveNameStyleBtn.disabled = true;
+      const usernameColor = normalizeHexColor(settingsUsernameColorInput?.value || "");
+      const nameEmoji = normalizeNameEmojiInput(settingsNameEmojiInput?.value || "");
+      await saveCurrentUserNameStyle({ usernameColor, nameEmoji });
+      if (settingsNameEmojiInput) settingsNameEmojiInput.value = currentUser?.name_emoji || "";
+      showToast("Name style saved");
+      if (activeChannelId && activeChannelType !== "voice" && activeChannelType !== "notes" && activeMode === "server") {
+        loadMessages(activeChannelId, false).catch(() => {});
+      }
+    } catch (err) {
+      alert(err?.message || "Failed to save name style");
+    } finally {
+      settingsSaveNameStyleBtn.disabled = false;
+    }
+  });
+}
+
+if (settingsSaveCustomStatusBtn) {
+  const saveCustomStatusFromSettings = async () => {
+    try {
+      settingsSaveCustomStatusBtn.disabled = true;
+      const customStatus = normalizeCustomStatusInput(settingsCustomStatusInput?.value || "");
+      await saveCurrentUserCustomStatus(customStatus);
+      if (settingsCustomStatusInput) settingsCustomStatusInput.value = currentUser?.custom_status || "";
+      showToast("Custom status saved");
+    } catch (err) {
+      alert(err?.message || "Failed to save custom status");
+    } finally {
+      settingsSaveCustomStatusBtn.disabled = false;
+    }
+  };
+  settingsSaveCustomStatusBtn.addEventListener("click", saveCustomStatusFromSettings);
+  settingsCustomStatusInput?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    saveCustomStatusFromSettings();
+  });
+}
+
+if (settingsSaveUploadPrivacyBtn) {
+  settingsSaveUploadPrivacyBtn.addEventListener("click", async () => {
+    try {
+      settingsSaveUploadPrivacyBtn.disabled = true;
+      const stripMetadata = Boolean(settingsStripUploadMetadataInput?.checked);
+      await saveCurrentUserUploadPrivacy(stripMetadata);
+      if (settingsStripUploadMetadataInput) settingsStripUploadMetadataInput.checked = Boolean(currentUser?.strip_upload_metadata);
+      showToast("Upload privacy saved");
+    } catch (err) {
+      alert(err?.message || "Failed to save upload privacy");
+    } finally {
+      settingsSaveUploadPrivacyBtn.disabled = false;
+    }
+  });
+}
+
+if (cameraVoiceBtn) {
+  cameraVoiceBtn.addEventListener("click", async () => {
+    if (!voiceSocket || voiceSocket.readyState !== WebSocket.OPEN) {
+      showToast("Join a voice channel first");
+      return;
+    }
+    try {
+      if (isCameraEnabled) {
+        stopCameraShare({ notifyPeers: true });
+      } else {
+        await startCameraShare();
+      }
+      const selfPeer = peerMeta.get(voiceSelfPeerId);
+      if (selfPeer) selfPeer.camera_on = isCameraEnabled;
+      renderVoiceUsers();
+    } catch (err) {
+      showToast(err?.message || "Could not start camera");
+    }
+  });
+}
+
+if (screenVoiceBtn) {
+  screenVoiceBtn.addEventListener("click", async () => {
+    if (!voiceSocket || voiceSocket.readyState !== WebSocket.OPEN) {
+      showToast("Join a voice channel first");
+      return;
+    }
+    try {
+      if (isScreenSharing) {
+        await stopScreenShare({ notifyPeers: true });
+      } else {
+        await startScreenShare();
+      }
+      const selfPeer = peerMeta.get(voiceSelfPeerId);
+      if (selfPeer) selfPeer.screen_on = isScreenSharing;
+      renderVoiceUsers();
+    } catch (err) {
+      showToast(err?.message || "Could not share screen");
+    }
+  });
+}
+
+if (linkStreamVoiceBtn) {
+  linkStreamVoiceBtn.addEventListener("click", () => {
+    if (!voiceSocket || voiceSocket.readyState !== WebSocket.OPEN) {
+      showToast("Join a voice channel first");
+      return;
+    }
+    if (sharedLinkStreamUrl) {
+      sharedLinkStreamUrl = null;
+      renderLocalVoiceVideoTiles();
+      sendVoiceState();
+      const selfPeer = peerMeta.get(voiceSelfPeerId);
+      if (selfPeer) selfPeer.link_stream_url = null;
+      updateVoiceMediaButtons();
+      showToast("Link stream stopped");
+      return;
+    }
+    const raw = window.prompt("Paste a stream/video URL (direct video, YouTube, Vimeo, or embeddable link):", "");
+    if (!raw || !raw.trim()) return;
+    const parsed = parseEmbeddableStreamUrl(raw);
+    if (!parsed) {
+      showToast("Unsupported or invalid link");
+      return;
+    }
+    sharedLinkStreamUrl = raw.trim();
+    renderLocalVoiceVideoTiles();
+    sendVoiceState();
+    const selfPeer = peerMeta.get(voiceSelfPeerId);
+    if (selfPeer) selfPeer.link_stream_url = sharedLinkStreamUrl;
+    updateVoiceMediaButtons();
+    showToast("Link stream shared");
+  });
+}
+
+if (watchSharesVoiceBtn) {
+  watchSharesVoiceBtn.addEventListener("click", () => {
+    watchRemoteScreenShares = !watchRemoteScreenShares;
+    updateVoiceMediaButtons();
+    applyRemoteScreenShareWatchPreference();
+    showToast(watchRemoteScreenShares ? "Watching screen shares" : "Screen shares hidden");
+  });
+}
+
 // --------------------
 // Three.js D20
 // --------------------
@@ -5318,12 +13057,126 @@ if (canvas) {
   const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
   camera.position.z = 3;
 
-  const geometry = new THREE.IcosahedronGeometry(1, 0);
+  const geometry = createCenterWireframeGeometry(appearanceSettings.centerWireframeShape);
   const material = new THREE.MeshBasicMaterial({ color: 0x7f8072, wireframe: true });
   d20Material = material;
   updateD20ThemeColor();
   const d20 = new THREE.Mesh(geometry, material);
+  d20Mesh = d20;
   scene.add(d20);
+
+  const cosmicCore = new THREE.Mesh(
+    new THREE.SphereGeometry(0.42, 24, 24),
+    new THREE.MeshBasicMaterial({ color: 0x05060a, transparent: true, opacity: 0 })
+  );
+  cosmicCore.visible = false;
+  scene.add(cosmicCore);
+
+  const cosmicRing = new THREE.Mesh(
+    new THREE.TorusGeometry(0.92, 0.11, 16, 64),
+    new THREE.MeshBasicMaterial({
+      color: 0x7f5bff,
+      transparent: true,
+      opacity: 0,
+      blending: THREE.AdditiveBlending,
+    })
+  );
+  cosmicRing.rotation.x = 1.15;
+  cosmicRing.visible = false;
+  scene.add(cosmicRing);
+  centerGlowVisualRefs.cosmicRingMaterial = cosmicRing.material;
+
+  const cosmicAccretionRing = new THREE.Mesh(
+    new THREE.TorusGeometry(1.08, 0.18, 20, 96),
+    new THREE.MeshBasicMaterial({
+      color: 0xff9a45,
+      transparent: true,
+      opacity: 0,
+      blending: THREE.AdditiveBlending,
+    })
+  );
+  cosmicAccretionRing.rotation.x = 1.08;
+  cosmicAccretionRing.visible = false;
+  scene.add(cosmicAccretionRing);
+  centerGlowVisualRefs.cosmicAccretionRingMaterial = cosmicAccretionRing.material;
+
+  const cosmicAccretionGlow = new THREE.Mesh(
+    new THREE.TorusGeometry(1.2, 0.28, 20, 96),
+    new THREE.MeshBasicMaterial({
+      color: 0xffc072,
+      transparent: true,
+      opacity: 0,
+      blending: THREE.AdditiveBlending,
+    })
+  );
+  cosmicAccretionGlow.rotation.x = 1.08;
+  cosmicAccretionGlow.visible = false;
+  scene.add(cosmicAccretionGlow);
+  centerGlowVisualRefs.cosmicAccretionGlowMaterial = cosmicAccretionGlow.material;
+
+  const cosmicHalo = new THREE.Mesh(
+    new THREE.RingGeometry(0.5, 1.55, 64),
+    new THREE.MeshBasicMaterial({
+      color: 0x6dc6ff,
+      transparent: true,
+      opacity: 0,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+    })
+  );
+  cosmicHalo.visible = false;
+  scene.add(cosmicHalo);
+  centerGlowVisualRefs.cosmicHaloMaterial = cosmicHalo.material;
+
+  const cosmicInnerGlow = new THREE.Mesh(
+    new THREE.RingGeometry(0.22, 0.52, 48),
+    new THREE.MeshBasicMaterial({
+      color: 0x8dd7ff,
+      transparent: true,
+      opacity: 0,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+    })
+  );
+  cosmicInnerGlow.visible = false;
+  scene.add(cosmicInnerGlow);
+  centerGlowVisualRefs.cosmicInnerGlowMaterial = cosmicInnerGlow.material;
+
+  const cosmicNebula = new THREE.Mesh(
+    new THREE.SphereGeometry(1.24, 20, 20),
+    new THREE.MeshBasicMaterial({
+      color: 0x5ebdff,
+      transparent: true,
+      opacity: 0,
+      wireframe: false,
+      blending: THREE.AdditiveBlending,
+    })
+  );
+  cosmicNebula.visible = false;
+  scene.add(cosmicNebula);
+  centerGlowVisualRefs.cosmicNebulaMaterial = cosmicNebula.material;
+
+  const cosmicDust = new THREE.Group();
+  for (let i = 0; i < 18; i += 1) {
+    const dust = new THREE.Mesh(
+      new THREE.SphereGeometry(0.018 + Math.random() * 0.025, 8, 8),
+      new THREE.MeshBasicMaterial({
+        color: i % 3 === 0 ? 0xffb577 : i % 3 === 1 ? 0x86d6ff : 0xc39cff,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+      })
+    );
+    dust.userData.radius = 0.75 + Math.random() * 0.7;
+    dust.userData.speed = 0.45 + Math.random() * 0.9;
+    dust.userData.phase = Math.random() * Math.PI * 2;
+    dust.userData.yDrift = (Math.random() - 0.5) * 0.22;
+    cosmicDust.add(dust);
+    centerGlowVisualRefs.cosmicDustMaterials.push(dust.material);
+  }
+  cosmicDust.visible = false;
+  scene.add(cosmicDust);
+  updateCenterGlowColors();
 
   function resizeD20Canvas() {
     const rect = canvas.getBoundingClientRect();
@@ -5338,20 +13191,241 @@ if (canvas) {
   window.addEventListener("resize", resizeD20Canvas);
 
   let floatOffset = 0;
+  let d20PointerActive = false;
+  let d20PointerTargetX = 0;
+  let d20PointerTargetY = 0;
+  let d20PointerInfluence = 0;
+  let d20PointerDragSpinX = 0;
+  let d20PointerDragSpinY = 0;
+  let d20PointerLast = null;
+  let d20ActivePointerId = null;
+  let lastCenterBounceAt = 0;
+  const tesseractAngles = {
+    xy: 0,
+    xz: 0,
+    yz: 0,
+    xw: 0,
+    yw: 0,
+    zw: 0,
+  };
+
+  function isSettingsPreviewInteractive() {
+    return Boolean(userSettingsModal?.classList?.contains("open"));
+  }
+
+  function setD20PointerTargetFromEvent(event) {
+    const rect = canvas.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / Math.max(1, rect.width)) * 2 - 1;
+    const y = ((event.clientY - rect.top) / Math.max(1, rect.height)) * 2 - 1;
+    d20PointerTargetX = Math.max(-1, Math.min(1, x));
+    d20PointerTargetY = Math.max(-1, Math.min(1, y));
+  }
+
+  function isPointerInsideCenterVisual(event) {
+    const rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return false;
+    const x = event.clientX;
+    const y = event.clientY;
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return false;
+    const nx = ((x - rect.left) / rect.width) * 2 - 1;
+    const ny = ((y - rect.top) / rect.height) * 2 - 1;
+    return ((nx * nx) + (ny * ny)) <= 0.92;
+  }
+
+  function beginD20PointerInteraction(event) {
+    if (!isPointerInsideCenterVisual(event)) return false;
+    d20PointerActive = true;
+    d20ActivePointerId = event.pointerId;
+    d20PointerInfluence = 1;
+    d20PointerLast = { x: event.clientX, y: event.clientY };
+    canvas.style.cursor = "grabbing";
+    setD20PointerTargetFromEvent(event);
+    try { canvas.setPointerCapture(event.pointerId); } catch {}
+    event.preventDefault();
+    return true;
+  }
+
+  // Start drag from anywhere in the document when the pointer is inside
+  // the center visual footprint. This avoids missing events when UI layers
+  // overlap the canvas element.
+  document.addEventListener("pointerdown", (event) => {
+    beginD20PointerInteraction(event);
+  }, { passive: false });
+
+  document.addEventListener("pointermove", (event) => {
+    if (!d20PointerActive) return;
+    if (d20ActivePointerId != null && event.pointerId !== d20ActivePointerId) return;
+    setD20PointerTargetFromEvent(event);
+    d20PointerInfluence = 1;
+    if (!d20PointerLast) return;
+    const dx = event.clientX - d20PointerLast.x;
+    const dy = event.clientY - d20PointerLast.y;
+    d20PointerLast = { x: event.clientX, y: event.clientY };
+    d20PointerDragSpinY += dx * 0.0055;
+    d20PointerDragSpinX += dy * 0.0055;
+    event.preventDefault();
+  }, { passive: false });
+
+  function endD20PointerInteraction(event) {
+    if (d20ActivePointerId != null && event && event.pointerId != null && event.pointerId !== d20ActivePointerId) return;
+    d20PointerActive = false;
+    d20ActivePointerId = null;
+    d20PointerLast = null;
+    d20PointerTargetX = 0;
+    d20PointerTargetY = 0;
+    canvas.style.cursor = "grab";
+    try {
+      if (event && event.pointerId != null) canvas.releasePointerCapture(event.pointerId);
+    } catch {}
+  }
+
+  document.addEventListener("pointerup", endD20PointerInteraction);
+  document.addEventListener("pointercancel", endD20PointerInteraction);
+  document.addEventListener("pointerleave", () => {
+    if (d20PointerActive) return;
+    d20PointerTargetX = 0;
+    d20PointerTargetY = 0;
+  });
+
+  function triggerCenterVisualBounce() {
+    const now = Date.now();
+    if (now - lastCenterBounceAt < 120) return;
+    lastCenterBounceAt = now;
+    const settingsPreviewMode = Boolean(userSettingsModal?.classList?.contains("open"));
+    if (!d20.visible) {
+      if (!d20BounceEnabled && !settingsPreviewMode) return;
+      cosmicAccretionRing.scale.set(1.22, 0.84, 1.22);
+      cosmicAccretionGlow.scale.set(1.24, 0.9, 1.24);
+      cosmicRing.scale.setScalar(1.08);
+      window.setTimeout(() => {
+        cosmicAccretionRing.scale.set(1, 1, 1);
+        cosmicAccretionGlow.scale.set(1, 1, 1);
+        cosmicRing.scale.setScalar(1);
+      }, 180);
+      return;
+    }
+    const bounceScale = settingsPreviewMode ? 1.28 : 1.18;
+    d20.scale.set(bounceScale, bounceScale, bounceScale);
+    window.setTimeout(() => d20.scale.set(1, 1, 1), settingsPreviewMode ? 220 : 180);
+  }
+
+  document.addEventListener("click", (event) => {
+    if (!d20.visible) return;
+    if (event.target === canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const x = event.clientX;
+    const y = event.clientY;
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return;
+    const nx = ((x - rect.left) / rect.width) * 2 - 1;
+    const ny = ((y - rect.top) / rect.height) * 2 - 1;
+    if ((nx * nx) + (ny * ny) > 0.92) return;
+    triggerCenterVisualBounce();
+  }, true);
+
   function animate() {
     requestAnimationFrame(animate);
-    d20.rotation.x += 0.002 * d20SpinMultiplier;
-    d20.rotation.y += 0.003 * d20SpinMultiplier;
+    if (document.getElementById("space-core-layer")) {
+      updateSpaceCoreLayerAnchor();
+    }
+    const cosmicModeEnabled = document.body.classList.contains("fx-cosmic-d20");
+    const settingsPreviewMode = isSettingsPreviewInteractive();
+    const desiredPointerInfluence = (d20PointerActive || settingsPreviewMode) ? 1 : 0;
+    const centerShape = normalizeCenterWireframeShape(appearanceSettings.centerWireframeShape);
+    d20PointerInfluence += (desiredPointerInfluence - d20PointerInfluence) * 0.08;
+    d20PointerDragSpinX *= 0.955;
+    d20PointerDragSpinY *= 0.955;
+    if (centerShape === "tesseract") {
+      // Rotate in multiple 4D planes, then project into 3D every frame.
+      tesseractAngles.xy += (0.0011 * d20SpinMultiplier) + (d20PointerDragSpinY * 0.22);
+      tesseractAngles.yz += (0.0014 * d20SpinMultiplier) + (d20PointerDragSpinX * 0.22);
+      tesseractAngles.xz += 0.0008 * d20SpinMultiplier;
+      tesseractAngles.xw += (0.0022 * d20SpinMultiplier) + (d20PointerTargetX * 0.016 * d20PointerInfluence);
+      tesseractAngles.yw += (0.0019 * d20SpinMultiplier) + (d20PointerTargetY * 0.016 * d20PointerInfluence);
+      tesseractAngles.zw += 0.0016 * d20SpinMultiplier;
+      updateTesseractGeometryProjection(d20.geometry, tesseractAngles);
+      d20.rotation.x = 0;
+      d20.rotation.y = 0;
+      d20.rotation.z = 0;
+    } else {
+      d20.rotation.x += (0.002 * d20SpinMultiplier) + (d20PointerTargetY * 0.008 * d20PointerInfluence) + d20PointerDragSpinX;
+      d20.rotation.y += (0.003 * d20SpinMultiplier) + (d20PointerTargetX * 0.010 * d20PointerInfluence) + d20PointerDragSpinY;
+    }
     floatOffset += 0.01 * d20SpinMultiplier;
-    d20.position.y = Math.sin(floatOffset) * 0.2;
+    d20.position.y = (Math.sin(floatOffset) * 0.2) + (d20PointerTargetY * 0.06 * d20PointerInfluence);
+    d20.position.x = d20PointerTargetX * 0.08 * d20PointerInfluence;
+    if (cosmicModeEnabled) {
+      const pulse = 0.5 + Math.sin(floatOffset * 1.8) * 0.5;
+      d20.visible = false;
+      cosmicCore.visible = true;
+      cosmicRing.visible = true;
+      cosmicAccretionRing.visible = true;
+      cosmicAccretionGlow.visible = true;
+      cosmicHalo.visible = true;
+      cosmicInnerGlow.visible = true;
+      cosmicNebula.visible = true;
+      cosmicDust.visible = true;
+      cosmicCore.position.copy(d20.position);
+      cosmicRing.position.copy(d20.position);
+      cosmicAccretionRing.position.copy(d20.position);
+      cosmicAccretionGlow.position.copy(d20.position);
+      cosmicHalo.position.copy(d20.position);
+      cosmicInnerGlow.position.copy(d20.position);
+      cosmicNebula.position.copy(d20.position);
+      cosmicDust.position.copy(d20.position);
+      cosmicRing.rotation.z += 0.004 * d20SpinMultiplier;
+      cosmicAccretionRing.rotation.z -= 0.007 * d20SpinMultiplier;
+      cosmicAccretionRing.rotation.y += 0.002 * d20SpinMultiplier;
+      cosmicAccretionGlow.rotation.z += 0.0045 * d20SpinMultiplier;
+      cosmicAccretionGlow.rotation.y -= 0.0014 * d20SpinMultiplier;
+      cosmicNebula.rotation.y += 0.0025 * d20SpinMultiplier;
+      cosmicNebula.rotation.x -= 0.0015 * d20SpinMultiplier;
+      cosmicDust.rotation.z += 0.0022 * d20SpinMultiplier;
+      cosmicHalo.lookAt(camera.position);
+      cosmicInnerGlow.lookAt(camera.position);
+      cosmicCore.material.opacity = 0.92;
+      cosmicRing.material.opacity = 0.1 + pulse * 0.08;
+      cosmicAccretionRing.material.opacity = 0.34 + pulse * 0.24;
+      cosmicAccretionGlow.material.opacity = 0.14 + pulse * 0.16;
+      cosmicHalo.material.opacity = 0.1 + pulse * 0.1;
+      cosmicInnerGlow.material.opacity = 0.1 + pulse * 0.15;
+      cosmicNebula.material.opacity = 0.035 + pulse * 0.045;
+      cosmicRing.scale.setScalar(0.95 + pulse * 0.08);
+      cosmicAccretionRing.scale.set(1.05 + pulse * 0.14, 0.72 + pulse * 0.06, 1.05 + pulse * 0.14);
+      cosmicAccretionGlow.scale.set(1.14 + pulse * 0.18, 0.8 + pulse * 0.08, 1.14 + pulse * 0.18);
+      cosmicHalo.scale.setScalar(1.04 + pulse * 0.12);
+      cosmicInnerGlow.scale.setScalar(0.96 + pulse * 0.12);
+      cosmicCore.scale.setScalar(0.88 + pulse * 0.05);
+      cosmicDust.children.forEach((dust) => {
+        const t = floatOffset * dust.userData.speed + dust.userData.phase;
+        const r = dust.userData.radius * (0.95 + pulse * 0.08);
+        dust.position.set(
+          Math.cos(t) * r,
+          dust.userData.yDrift + Math.sin(t * 1.7) * 0.06,
+          Math.sin(t) * r * 0.6
+        );
+        dust.material.opacity = 0.18 + pulse * 0.22;
+      });
+    } else {
+      d20.visible = true;
+      cosmicCore.visible = false;
+      cosmicRing.visible = false;
+      cosmicAccretionRing.visible = false;
+      cosmicAccretionGlow.visible = false;
+      cosmicHalo.visible = false;
+      cosmicInnerGlow.visible = false;
+      cosmicNebula.visible = false;
+      cosmicDust.visible = false;
+      d20Material.transparent = false;
+      d20Material.opacity = 1;
+      updateD20ThemeColor();
+    }
     renderer.render(scene, camera);
   }
   animate();
 
   canvas.addEventListener("click", () => {
-    if (!d20BounceEnabled) return;
-    d20.scale.set(1.18, 1.18, 1.18);
-    window.setTimeout(() => d20.scale.set(1, 1, 1), 180);
+    triggerCenterVisualBounce();
   });
 }
 
@@ -5364,6 +13438,7 @@ loadDraftsState();
 loadChannelNotificationState();
 loadSafeModeState();
 loadLaunchChecklistState();
+loadVoiceSettings();
 initSortableList(serversPanel, persistServerOrder);
 initSortableList(channelsPanel, persistChannelOrder);
 initPanelResizer(serversPanelContainer, "servers", 72, 0.35);
@@ -5373,13 +13448,21 @@ loadLabsSettings();
 applyLabsSettings();
 bindAppearanceControls();
 bindLabsControls();
+bindSettingsMenuControls();
+enhanceCustomSelects(document);
+applySettingsTooltips(document);
+bindVoiceControls();
 bindUtilityControls();
 updateAppearanceControlValues();
 updateLabsControlValues();
+updateVoiceControlValues();
+setActiveSettingsTab("profile");
+updateMicSelfTestUi();
 renderLaunchChecklist();
 startRealtimeStatusTicker();
 runPreflightChecks();
 refreshRuntimeMeta();
+renderDashboardCacheMeta();
 setInterval(refreshRuntimeMeta, 60000);
 applySafeModeState();
 applyDraftToComposer();
@@ -5387,6 +13470,65 @@ updateRetrySendUi();
 renderThemePresetGrid();
 populateThemeTemplateEditor(getThemeById(appearanceSettings.themeId));
 updateTextVsVoiceUI();
-window.addEventListener("resize", applyPanelSizes);
+window.addEventListener("resize", () => {
+  applyPanelSizes();
+  updateMobileNavigationState();
+});
+updateMobileNavigationState();
+applyDesktopRuntimeUiTweaks();
+setupDesktopExternalLinkGuard();
+if (!isDesktopTauriRuntime()) {
+  setupNotificationPermissionPrompt();
+  refreshPushButtonState();
+  ensurePushSubscriptionHealthy({ silent: true }).catch(() => {});
+  startPushHealthChecks();
+}
+startNotificationFallbackPolling({ resetBaseline: true });
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    refreshSessionOnAppResume({ force: true }).catch(() => {});
+    maybeNotifyPushPermissionRevoked();
+    if (!isDesktopTauriRuntime()) ensurePushSubscriptionHealthy({ silent: true }).catch(() => {});
+    startNotificationFallbackPolling();
+    pollNotificationFallback({ force: true }).catch(() => {});
+  } else {
+    // iOS may suspend timers quickly; refresh token right as app backgrounds.
+    refreshSessionOnAppResume({ force: true }).catch(() => {});
+    stopMicSelfTest();
+    startNotificationFallbackPolling();
+  }
+});
+window.addEventListener("focus", () => {
+  refreshSessionOnAppResume().catch(() => {});
+  maybeNotifyPushPermissionRevoked();
+  if (!isDesktopTauriRuntime()) ensurePushSubscriptionHealthy({ silent: true }).catch(() => {});
+  pollNotificationFallback({ force: true }).catch(() => {});
+});
+window.addEventListener("pageshow", () => {
+  refreshSessionOnAppResume({ force: true }).catch(() => {});
+});
+if (!isDesktopTauriRuntime() && "serviceWorker" in navigator) {
+  registerPushServiceWorker().catch(() => {});
+  navigator.serviceWorker.addEventListener("message", handleServiceWorkerPushMessage);
+}
+window.addEventListener("beforeunload", () => {
+  stopMicSelfTest();
+  clearSessionLifecycleTimers();
+});
+startSessionLifecycle();
 loadDashboard();
-
+if (isDesktopTauriRuntime()) {
+  desktopWindowLikelyFocused = true;
+  window.addEventListener("focus", () => {
+    desktopWindowLikelyFocused = true;
+  });
+  window.addEventListener("blur", () => {
+    desktopWindowLikelyFocused = false;
+  });
+}
+window.setTimeout(() => {
+  primeDesktopNotificationBridge().catch(() => {});
+}, 500);
+window.setTimeout(() => {
+  maybeCheckDesktopWrapperUpdate().catch(() => {});
+}, 1500);

@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, UTC
-from sqlalchemy import String, Integer, DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy import String, Integer, DateTime, ForeignKey, UniqueConstraint, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
@@ -53,6 +53,13 @@ class User(Base):
     )
     is_superadmin: Mapped[bool] = mapped_column(default=False, nullable=False)
     must_reset_password: Mapped[bool] = mapped_column(default=False, nullable=False)
+    last_announcement_version: Mapped[int] = mapped_column(default=0, nullable=False)
+    has_seen_tutorial: Mapped[bool] = mapped_column(default=False, nullable=False)
+    username_color: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    name_emoji: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    custom_status: Mapped[str | None] = mapped_column(String(140), nullable=True)
+    strip_upload_metadata: Mapped[bool] = mapped_column(default=False, nullable=False)
+    appearance_settings: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class FriendRequest(Base):

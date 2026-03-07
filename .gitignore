@@ -45,6 +45,9 @@ htmlcov/
 node_modules/
 dist/
 build/
+desktop-client/src-tauri/target/
+desktop-client/src-tauri/gen/
+desktop-client/src-tauri/*.log
 
 # Editors/OS
 .vscode/

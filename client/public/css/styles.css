@@ -197,6 +197,12 @@ button {
   font-size: 13px;
   color: var(--muted);
 }
+.footer .cache-meta {
+  margin-top: 6px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  opacity: 0.9;
+}
 
 /* Theme toggle */
 #theme-toggle {
@@ -263,4 +269,92 @@ button {
   border: none;
   cursor: pointer;
   color: var(--text);
+}
+
+@media (max-width: 760px) {
+  #d20-canvas {
+    width: 360px;
+    height: 360px;
+    opacity: 0.2;
+  }
+
+  .top-bar {
+    padding: 16px 14px;
+  }
+
+  .logo {
+    font-size: 36px;
+  }
+
+  .github-link {
+    font-size: 12px;
+    padding: 7px 10px;
+  }
+
+  .hero {
+    padding: 42px 16px 34px;
+  }
+
+  .hero h1 {
+    font-size: 40px;
+    line-height: 1.1;
+  }
+
+  .hero p {
+    margin-top: 14px;
+    font-size: 14px;
+  }
+
+  .tagline {
+    margin-top: 14px;
+    font-size: 14px;
+  }
+
+  .cta {
+    margin-top: 24px;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .cta button {
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto;
+  }
+
+  .features {
+    gap: 14px;
+    padding: 0 14px;
+  }
+
+  .feature-card {
+    padding: 20px;
+    border-radius: 14px;
+  }
+
+  .footer {
+    padding: 24px 14px 80px;
+  }
+
+  .side-panel {
+    right: -100%;
+    width: 100%;
+    max-width: 100%;
+    padding: 26px 18px;
+  }
+
+  .side-panel h2 {
+    font-size: 26px;
+    margin-bottom: 18px;
+  }
+
+  .side-panel input {
+    margin-bottom: 12px;
+    font-size: 16px;
+  }
+
+  #theme-toggle {
+    bottom: 14px;
+    right: 14px;
+  }
 }

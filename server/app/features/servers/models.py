@@ -16,6 +16,15 @@ class Server(Base):
     name: Mapped[str] = mapped_column(String(50), unique=True, index=True)  # Server name
     owner_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))  # Server owner
     is_public: Mapped[bool] = mapped_column(Boolean, default=False)  # Visibility
+    max_upload_size_mb: Mapped[int | None] = mapped_column(Integer, nullable=True)  # Null means unlimited
+    log_retention_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    message_retention_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    strip_upload_metadata: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    automod_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    automod_block_external_links: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    automod_block_invite_links: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    automod_blocked_terms: Mapped[str | None] = mapped_column(String(4000), nullable=True)
+    automod_blocked_extensions: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC))  # Creation timestamp
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC))  # Last updated
 

@@ -43,7 +43,10 @@ async def websocket_presence(
     websocket: WebSocket,
     db: Session = Depends(get_db),
 ):
-    user = await get_current_user_ws(websocket, db)
+    try:
+        user = await get_current_user_ws(websocket, db)
+    except WebSocketDisconnect:
+        return
     await manager.connect(websocket, user.public_id)
     await manager.broadcast_presence()
 

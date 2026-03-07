@@ -1,0 +1,20 @@
+{
+  "name": "Tavern",
+  "short_name": "Tavern",
+  "id": "/",
+  "description": "Self-hosted realtime chat with servers, channels, DMs, and voice.",
+  "start_url": "/",
+  "scope": "/",
+  "display_override": ["standalone"],
+  "display": "standalone",
+  "background_color": "#1b1b1b",
+  "theme_color": "#a2a392",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

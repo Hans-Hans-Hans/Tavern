@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime, UTC
 from app.db.base import Base
@@ -12,6 +12,7 @@ class Channel(Base):
     name = Column(String, nullable=False)  # Channel name, cannot be null
     server_id = Column(Integer, ForeignKey("servers.id"), nullable=False)  # Foreign key linking to parent server
     type = Column(String, default="text", nullable=False)  # Channel type (e.g., text or voice), defaults to text
+    battlemap_state = Column(Text, nullable=True)  # JSON-serialized battlemap state for battlemap channels
     
     created_at = Column(
         DateTime(timezone=True),

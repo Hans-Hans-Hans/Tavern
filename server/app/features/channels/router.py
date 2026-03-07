@@ -62,3 +62,22 @@ def update_channel(
         channel_in.name,
         current_user.id
     )
+
+
+@router.get("/{channel_public_id}/battlemap-state", response_model=schemas.BattlemapStateOut)
+def get_battlemap_state(
+    channel_public_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return {"state": service.get_battlemap_state(db, channel_public_id, current_user.id)}
+
+
+@router.put("/{channel_public_id}/battlemap-state", response_model=schemas.BattlemapStateOut)
+def put_battlemap_state(
+    channel_public_id: str,
+    payload: schemas.BattlemapStateUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return {"state": service.update_battlemap_state(db, channel_public_id, payload.state, current_user.id)}

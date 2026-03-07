@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from pathlib import Path
 from typing import List
+from fastapi import Query
 
 from app.db.deps import get_db
 from app.core.security import get_current_user
@@ -25,6 +27,26 @@ def create_server(
 @router.get("/", response_model=List[schemas.ServerOut])
 def list_servers(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     return service.list_user_servers(db, user_id=current_user.id)
+
+
+@router.get("/{public_id}/upload-diagnostics", response_model=schemas.ServerUploadDiagnosticsOut)
+def get_upload_diagnostics(
+    public_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    tmp_upload_dir = Path(__file__).resolve().parents[4] / "server" / "uploads" / "messages" / ".tmp"
+    return service.get_server_upload_diagnostics(db, public_id, current_user.id, tmp_upload_dir)
+
+
+@router.get("/{public_id}/activity", response_model=List[schemas.ServerActivityEventOut])
+def get_server_activity(
+    public_id: str,
+    limit: int = Query(80, ge=1, le=300),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return service.list_server_activity(db, public_id, current_user.id, limit)
 
 # Get a specific server by its public ID
 @router.get("/{public_id}", response_model=schemas.ServerOut)
@@ -106,7 +128,7 @@ def update_server(
     return service.update_server(
         db,
         public_id,
-        server_in.name,
+        server_in,
         current_user.id
     )
 

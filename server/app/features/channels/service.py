@@ -1,11 +1,14 @@
 import uuid
 import asyncio
+import json
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
 from app.core.audit import write_audit_event
+from app.core.uploads import delete_managed_upload_refs_for_messages
 from app.features.channels import models
 from app.features.channels.models import Channel
+from app.features.messages.models import Message
 from app.features.servers.models import ServerMember, Server
 from app.features.servers import service as server_service
 from app.features.users.models import User
@@ -46,7 +49,7 @@ def create_channel(db: Session, server_public_id: str, name: str, channel_type: 
         raise HTTPException(status_code=403, detail="Not authorized to create channels")
 
     normalized_type = (channel_type or "text").strip().lower()
-    if normalized_type not in {"text", "voice"}:
+    if normalized_type not in {"text", "voice", "notes", "battlemap"}:
         raise HTTPException(status_code=400, detail="Invalid channel type")
 
     channel = models.Channel(
@@ -92,6 +95,43 @@ def get_channel_by_public_id(db: Session, public_id: str):
     return db.query(models.Channel).filter(models.Channel.public_id == public_id).first()
 
 
+def _require_channel_access(db: Session, channel_public_id: str, user_id: int):
+    channel = get_channel_by_public_id(db, channel_public_id)
+    if not channel:
+        raise HTTPException(status_code=404, detail="Channel not found")
+    if not server_service.has_server_permission(db, channel.server_id, user_id, "can_manage_channels"):
+        membership = db.query(ServerMember).filter(
+            ServerMember.server_id == channel.server_id,
+            ServerMember.user_id == user_id,
+        ).first()
+        if not membership:
+            raise HTTPException(status_code=403, detail="Not authorized")
+    return channel
+
+
+def get_battlemap_state(db: Session, channel_public_id: str, user_id: int):
+    channel = _require_channel_access(db, channel_public_id, user_id)
+    if (channel.type or "text") != "battlemap":
+        raise HTTPException(status_code=400, detail="Channel is not a battlemap")
+    if not channel.battlemap_state:
+        return {}
+    try:
+        parsed = json.loads(channel.battlemap_state)
+    except Exception:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def update_battlemap_state(db: Session, channel_public_id: str, state: dict, user_id: int):
+    channel = _require_channel_access(db, channel_public_id, user_id)
+    if (channel.type or "text") != "battlemap":
+        raise HTTPException(status_code=400, detail="Channel is not a battlemap")
+    safe_state = state if isinstance(state, dict) else {}
+    channel.battlemap_state = json.dumps(safe_state, separators=(",", ":"), ensure_ascii=False)
+    db.commit()
+    return safe_state
+
+
 # -------------------------------
 # Delete a channel
 # -------------------------------
@@ -108,6 +148,8 @@ def delete_channel(db: Session, channel_public_id: str, user_id: int):
     if channel_count <= 1:
         raise HTTPException(status_code=400, detail="Cannot delete the last channel")
 
+    message_rows = db.query(Message).filter(Message.channel_id == channel.id).all()
+    delete_managed_upload_refs_for_messages(message_rows)
     channel_name = channel.name
     server_public_id = server.public_id
     db.delete(channel)

@@ -1,12 +1,16 @@
 from datetime import UTC, datetime
+import json
+from pathlib import Path
 from typing import List
 import uuid
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from app.core.audit import write_audit_event
+from app.core.audit import read_recent_audit_events, write_audit_event, prune_server_audit_events
+from app.core.uploads import SERVER_AVATAR_DIR, delete_managed_upload_refs_for_messages
 from app.features.channels.models import Channel
+from app.features.messages.models import Message
 from app.features.servers import models, schemas
 from app.features.servers.models import Server
 from app.features.users.models import User
@@ -199,6 +203,18 @@ def delete_server(db: Session, public_id: str, user_id: int):
         raise HTTPException(status_code=404, detail="Server not found")
     if not has_server_permission(db, server.id, user_id, "can_manage_server"):
         raise HTTPException(status_code=403, detail="Not authorized")
+    message_rows = (
+        db.query(Message)
+        .join(Channel, Message.channel_id == Channel.id)
+        .filter(Channel.server_id == server.id)
+        .all()
+    )
+    delete_managed_upload_refs_for_messages(message_rows)
+    for old_avatar in SERVER_AVATAR_DIR.glob(f"{public_id}.*"):
+        try:
+            old_avatar.unlink(missing_ok=True)
+        except Exception:
+            continue
     server_name = server.name
     db.delete(server)
     db.commit()
@@ -212,16 +228,180 @@ def delete_server(db: Session, public_id: str, user_id: int):
     return {"detail": "Server deleted"}
 
 
-def update_server(db: Session, public_id: str, name: str, user_id: int):
+def update_server(db: Session, public_id: str, server_in: schemas.ServerUpdate, user_id: int):
     server = db.query(Server).filter(Server.public_id == public_id).first()
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
     if not has_server_permission(db, server.id, user_id, "can_manage_server"):
         raise HTTPException(status_code=403, detail="Not authorized")
-    server.name = name
+
+    updated = False
+    if server_in.name is not None:
+        next_name = (server_in.name or "").strip()
+        if not next_name:
+            raise HTTPException(status_code=400, detail="Server name is required")
+        server.name = next_name
+        updated = True
+
+    if server_in.max_upload_size_mb is not None:
+        # 0 means unlimited for easier client UX.
+        server.max_upload_size_mb = int(server_in.max_upload_size_mb) or None
+        updated = True
+    if "log_retention_days" in server_in.model_fields_set:
+        value = server_in.log_retention_days
+        server.log_retention_days = int(value) if value is not None else None
+        updated = True
+    if "message_retention_days" in server_in.model_fields_set:
+        value = server_in.message_retention_days
+        server.message_retention_days = int(value) if value is not None else None
+        updated = True
+    if server_in.strip_upload_metadata is not None:
+        server.strip_upload_metadata = bool(server_in.strip_upload_metadata)
+        updated = True
+    if server_in.automod_enabled is not None:
+        server.automod_enabled = bool(server_in.automod_enabled)
+        updated = True
+    if server_in.automod_block_external_links is not None:
+        server.automod_block_external_links = bool(server_in.automod_block_external_links)
+        updated = True
+    if server_in.automod_block_invite_links is not None:
+        server.automod_block_invite_links = bool(server_in.automod_block_invite_links)
+        updated = True
+    if server_in.automod_blocked_terms is not None:
+        server.automod_blocked_terms = str(server_in.automod_blocked_terms or "").strip() or None
+        updated = True
+    if server_in.automod_blocked_extensions is not None:
+        server.automod_blocked_extensions = str(server_in.automod_blocked_extensions or "").strip() or None
+        updated = True
+
+    if not updated:
+        raise HTTPException(status_code=400, detail="No server updates provided")
+
     db.commit()
     db.refresh(server)
+    if "log_retention_days" in server_in.model_fields_set:
+        prune_server_audit_events(server.public_id, server.log_retention_days)
     return server
+
+
+def get_server_upload_diagnostics(
+    db: Session,
+    server_public_id: str,
+    user_id: int,
+    tmp_upload_dir: Path,
+):
+    server = get_server_by_public_id(db, server_public_id)
+    if not server:
+        raise HTTPException(status_code=404, detail="Server not found")
+    if not get_membership(db, server.id, user_id) and not db.query(User).filter(User.id == user_id, User.is_superadmin == True).first():
+        raise HTTPException(status_code=403, detail="Not authorized")
+    retention_days = server.log_retention_days
+
+    session_count = 0
+    pending_bytes = 0
+    channel_cache: dict[str, int | None] = {}
+    try:
+        for meta_path in tmp_upload_dir.glob("*.json"):
+            try:
+                payload = json.loads(meta_path.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            channel_public_id = str(payload.get("channel_public_id") or "").strip()
+            if not channel_public_id:
+                continue
+            if channel_public_id in channel_cache:
+                server_id = channel_cache[channel_public_id]
+            else:
+                channel = db.query(Channel).filter(Channel.public_id == channel_public_id).first()
+                server_id = channel.server_id if channel else None
+                channel_cache[channel_public_id] = server_id
+            if int(server_id or 0) != int(server.id):
+                continue
+            session_count += 1
+            pending_bytes += int(payload.get("bytes_written") or 0)
+    except Exception:
+        # Diagnostics should degrade gracefully if temp files are inaccessible.
+        pass
+
+    uploads_24h_count = 0
+    uploads_24h_bytes = 0
+    if retention_days == 0:
+        return {
+            "max_upload_size_mb": server.max_upload_size_mb,
+            "active_upload_sessions": session_count,
+            "pending_upload_bytes": pending_bytes,
+            "uploads_24h_count": 0,
+            "uploads_24h_bytes": 0,
+        }
+    since = datetime.now(UTC).timestamp() - (24 * 60 * 60)
+    retention_cutoff = None
+    if retention_days and retention_days > 0:
+        retention_cutoff = datetime.now(UTC).timestamp() - (int(retention_days) * 24 * 60 * 60)
+    for event in read_recent_audit_events(1200):
+        if str(event.get("event_type") or "") != "message_file_upload_completed":
+            continue
+        ts_raw = str(event.get("ts") or "").strip()
+        try:
+            event_ts = datetime.fromisoformat(ts_raw.replace("Z", "+00:00")).timestamp()
+        except Exception:
+            event_ts = 0
+        if retention_cutoff is not None and event_ts < retention_cutoff:
+            continue
+        if event_ts < since:
+            continue
+        target = event.get("target") or {}
+        if str(target.get("server_public_id") or "") != server_public_id:
+            continue
+        uploads_24h_count += 1
+        details = event.get("details") or {}
+        uploads_24h_bytes += int(details.get("bytes") or 0)
+
+    return {
+        "max_upload_size_mb": server.max_upload_size_mb,
+        "active_upload_sessions": session_count,
+        "pending_upload_bytes": pending_bytes,
+        "uploads_24h_count": uploads_24h_count,
+        "uploads_24h_bytes": uploads_24h_bytes,
+    }
+
+
+def list_server_activity(db: Session, server_public_id: str, user_id: int, limit: int = 80):
+    server = get_server_by_public_id(db, server_public_id)
+    if not server:
+        raise HTTPException(status_code=404, detail="Server not found")
+    if not get_membership(db, server.id, user_id) and not db.query(User).filter(User.id == user_id, User.is_superadmin == True).first():
+        raise HTTPException(status_code=403, detail="Not authorized")
+    retention_days = server.log_retention_days
+    if retention_days == 0:
+        return []
+    safe_limit = max(1, min(300, int(limit)))
+    retention_cutoff = None
+    if retention_days and retention_days > 0:
+        retention_cutoff = datetime.now(UTC).timestamp() - (int(retention_days) * 24 * 60 * 60)
+    rows = []
+    for event in reversed(read_recent_audit_events(2000)):
+        ts_raw = str(event.get("ts") or "").strip()
+        try:
+            event_ts = datetime.fromisoformat(ts_raw.replace("Z", "+00:00")).timestamp()
+        except Exception:
+            event_ts = 0
+        if retention_cutoff is not None and event_ts < retention_cutoff:
+            continue
+        target = event.get("target") or {}
+        if str(target.get("server_public_id") or "") != server_public_id:
+            continue
+        rows.append(
+            {
+                "ts": str(event.get("ts") or ""),
+                "event_type": str(event.get("event_type") or "unknown"),
+                "actor_public_id": event.get("actor_public_id"),
+                "target": target if isinstance(target, dict) else {},
+                "details": (event.get("details") or {}) if isinstance(event.get("details") or {}, dict) else {},
+            }
+        )
+        if len(rows) >= safe_limit:
+            break
+    return rows
 
 
 def list_server_roles(db: Session, server_public_id: str, user_id: int):

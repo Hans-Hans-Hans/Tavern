@@ -23,13 +23,20 @@ class MessageOut(BaseModel):
     public_id: str          # Public identifier for the message (not DB ID)
     content: str            # The text content of the message
     user_id: int            # ID of the user who sent the message
+    user_public_id: Optional[str] = None
     username: str           # Username of the sender
+    username_color: Optional[str] = None
+    name_emoji: Optional[str] = None
+    server_role: Optional[str] = None
     channel_id: int         # ID of the channel where message resides
     created_at: datetime    # Timestamp when message was created
     edited_at: Optional[datetime] = None  # Timestamp when message was last edited, if any
     parent_message_public_id: Optional[str] = None
     thread_reply_count: int = 0
     reactions: List[MessageReactionOut] = Field(default_factory=list)
+    is_pinned: bool = False
+    pinned_at: Optional[datetime] = None
+    pinned_by_user_public_id: Optional[str] = None
 
     class Config:
         # Enables populating schema from ORM model instances

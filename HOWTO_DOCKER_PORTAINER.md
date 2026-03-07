@@ -16,12 +16,13 @@ SECRET_KEY=replace-with-a-long-random-secret
 DATABASE_URL=sqlite:////data/tavern.db
 COOKIE_SECURE=true
 CORS_ORIGINS=https://tavern.hans-homelab.com
-APP_VERSION=1.0.0
+APP_VERSION=1.1.0
 ```
 
 Notes:
 - `DATABASE_URL=sqlite:////data/tavern.db` stores DB in a Docker volume.
 - `COOKIE_SECURE=true` requires HTTPS at the proxy/domain.
+- PostgreSQL is also supported with `DATABASE_URL=postgresql+psycopg2://...`.
 
 ## 3. Deploy with Docker Compose
 From repo root:
@@ -75,6 +76,10 @@ Inside container, DB path is `/data/tavern.db`.
 Back up both:
 - DB file (`/data/tavern.db`)
 - Uploads (`/app/server/uploads`)
+
+If migrating from SQLite to PostgreSQL:
+- Run from repo root:
+  - `python scripts/migrate_sqlite_to_postgres.py --source "sqlite:////data/tavern.db" --target "postgresql+psycopg2://user:pass@db:5432/tavern"`
 
 ## 9. Update Flow
 ```bash

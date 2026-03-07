@@ -4,11 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tavern Dashboard</title>
+<meta name="theme-color" content="#a2a392">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tavern">
+<link rel="manifest" href="/manifest.webmanifest?v=20260306-hotfix70">
+<link rel="apple-touch-icon" href="/favicon.svg">
 
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/dashboard.css?v=20260306-hotfix70">
 </head>
 <body>
 <header class="app-header">
@@ -20,35 +26,42 @@
 </header>
 
 <div class="dashboard">
-  <!-- Servers Panel -->
-  <aside class="servers-panel">
-    <h3>
-      Spaces 
-      <button id="open-create-server" class="add-btn"><i class="fas fa-plus"></i></button>
-    </h3>
-    <div id="home-dm-btn" class="home-dm-btn" title="Direct Messages">
-      <i class="fas fa-comments"></i>
-    </div>
-    <ul id="servers-list">
-      <!-- Server items will be populated dynamically -->
-    </ul>
-  </aside>
-
-  <!-- Channels Panel -->
+  <!-- Combined Sidebar Panel -->
   <aside class="channels-panel">
     <h3>
-      <span id="channels-panel-title">Channels</span>
-      <span class="channel-header-actions">
-        <button id="open-server-members" class="add-btn" title="Server Members"><i class="fas fa-users"></i></button>
-        <button id="open-friends" class="add-btn hidden" title="Friends"><i class="fas fa-user-friends"></i></button>
-        <button id="open-create-dm" class="add-btn hidden"><i class="fas fa-user-plus"></i></button>
-        <button id="open-add-separator" class="add-btn"><i class="fas fa-grip-lines"></i></button>
-        <button id="open-create-channel" class="add-btn"><i class="fas fa-plus"></i></button>
+      <span class="panel-header-main">
+        <span id="current-server-name" class="panel-header-title">Spaces</span>
+        <span id="channels-panel-title" class="panel-subtitle">Channels</span>
       </span>
+      <button id="open-server-switcher" class="add-btn server-switcher-btn" title="Switch space">
+        <i class="fas fa-layer-group"></i>
+      </button>
     </h3>
+    <div id="server-switcher-overlay" class="server-switcher-overlay hidden" aria-hidden="true">
+      <div class="server-switcher-card">
+        <div class="server-switcher-header">
+          <span>Spaces</span>
+          <button id="close-server-switcher" type="button" class="add-btn" title="Close">
+            <i class="fas fa-xmark"></i>
+          </button>
+        </div>
+        <ul id="servers-list" class="server-switcher-list">
+          <!-- Server items will be populated dynamically -->
+        </ul>
+      </div>
+    </div>
     <ul id="channels-list">
       <!-- Channel items will be populated dynamically -->
     </ul>
+    <div class="panel-footer-actions channel-header-actions">
+      <button id="home-dm-btn" class="add-btn dm-quick-btn" title="Direct Messages"><i class="fas fa-comments"></i></button>
+      <button id="open-server-members" class="add-btn" title="Server Members"><i class="fas fa-users"></i></button>
+      <button id="open-server-settings" class="add-btn" title="Server Settings"><i class="fas fa-sliders"></i></button>
+      <button id="open-friends" class="add-btn hidden" title="Friends"><i class="fas fa-user-friends"></i></button>
+      <button id="open-create-dm" class="add-btn hidden"><i class="fas fa-user-plus"></i></button>
+      <button id="open-add-separator" class="add-btn"><i class="fas fa-grip-lines"></i></button>
+      <button id="open-create-item" class="add-btn" title="Create"><i class="fas fa-plus"></i></button>
+    </div>
   </aside>
 
   <!-- Messages Panel -->
@@ -56,9 +69,13 @@
     <canvas id="d20-canvas"></canvas>
     <div id="realtime-status-banner" class="realtime-status-banner hidden"></div>
     <div id="messages-topbar" class="messages-topbar hidden">
-      <div id="messages-topbar-title" class="messages-topbar-title"></div>
+      <div class="messages-topbar-title-wrap">
+        <div id="messages-topbar-title" class="messages-topbar-title"></div>
+        <span id="messages-topbar-type-badge" class="topbar-btn hidden" aria-live="polite"></span>
+      </div>
       <div class="messages-topbar-actions">
         <button id="message-search-toggle-btn" type="button" class="topbar-btn"><i class="fas fa-search"></i> Search</button>
+        <button id="channel-pins-btn" type="button" class="topbar-btn hidden"><i class="fas fa-thumbtack"></i> Pins</button>
         <button id="dm-call-btn" type="button" class="topbar-btn hidden"><i class="fas fa-phone"></i> Call</button>
       </div>
     </div>
@@ -76,12 +93,17 @@
         <h4 id="voice-channel-title">Voice Channel</h4>
         <span id="voice-status">Not connected</span>
       </div>
+      <div id="voice-video-grid" class="voice-video-grid hidden"></div>
       <div id="voice-users-list" class="voice-users-list"></div>
       <div class="voice-controls">
         <button id="join-voice-btn" class="voice-btn">Join</button>
         <button id="leave-voice-btn" class="voice-btn secondary">Leave</button>
         <button id="mute-voice-btn" class="voice-btn secondary">Mute</button>
         <button id="deafen-voice-btn" class="voice-btn secondary">Deafen</button>
+        <button id="camera-voice-btn" class="voice-btn secondary">Camera</button>
+        <button id="screen-voice-btn" class="voice-btn secondary">Share Screen</button>
+        <button id="link-stream-voice-btn" class="voice-btn secondary">Link Stream</button>
+        <button id="watch-shares-voice-btn" class="voice-btn secondary">Watch Shares: On</button>
       </div>
     </div>
     <!-- Message input bar -->
@@ -95,9 +117,15 @@
         <span id="send-status-text" class="send-status-text"></span>
         <button id="retry-send-btn" type="button" class="retry-send-btn hidden">Retry failed send</button>
       </div>
+      <div id="upload-progress-row" class="upload-progress-row hidden" aria-live="polite">
+        <div class="upload-progress-track">
+          <div id="upload-progress-fill" class="upload-progress-fill"></div>
+        </div>
+        <span id="upload-progress-text" class="upload-progress-text">Uploading... 0%</span>
+      </div>
       <div class="message-controls-row">
-        <input type="file" id="image-upload-input" accept="image/*" hidden>
-        <button id="upload-image-btn" type="button" title="Upload image"><i class="fas fa-image"></i></button>
+        <input type="file" id="image-upload-input" hidden>
+        <button id="upload-image-btn" type="button" title="Attach file" aria-label="Attach file"><i class="fas fa-paperclip"></i></button>
         <button id="open-rich-editor-btn" type="button" title="Open MD/HTML/CSS editor"><i class="fas fa-code"></i></button>
         <textarea id="message-input" rows="1" placeholder="Type a message..."></textarea>
         <button id="send-message-btn"><i class="fas fa-paper-plane"></i></button>
@@ -115,13 +143,67 @@
   </div>
 </div>
 
+<!-- Server Settings Modal -->
+<div id="server-settings-modal" class="modal">
+  <div class="modal-content server-settings-modal-content">
+    <span class="close">&times;</span>
+    <h3>Server Settings: <span id="server-settings-name-label">Server</span></h3>
+    <div class="settings-row"><strong>Public ID:</strong> <span id="server-settings-public-id">-</span></div>
+    <div class="settings-row"><strong>Members:</strong> <span id="server-settings-member-count">-</span></div>
+
+    <div class="settings-subtitle">General</div>
+    <div class="server-settings-grid">
+      <label for="server-settings-name-input">Server Name</label>
+      <input id="server-settings-name-input" type="text" maxlength="50" placeholder="Server name">
+      <label for="server-settings-upload-limit-input">Upload Limit (MB, 0 = unlimited)</label>
+      <input id="server-settings-upload-limit-input" type="number" min="0" max="102400" step="1" value="0">
+      <label for="server-settings-log-retention-input">Log Retention (days, 0 = off)</label>
+      <input id="server-settings-log-retention-input" type="number" min="0" max="3650" step="1" value="30">
+      <label for="server-settings-message-retention-input">Message Persistence (days, -1 = unlimited, 0 = no persistence)</label>
+      <input id="server-settings-message-retention-input" type="number" min="-1" max="3650" step="1" value="-1">
+      <label for="server-settings-strip-metadata">Strip Image Metadata/EXIF On Upload</label>
+      <input id="server-settings-strip-metadata" type="checkbox">
+    </div>
+    <div class="settings-action-row">
+      <button id="server-settings-save-btn" type="button">Save Server Settings</button>
+    </div>
+
+    <div class="settings-subtitle">Upload Diagnostics (24h)</div>
+    <div id="server-upload-diagnostics-list" class="server-upload-diagnostics-list"></div>
+
+    <div class="settings-subtitle">Auto Moderation</div>
+    <div class="server-settings-grid">
+      <label for="server-settings-automod-enabled">Enable AutoMod</label>
+      <input id="server-settings-automod-enabled" type="checkbox">
+      <label for="server-settings-automod-block-links">Block External Links</label>
+      <input id="server-settings-automod-block-links" type="checkbox">
+      <label for="server-settings-automod-block-invites">Block Invite Links</label>
+      <input id="server-settings-automod-block-invites" type="checkbox">
+      <label for="server-settings-automod-terms">Blocked Terms (comma/newline separated)</label>
+      <textarea id="server-settings-automod-terms" rows="4" placeholder="spoiler, scam, etc"></textarea>
+      <label for="server-settings-automod-extensions">Blocked File Extensions (comma/newline)</label>
+      <textarea id="server-settings-automod-extensions" rows="3" placeholder=".iso, .exe, .bat"></textarea>
+    </div>
+
+    <div class="settings-subtitle">Roles & Permissions</div>
+    <div id="server-settings-roles-list" class="server-settings-roles-list"></div>
+    <div class="server-settings-create-role-row">
+      <input id="server-settings-new-role-name" type="text" maxlength="30" placeholder="New role name">
+      <button id="server-settings-create-role-btn" type="button">Create Role</button>
+    </div>
+
+    <div class="settings-subtitle">Server Activity Feed</div>
+    <div id="server-settings-activity-list" class="server-settings-activity-list"></div>
+  </div>
+</div>
+
 <!-- Friends Modal -->
 <div id="friends-modal" class="modal">
   <div class="modal-content friends-modal-content">
     <span class="close">&times;</span>
     <h3>Friends</h3>
     <div class="friends-add-row">
-      <input type="text" id="friend-public-id-input" placeholder="User public ID">
+      <input type="text" id="friend-public-id-input" placeholder="User public ID or username:abcd">
       <button id="send-friend-request-btn" type="button">Send Request</button>
     </div>
     <div class="friends-columns">
@@ -137,6 +219,31 @@
         <h4>Outgoing</h4>
         <div id="friend-requests-outgoing" class="friends-list"></div>
       </div>
+      <div class="friends-column">
+        <h4>History</h4>
+        <div id="friend-requests-history" class="friends-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Public User Profile Modal -->
+<div id="public-user-profile-modal" class="modal">
+  <div class="modal-content public-user-profile-modal-content">
+    <span class="close">&times;</span>
+    <h3>Public Profile</h3>
+    <div class="public-user-profile-header">
+      <img id="public-user-profile-avatar" class="public-user-profile-avatar" alt="User avatar">
+      <div class="public-user-profile-header-text">
+        <div id="public-user-profile-name" class="public-user-profile-name">Loading...</div>
+        <div id="public-user-profile-status" class="public-user-profile-status">-</div>
+      </div>
+    </div>
+    <div class="settings-row"><strong>Public ID:</strong> <span id="public-user-profile-public-id">-</span></div>
+    <div class="settings-row"><strong>Created:</strong> <span id="public-user-profile-created-at">-</span></div>
+    <div class="settings-row"><strong>Updated:</strong> <span id="public-user-profile-updated-at">-</span></div>
+    <div class="settings-action-row">
+      <button id="public-user-profile-dm-btn" type="button">Message</button>
     </div>
   </div>
 </div>
@@ -157,6 +264,7 @@
   <i id="settings-btn" class="fas fa-cog"></i>
   <i id="admin-btn" class="fas fa-shield-halved hidden"></i>
   <span id="runtime-meta" class="runtime-meta">v1.0</span>
+  <span id="cache-meta" class="cache-meta">cache -</span>
 </footer>
 
 <!-- Create Server Modal -->
@@ -177,6 +285,8 @@
     <input type="text" id="new-channel-name" placeholder="Channel Name">
     <select id="new-channel-type">
       <option value="text">Text</option>
+      <option value="battlemap">Battlemap</option>
+      <option value="notes">Notes</option>
       <option value="voice">Voice</option>
     </select>
     <button id="submit-channel">Create</button>
@@ -188,7 +298,14 @@
   <div class="modal-content">
     <span class="close">&times;</span>
     <h3>Invite to <span id="invite-server-name">Server</span></h3>
-    <input type="text" id="invite-user-public-id" placeholder="User Public ID">
+    <select id="invite-user-public-id">
+      <option value="">Select a friend…</option>
+    </select>
+    <div id="invite-friend-picker" class="invite-friend-picker">
+      <input type="text" id="invite-friend-search-input" placeholder="Search friends...">
+      <div id="invite-friend-list" class="invite-friend-list" role="listbox" aria-label="Friends to invite"></div>
+    </div>
+    <div class="settings-subtitle">Only friends can be invited.</div>
     <button id="submit-invite-member">Invite</button>
   </div>
 </div>
@@ -223,102 +340,312 @@
 <div id="user-settings-modal" class="modal">
   <div class="modal-content settings-modal-content">
     <span class="close">&times;</span>
-    <h3 id="settings-title">Settings <button id="settings-open-labs" type="button" class="settings-labs-link" title="Open Labs">Labs</button></h3>
-    <div class="settings-section">
-      <h4>Profile</h4>
-      <div class="settings-row settings-upload-row">
-        <strong>Avatar</strong>
-        <input type="file" id="settings-avatar-input" accept="image/*">
-        <button id="settings-avatar-upload-btn" type="button">Upload Avatar</button>
-      </div>
-      <div class="settings-row"><strong>Public ID:</strong> <span id="settings-public-id">-</span></div>
-      <div class="settings-row"><strong>Internal ID:</strong> <span id="settings-user-id">-</span></div>
-      <div class="settings-row"><strong>Username:</strong> <span id="settings-username">-</span></div>
-      <div class="settings-row"><strong>Email:</strong> <span id="settings-email">-</span></div>
-      <div class="settings-row"><strong>Created:</strong> <span id="settings-created-at">-</span></div>
-      <div class="settings-row"><strong>Updated:</strong> <span id="settings-updated-at">-</span></div>
-    </div>
+    <h3 id="settings-title">Settings</h3>
+    <div class="settings-layout">
+      <aside class="settings-menu">
+        <div class="settings-menu-buttons" role="tablist" aria-label="Settings categories">
+          <button type="button" class="settings-menu-btn active" data-settings-tab="profile" role="tab" aria-selected="true">Profile & Info</button>
+          <button type="button" class="settings-menu-btn" data-settings-tab="voice" role="tab" aria-selected="false">Voice & Calls</button>
+          <button type="button" class="settings-menu-btn" data-settings-tab="appearance" role="tab" aria-selected="false">Appearance</button>
+          <button type="button" class="settings-menu-btn" data-settings-tab="connections" role="tab" aria-selected="false">Connections</button>
+          <button type="button" class="settings-menu-btn" data-settings-tab="labs" role="tab" aria-selected="false">Labs</button>
+        </div>
+      </aside>
 
-    <div class="settings-section">
-      <h4>Appearance</h4>
-      <div class="settings-subtitle">Theme Presets</div>
-      <div id="settings-theme-grid" class="theme-grid"></div>
+      <div class="settings-panels">
+        <section class="settings-section active" data-settings-panel="profile">
+          <h4>Profile</h4>
+          <div class="settings-row settings-upload-row">
+            <strong>Avatar</strong>
+            <img id="settings-avatar-preview" class="settings-avatar-preview" alt="Your avatar preview">
+            <input type="file" id="settings-avatar-input" accept="image/*">
+            <button id="settings-avatar-upload-btn" type="button">Upload Avatar</button>
+          </div>
+          <div class="settings-row"><strong>Public ID:</strong> <span id="settings-public-id">-</span></div>
+          <div class="settings-row">
+            <strong>Friend Invite:</strong>
+            <span id="settings-friend-invite-code">-</span>
+            <button id="settings-copy-friend-invite-btn" type="button" class="secondary-action">Copy</button>
+          </div>
+          <div class="settings-row"><strong>Internal ID:</strong> <span id="settings-user-id">-</span></div>
+          <div class="settings-row"><strong>Username:</strong> <span id="settings-username">-</span></div>
+          <div class="settings-row settings-control-row">
+            <label for="settings-username-color-input"><strong>Name Color:</strong></label>
+            <input id="settings-username-color-input" type="color" value="#4f8fcf">
+            <button id="settings-clear-username-color-btn" type="button" class="secondary-action">Clear</button>
+          </div>
+          <div class="settings-row settings-control-row">
+            <label for="settings-name-emoji-input"><strong>Name Emoji:</strong></label>
+            <input id="settings-name-emoji-input" type="text" maxlength="4" placeholder="Optional emoji" autocomplete="off">
+            <button id="settings-save-name-style-btn" type="button">Save Name Style</button>
+          </div>
+          <div class="settings-row settings-control-row">
+            <label for="settings-custom-status-input"><strong>Custom Status:</strong></label>
+            <input id="settings-custom-status-input" type="text" maxlength="140" placeholder="What's up?" autocomplete="off">
+            <button id="settings-save-custom-status-btn" type="button">Save Status</button>
+          </div>
+          <div class="settings-row settings-control-row">
+            <label for="settings-strip-upload-metadata"><strong>Strip Upload Metadata:</strong></label>
+            <input id="settings-strip-upload-metadata" type="checkbox">
+            <button id="settings-save-upload-privacy-btn" type="button">Save Upload Privacy</button>
+          </div>
+          <div class="settings-row"><strong>Email:</strong> <span id="settings-email">-</span></div>
+          <div class="settings-row"><strong>Created:</strong> <span id="settings-created-at">-</span></div>
+          <div class="settings-row"><strong>Updated:</strong> <span id="settings-updated-at">-</span></div>
+          <div class="settings-action-row">
+            <button id="settings-open-tutorial-btn" type="button" class="secondary-action">Show Tutorial</button>
+            <button id="settings-test-notification-btn" type="button" class="secondary-action">Test Notification</button>
+            <button id="settings-enable-push-btn" type="button" class="secondary-action">Enable Push Notifications</button>
+          </div>
+        </section>
 
-      <div class="settings-control-row">
-        <label for="settings-ui-scale">UI Scale</label>
-        <input id="settings-ui-scale" type="range" min="0.9" max="1.15" step="0.01">
-        <span id="settings-ui-scale-value">1.00x</span>
-      </div>
-      <div class="settings-control-row">
-        <label for="settings-panel-radius">Panel Radius</label>
-        <input id="settings-panel-radius" type="range" min="8" max="24" step="1">
-        <span id="settings-panel-radius-value">16px</span>
-      </div>
-      <div class="settings-control-row">
-        <label for="settings-message-density">Message Density</label>
-        <input id="settings-message-density" type="range" min="0.85" max="1.25" step="0.01">
-        <span id="settings-message-density-value">1.00x</span>
-      </div>
-      <div class="settings-control-row">
-        <label for="settings-font-family">Font Family</label>
-        <input id="settings-font-family" type="text" placeholder="'Inter', sans-serif">
-        <span>UI font</span>
-      </div>
-      <div class="settings-subtitle">Theme Template (JSON)</div>
-      <textarea id="settings-theme-template" rows="8" placeholder='{"name":"My Theme","mode":"dark","bg":"#111"...}'></textarea>
-      <div class="settings-action-row">
-        <button id="settings-template-load-btn" type="button">Load Current</button>
-        <button id="settings-template-apply-btn" type="button">Apply JSON</button>
-        <button id="settings-template-save-btn" type="button">Save Theme</button>
-        <button id="settings-template-delete-btn" type="button">Delete Theme</button>
-      </div>
-      <div class="settings-action-row">
-        <button id="settings-template-export-btn" type="button">Export Themes</button>
-        <label class="settings-import-label" for="settings-template-import-input">Import Themes</label>
-        <input id="settings-template-import-input" type="file" accept="application/json" hidden>
-      </div>
-      <div class="settings-subtitle">Custom CSS Overrides</div>
-      <textarea id="settings-custom-css" rows="8" placeholder="/* Advanced client-side CSS overrides */"></textarea>
-      <div class="settings-action-row">
-        <button id="settings-reset-appearance-btn" type="button" class="secondary-action">Reset Appearance</button>
-        <button id="settings-safe-mode-btn" type="button" class="secondary-action">Safe Mode: Off</button>
-        <button id="settings-reset-client-cache-btn" type="button" class="secondary-action">Reset Client Cache</button>
-      </div>
-      <div class="settings-action-row">
-        <button id="settings-export-bundle-btn" type="button">Export Settings Bundle</button>
-        <label class="settings-import-label" for="settings-import-bundle-input">Import Settings Bundle</label>
-        <input id="settings-import-bundle-input" type="file" accept="application/json" hidden>
-      </div>
-    </div>
+        <section class="settings-section" data-settings-panel="voice">
+          <h4>Voice & Calls</h4>
+          <div class="settings-control-row">
+            <label for="settings-voice-echo-cancellation">Echo Cancellation</label>
+            <input id="settings-voice-echo-cancellation" type="checkbox" checked>
+            <span>Reduce speaker echo feeding back into your mic</span>
+          </div>
+          <div class="settings-control-row">
+            <label for="settings-voice-noise-suppression">Noise Suppression</label>
+            <input id="settings-voice-noise-suppression" type="checkbox" checked>
+            <span>Filter steady background noise from mic input</span>
+          </div>
+          <div class="settings-control-row">
+            <label for="settings-voice-eq-enabled">EQ Enabled</label>
+            <input id="settings-voice-eq-enabled" type="checkbox" checked>
+            <span>3-band EQ</span>
+          </div>
+          <div class="settings-control-row">
+            <label for="settings-voice-eq-low">EQ Low</label>
+            <input id="settings-voice-eq-low" type="range" min="-12" max="12" step="1">
+            <span id="settings-voice-eq-low-value">0 dB</span>
+          </div>
+          <div class="settings-control-row">
+            <label for="settings-voice-eq-mid">EQ Mid</label>
+            <input id="settings-voice-eq-mid" type="range" min="-12" max="12" step="1">
+            <span id="settings-voice-eq-mid-value">0 dB</span>
+          </div>
+          <div class="settings-control-row">
+            <label for="settings-voice-eq-high">EQ High</label>
+            <input id="settings-voice-eq-high" type="range" min="-12" max="12" step="1">
+            <span id="settings-voice-eq-high-value">0 dB</span>
+          </div>
+          <div class="settings-action-row">
+            <button id="settings-voice-self-test-btn" type="button" class="secondary-action">Start Mic Self Test</button>
+            <span id="settings-voice-self-test-status" class="settings-subtitle">Self test idle</span>
+          </div>
+          <div class="settings-control-row">
+            <label for="settings-voice-compact-video-tiles">Compact Video Tiles</label>
+            <input id="settings-voice-compact-video-tiles" type="checkbox">
+            <span>Smaller camera/screen tiles in voice chat</span>
+          </div>
+          <div class="settings-control-row">
+            <label for="settings-voice-video-tile-scale">Video Tile Size</label>
+            <input id="settings-voice-video-tile-scale" type="range" min="0.7" max="1.4" step="0.05">
+            <span id="settings-voice-video-tile-scale-value">1.00x</span>
+          </div>
+          <div class="settings-control-row">
+            <label for="settings-voice-screen-share-quality">Screen Share Quality</label>
+            <select id="settings-voice-screen-share-quality">
+              <option value="low">Low (540p / 10fps)</option>
+              <option value="medium">Medium (720p / 15fps)</option>
+              <option value="high">High (1080p / 24fps)</option>
+              <option value="ultra">Ultra (1080p / 60fps)</option>
+            </select>
+            <span>Lower quality reduces CPU/GPU and upload usage</span>
+          </div>
+        </section>
 
-    <div id="settings-labs-section" class="settings-section settings-labs-section hidden">
-      <h4>Labs & Easter Eggs</h4>
-      <div class="settings-subtitle">Mostly client-side visual extras and secret commands.</div>
-      <div class="settings-labs-grid">
-        <label><input id="labs-fx-grain" type="checkbox"> Ambient grain</label>
-        <label><input id="labs-fx-glass" type="checkbox"> Glass panels</label>
-        <label><input id="labs-fx-gradient" type="checkbox"> Gradient drift</label>
-        <label><input id="labs-fx-bob" type="checkbox"> Server bob hover</label>
-        <label><input id="labs-fx-glow" type="checkbox"> Message glow</label>
-        <label><input id="labs-fx-compact" type="checkbox"> Compact sidebars</label>
-        <label><input id="labs-fx-neon" type="checkbox"> Neon accents</label>
-        <label><input id="labs-fx-retro" type="checkbox"> Retro font mode</label>
-        <label><input id="labs-fx-lanterns" type="checkbox"> Lantern drift</label>
-        <label><input id="labs-fx-d20turbo" type="checkbox"> D20 turbo spin</label>
-        <label><input id="labs-fx-d20bounce" type="checkbox"> Click D20 bounce</label>
-        <label><input id="labs-fx-roll-anim" type="checkbox"> Animate /roll dice</label>
-        <label><input id="labs-fx-rainbow-author" type="checkbox"> Rainbow usernames</label>
-        <label><input id="labs-fx-scanlines" type="checkbox"> CRT scanlines</label>
-        <label><input id="labs-fx-panel-tilt" type="checkbox"> Panel tilt hover</label>
-        <label><input id="labs-fx-unread-shimmer" type="checkbox"> Unread shimmer</label>
-        <label><input id="labs-fx-command-hints" type="checkbox"> Show slash command hints</label>
-      </div>
-      <div class="settings-subtitle">Slash commands: <code>/roll 2d20</code>, <code>/party</code>, <code>/shrug</code>, <code>/tableflip</code>, <code>/unflip</code>, <code>/lenny</code>, <code>/konami</code></div>
-      <div class="settings-action-row">
-        <button id="labs-trigger-party" type="button">Trigger Emoji Rain</button>
-        <button id="labs-trigger-konami" type="button">Toggle Konami Mode</button>
-        <button id="open-launch-checklist-btn" type="button">Launch Checklist</button>
-        <button id="labs-reset-btn" type="button" class="secondary-action">Reset Labs</button>
+        <section class="settings-section" data-settings-panel="appearance">
+          <h4>Appearance</h4>
+          <div class="settings-subtitle">Theme Presets (Linen Light, Graphite Light, Dusk Medium, Graphite Dark)</div>
+          <div id="settings-theme-grid" class="theme-grid"></div>
+
+          <div class="settings-control-row">
+            <label for="settings-modern-ui">Modern UI Layout</label>
+            <input id="settings-modern-ui" type="checkbox" checked>
+            <span>Use the newer Tavern interface style by default.</span>
+          </div>
+          <div class="settings-control-row">
+            <label for="settings-ui-scale">UI Scale</label>
+            <input id="settings-ui-scale" type="range" min="0.7" max="1.15" step="0.01">
+            <span id="settings-ui-scale-value">1.00x</span>
+          </div>
+          <div class="settings-control-row">
+            <label for="settings-panel-radius">Panel Radius</label>
+            <input id="settings-panel-radius" type="range" min="8" max="24" step="1">
+            <span id="settings-panel-radius-value">16px</span>
+          </div>
+          <div class="settings-control-row">
+            <label for="settings-message-density">Message Density</label>
+            <input id="settings-message-density" type="range" min="0.85" max="1.25" step="0.01">
+            <span id="settings-message-density-value">1.00x</span>
+          </div>
+          <div class="settings-control-row">
+            <label for="settings-center-wireframe-shape">Center Wireframe</label>
+            <select id="settings-center-wireframe-shape">
+              <option value="d20">D20 (Icosahedron)</option>
+              <option value="d4">D4 (Tetrahedron)</option>
+              <option value="d6">D6 (Cube)</option>
+              <option value="d8">D8 (Octahedron)</option>
+              <option value="d10">D10 (Pentagonal Prism)</option>
+              <option value="d12">D12 (Dodecahedron)</option>
+              <option value="sphere">Sphere Wireframe</option>
+              <option value="torus">Torus Wireframe</option>
+              <option value="capsule">Capsule Wireframe</option>
+              <option value="tesseract">Tesseract (4D Cube)</option>
+            </select>
+            <span>Center dice / wireframe ornament</span>
+          </div>
+          <div class="settings-subtitle">Center Glow Colors</div>
+          <div class="settings-control-row">
+            <label for="settings-center-glow-cool-color">Cool Glow</label>
+            <input id="settings-center-glow-cool-color" type="color" value="#5ebcff">
+            <span id="settings-center-glow-cool-color-value">#5EBCFF</span>
+          </div>
+          <div class="settings-control-row">
+            <label for="settings-center-glow-violet-color">Violet Glow</label>
+            <input id="settings-center-glow-violet-color" type="color" value="#7c56ff">
+            <span id="settings-center-glow-violet-color-value">#7C56FF</span>
+          </div>
+          <div class="settings-control-row">
+            <label for="settings-center-glow-warm-color">Warm Glow</label>
+            <input id="settings-center-glow-warm-color" type="color" value="#ffb56a">
+            <span id="settings-center-glow-warm-color-value">#FFB56A</span>
+          </div>
+          <div class="settings-control-row">
+            <label for="settings-channel-row-highlight">Highlight Channels</label>
+            <input id="settings-channel-row-highlight" type="checkbox" checked>
+            <span>Box around channel rows</span>
+          </div>
+          <div class="settings-control-row">
+            <label for="settings-notification-ping-volume">Notification Ping</label>
+            <input id="settings-notification-ping-volume" type="range" min="0" max="2" step="0.01">
+            <span id="settings-notification-ping-volume-value">100%</span>
+          </div>
+          <div class="settings-control-row">
+            <label for="settings-theme-accent-color">Theme Accent</label>
+            <input id="settings-theme-accent-color" type="color" value="#4f8fcf">
+            <span id="settings-theme-accent-color-value">#4F8FCF</span>
+          </div>
+          <div class="settings-control-row">
+            <label for="settings-font-family">Font Family</label>
+            <input id="settings-font-family" type="text" placeholder="'Inter', sans-serif">
+            <span>UI font</span>
+          </div>
+          <div class="settings-subtitle">Custom CSS Overrides</div>
+          <textarea id="settings-custom-css" rows="8" placeholder="/* Advanced client-side CSS overrides */"></textarea>
+          <div class="settings-action-row">
+            <button id="settings-reset-appearance-btn" type="button" class="secondary-action">Reset Appearance</button>
+            <button id="settings-safe-mode-btn" type="button" class="secondary-action">Safe Mode: Off</button>
+            <button id="settings-reset-client-cache-btn" type="button" class="secondary-action">Reset Client Cache</button>
+            <button id="settings-force-refresh-btn" type="button" class="secondary-action">Force Refresh Client</button>
+          </div>
+          <div class="settings-action-row">
+            <button id="settings-export-bundle-btn" type="button">Export Settings Bundle</button>
+            <label class="settings-import-label" for="settings-import-bundle-input">Import Settings Bundle</label>
+            <input id="settings-import-bundle-input" type="file" accept="application/json" hidden>
+          </div>
+        </section>
+
+        <section class="settings-section" data-settings-panel="connections">
+          <h4>Connections & Performance</h4>
+          <div class="settings-subtitle">Quick diagnostics and manual recovery controls for realtime, polling, and service health.</div>
+          <div class="settings-action-row">
+            <button id="settings-open-diagnostics-btn" type="button" class="secondary-action">Open Diagnostics Overlay</button>
+            <button id="settings-refresh-connections-btn" type="button" class="secondary-action">Refresh Snapshot</button>
+          </div>
+          <div class="settings-action-row">
+            <button id="settings-run-notification-poll-btn" type="button" class="secondary-action">Run Notification Poll Now</button>
+            <button id="settings-resync-realtime-btn" type="button" class="secondary-action">Resync Realtime Subscriptions</button>
+          </div>
+          <div class="settings-row"><strong>Online:</strong> <span id="settings-connections-online">-</span></div>
+          <div class="settings-row"><strong>Visibility:</strong> <span id="settings-connections-visibility">-</span></div>
+          <div class="settings-row"><strong>Channel sockets:</strong> <span id="settings-connections-channel-sockets">-</span></div>
+          <div class="settings-row"><strong>Notification poll:</strong> <span id="settings-connections-poll-status">-</span></div>
+          <div class="settings-row"><strong>Last poll:</strong> <span id="settings-connections-last-poll">-</span></div>
+          <div class="settings-row"><strong>Asset versions:</strong> <span id="settings-connections-asset-versions">-</span></div>
+          <div class="settings-row"><strong>Service worker:</strong> <span id="settings-connections-sw-state">-</span></div>
+          <div class="settings-subtitle">Server /health (latest fetch)</div>
+          <pre id="settings-connections-health-json" class="editor-preview" style="max-height:220px; overflow:auto; white-space:pre-wrap;"></pre>
+        </section>
+
+        <section id="settings-labs-section" class="settings-section settings-labs-section hidden" data-settings-panel="labs">
+          <h4>Labs & Easter Eggs</h4>
+          <div class="settings-subtitle">Mostly client-side visual extras and secret commands.</div>
+          <div class="settings-labs-grid">
+            <label><input id="labs-fx-grain" type="checkbox"> Ambient grain</label>
+            <label><input id="labs-fx-glass" type="checkbox"> Glass panels</label>
+            <label><input id="labs-fx-gradient" type="checkbox"> Gradient drift</label>
+            <label><input id="labs-fx-bob" type="checkbox"> Server bob hover</label>
+            <label><input id="labs-fx-glow" type="checkbox"> Message glow</label>
+            <label><input id="labs-fx-compact" type="checkbox"> Compact sidebars</label>
+            <label><input id="labs-fx-neon" type="checkbox"> Neon accents</label>
+            <label><input id="labs-fx-retro" type="checkbox"> Retro font mode</label>
+            <label><input id="labs-fx-lanterns" type="checkbox"> Lantern drift</label>
+            <label><input id="labs-fx-bokeh" type="checkbox"> Bokeh drift</label>
+            <label><input id="labs-fx-d20turbo" type="checkbox"> D20 turbo spin</label>
+            <label><input id="labs-fx-d20bounce" type="checkbox"> Click D20 bounce</label>
+            <label><input id="labs-fx-cosmic-d20" type="checkbox"> Cosmic D20 + space backdrop</label>
+            <label><input id="labs-fx-space-core" type="checkbox"> Center space vortex glow</label>
+            <label><input id="labs-fx-roll-anim" type="checkbox"> Animate /roll dice</label>
+            <label><input id="labs-fx-rainbow-author" type="checkbox"> Rainbow usernames</label>
+            <label><input id="labs-fx-scanlines" type="checkbox"> CRT scanlines</label>
+            <label><input id="labs-fx-panel-tilt" type="checkbox"> Panel tilt hover</label>
+            <label><input id="labs-fx-unread-shimmer" type="checkbox"> Unread shimmer</label>
+            <label><input id="labs-fx-command-hints" type="checkbox"> Show slash command hints</label>
+          </div>
+          <div class="settings-subtitle">Labs Color Tuning</div>
+          <div class="settings-control-row">
+            <label for="labs-lantern-color-a">Lantern A</label>
+            <input id="labs-lantern-color-a" type="color" value="#ffd48f">
+            <span id="labs-lantern-color-a-value">#FFD48F</span>
+          </div>
+          <div class="settings-control-row">
+            <label for="labs-lantern-color-b">Lantern B</label>
+            <input id="labs-lantern-color-b" type="color" value="#ff9f4d">
+            <span id="labs-lantern-color-b-value">#FF9F4D</span>
+          </div>
+          <div class="settings-control-row">
+            <label for="labs-bokeh-color-a">Bokeh A</label>
+            <input id="labs-bokeh-color-a" type="color" value="#7cc6ff">
+            <span id="labs-bokeh-color-a-value">#7CC6FF</span>
+          </div>
+          <div class="settings-control-row">
+            <label for="labs-bokeh-color-b">Bokeh B</label>
+            <input id="labs-bokeh-color-b" type="color" value="#ffc28a">
+            <span id="labs-bokeh-color-b-value">#FFC28A</span>
+          </div>
+          <div class="settings-subtitle">Message Bar Glow</div>
+          <div class="settings-control-row">
+            <label for="labs-messagebar-glow-style">Glow style</label>
+            <select id="labs-messagebar-glow-style">
+              <option value="water">Water</option>
+              <option value="fire">Fire</option>
+              <option value="bubbles">Bubbles</option>
+              <option value="acid">Acid</option>
+            </select>
+            <span>Animated strip above composer; brightest at center, fades to edges.</span>
+          </div>
+          <div class="settings-control-row">
+            <label for="labs-messagebar-glow-color-a">Glow color A</label>
+            <input id="labs-messagebar-glow-color-a" type="color" value="#5ebcff">
+            <span id="labs-messagebar-glow-color-a-value">#5EBCFF</span>
+          </div>
+          <div class="settings-control-row">
+            <label for="labs-messagebar-glow-color-b">Glow color B</label>
+            <input id="labs-messagebar-glow-color-b" type="color" value="#8ed9ff">
+            <span id="labs-messagebar-glow-color-b-value">#8ED9FF</span>
+          </div>
+          <div class="settings-subtitle">Slash commands: <code>/roll 2d20</code>, <code>/party</code>, <code>/shrug</code>, <code>/tableflip</code>, <code>/unflip</code>, <code>/lenny</code>, <code>/konami</code></div>
+          <div class="settings-action-row">
+            <button id="labs-trigger-party" type="button">Trigger Emoji Rain</button>
+            <button id="labs-trigger-konami" type="button">Toggle Konami Mode</button>
+            <button id="open-launch-checklist-btn" type="button">Launch Checklist</button>
+            <button id="labs-reset-btn" type="button" class="secondary-action">Reset Labs</button>
+          </div>
+        </section>
       </div>
     </div>
   </div>
@@ -355,6 +682,21 @@
       <div class="checklist-item"><span><strong>Enter</strong> Send message</span></div>
       <div class="checklist-item"><span><strong>Shift + Enter</strong> New line</span></div>
       <div class="checklist-item"><span><strong>Esc</strong> Close active modal/menu</span></div>
+    </div>
+  </div>
+</div>
+
+<div id="onboarding-tutorial-modal" class="modal">
+  <div class="modal-content checklist-modal-content tutorial-modal-content">
+    <span class="close">&times;</span>
+    <h3 id="tutorial-title">Welcome to Tavern</h3>
+    <div id="tutorial-body" class="confirm-text"></div>
+    <div id="tutorial-progress" class="settings-subtitle">Step 1 of 6</div>
+    <div class="settings-action-row tutorial-action-row">
+      <button id="tutorial-skip-btn" type="button" class="secondary-action">Skip</button>
+      <button id="tutorial-prev-btn" type="button" class="secondary-action">Back</button>
+      <button id="tutorial-next-btn" type="button">Next</button>
+      <button id="tutorial-finish-btn" type="button" class="hidden">Finish</button>
     </div>
   </div>
 </div>
@@ -433,10 +775,24 @@
   </div>
 </div>
 
+<!-- Channel Pins Modal -->
+<div id="pins-modal" class="modal">
+  <div class="modal-content pins-modal-content">
+    <span class="close">&times;</span>
+    <h3>Pinned Messages</h3>
+    <div id="pins-modal-list" class="pins-modal-list"></div>
+  </div>
+</div>
+
 <div id="dashboard-toast-container" class="toast-container"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
-<script src="src/dashboard.js"></script>
+<script src="src/features/notifications/helpers.js?v=20260306-hotfix70"></script>
+<script src="src/features/session/helpers.js?v=20260306-hotfix70"></script>
+<script src="src/features/session/lifecycle.js?v=20260306-hotfix70"></script>
+<script src="src/features/runtime/diagnostics.js?v=20260306-hotfix70"></script>
+<script src="src/features/runtime/network_gates.js?v=20260306-hotfix70"></script>
+<script src="src/dashboard.js?v=20260306-hotfix70"></script>
 </body>
 </html>

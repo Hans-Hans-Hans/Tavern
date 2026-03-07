@@ -12,10 +12,60 @@ const d20 = new THREE.Mesh(geometry, material);
 scene.add(d20);
 
 let floatOffset = 0;
+let dragSpinX = 0;
+let dragSpinY = 0;
+let pointerActive = false;
+let activePointerId = null;
+let lastPointer = null;
+
+function pointerInsideD20(event) {
+  const rect = canvas.getBoundingClientRect();
+  if (!rect.width || !rect.height) return false;
+  const x = event.clientX;
+  const y = event.clientY;
+  if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return false;
+  const nx = ((x - rect.left) / rect.width) * 2 - 1;
+  const ny = ((y - rect.top) / rect.height) * 2 - 1;
+  return ((nx * nx) + (ny * ny)) <= 0.92;
+}
+
+canvas.addEventListener("pointerdown", (event) => {
+  if (!pointerInsideD20(event)) return;
+  pointerActive = true;
+  activePointerId = event.pointerId;
+  lastPointer = { x: event.clientX, y: event.clientY };
+  try { canvas.setPointerCapture(event.pointerId); } catch {}
+  event.preventDefault();
+});
+
+document.addEventListener("pointermove", (event) => {
+  if (!pointerActive) return;
+  if (activePointerId != null && event.pointerId !== activePointerId) return;
+  if (!lastPointer) return;
+  const dx = event.clientX - lastPointer.x;
+  const dy = event.clientY - lastPointer.y;
+  lastPointer = { x: event.clientX, y: event.clientY };
+  dragSpinY += dx * 0.003;
+  dragSpinX += dy * 0.003;
+  event.preventDefault();
+}, { passive: false });
+
+function endPointerDrag(event) {
+  if (activePointerId != null && event?.pointerId != null && event.pointerId !== activePointerId) return;
+  pointerActive = false;
+  activePointerId = null;
+  lastPointer = null;
+}
+
+document.addEventListener("pointerup", endPointerDrag);
+document.addEventListener("pointercancel", endPointerDrag);
+
 function animate() {
   requestAnimationFrame(animate);
-  d20.rotation.x += 0.002;
-  d20.rotation.y += 0.003;
+  dragSpinX *= 0.955;
+  dragSpinY *= 0.955;
+  d20.rotation.x += 0.002 + dragSpinX;
+  d20.rotation.y += 0.003 + dragSpinY;
   floatOffset += 0.01;
   d20.position.y = Math.sin(floatOffset) * 0.2;
   renderer.render(scene, camera);
@@ -24,10 +74,132 @@ animate();
 
 // Theme toggle
 const toggle = document.getElementById("theme-toggle");
+const cacheMetaEl = document.getElementById("cache-meta");
 toggle.addEventListener("click", () => {
   document.body.classList.toggle("dark-mode");
   material.color.setHex(document.body.classList.contains("dark-mode") ? 0xffffff : 0x7f8072);
 });
+
+const TAVERN_DESKTOP_SERVER_URL_KEY = "tavern.desktopServerUrl";
+const TAVERN_REMEMBER_ME_PREF_KEY = "tavern.rememberMePreference";
+
+function getConfiguredServerOrigin() {
+  let candidate = "";
+  try {
+    candidate = String(window.__TAVERN_SERVER_URL__ || "").trim();
+  } catch {
+    candidate = "";
+  }
+  if (!candidate) {
+    try {
+      candidate = String(localStorage.getItem(TAVERN_DESKTOP_SERVER_URL_KEY) || "").trim();
+    } catch {
+      candidate = "";
+    }
+  }
+  if (!candidate) {
+    try {
+      const param = new URLSearchParams(window.location.search).get("server");
+      candidate = String(param || "").trim();
+      if (candidate) localStorage.setItem(TAVERN_DESKTOP_SERVER_URL_KEY, candidate);
+    } catch {
+      candidate = "";
+    }
+  }
+  if (!candidate) return "";
+  try {
+    const url = new URL(candidate);
+    if (!/^https?:$/i.test(url.protocol)) return "";
+    return url.origin;
+  } catch {
+    return "";
+  }
+}
+
+function resolveApiUrl(input) {
+  if (typeof input !== "string") return input;
+  if (!input.startsWith("/")) return input;
+  const origin = getConfiguredServerOrigin();
+  return origin ? `${origin}${input}` : input;
+}
+
+function getDashboardPageHref() {
+  return getConfiguredServerOrigin() ? "dashboard.html" : "/dashboard";
+}
+
+function isStandalonePwaMode() {
+  try {
+    const standaloneMedia = typeof window.matchMedia === "function"
+      ? window.matchMedia("(display-mode: standalone)").matches
+      : false;
+    const iosStandalone = window.navigator?.standalone === true;
+    return Boolean(standaloneMedia || iosStandalone);
+  } catch {
+    return false;
+  }
+}
+
+function getRememberMePreference() {
+  try {
+    const raw = localStorage.getItem(TAVERN_REMEMBER_ME_PREF_KEY);
+    if (raw === "true") return true;
+    if (raw === "false") return false;
+  } catch {
+    // Ignore storage read failures.
+  }
+  return null;
+}
+
+function setRememberMePreference(value) {
+  try {
+    localStorage.setItem(TAVERN_REMEMBER_ME_PREF_KEY, value ? "true" : "false");
+  } catch {
+    // Ignore storage write failures.
+  }
+}
+
+function getDefaultRememberMeValue() {
+  const preferred = getRememberMePreference();
+  if (preferred !== null) return preferred;
+  return isStandalonePwaMode();
+}
+
+function getVersionFromUrl(urlLike) {
+  if (!urlLike) return "";
+  try {
+    const url = new URL(urlLike, window.location.origin);
+    return String(url.searchParams.get("v") || "").trim();
+  } catch {
+    return "";
+  }
+}
+
+function detectLandingCacheVersion() {
+  const scriptVersion = getVersionFromUrl(
+    document.querySelector('script[src*="src/app.js"]')?.getAttribute("src") || ""
+  );
+  if (scriptVersion) return scriptVersion;
+  const manifestVersion = getVersionFromUrl(
+    document.querySelector('link[rel="manifest"]')?.getAttribute("href") || ""
+  );
+  return manifestVersion || "";
+}
+
+function renderLandingCacheMeta() {
+  if (!cacheMetaEl) return;
+  const version = detectLandingCacheVersion();
+  cacheMetaEl.textContent = version ? `cache ${version}` : "cache -";
+  cacheMetaEl.title = version ? `Client cache version: ${version}` : "Client cache version unavailable";
+}
+
+renderLandingCacheMeta();
+
+const originalFetch = window.fetch.bind(window);
+window.fetch = (...args) => {
+  const resolvedArgs = [...args];
+  if (resolvedArgs.length > 0) resolvedArgs[0] = resolveApiUrl(resolvedArgs[0]);
+  return originalFetch(...resolvedArgs);
+};
 
 // Side panel logic
 const sidePanel = document.getElementById('side-panel');
@@ -35,6 +207,8 @@ const panelTitle = document.getElementById('panel-title');
 const panelForm = document.getElementById('panel-form');
 const closePanel = document.getElementById('close-panel');
 const panelMessage = document.getElementById('panel-message');
+const panelRememberWrap = document.getElementById('panel-remember-wrap');
+const panelRememberMe = document.getElementById('panel-remember-me');
 let pendingFirstUseReset = null;
 
 document.getElementById('login-btn').addEventListener('click', () => {
@@ -45,6 +219,8 @@ document.getElementById('login-btn').addEventListener('click', () => {
   document.getElementById('panel-password').placeholder = "Password";
   if (document.getElementById('panel-password-confirm'))
     document.getElementById('panel-password-confirm').style.display = "none";
+  if (panelRememberWrap) panelRememberWrap.style.display = "flex";
+  if (panelRememberMe) panelRememberMe.checked = getDefaultRememberMeValue();
   pendingFirstUseReset = null;
   sidePanel.classList.add('open');
 });
@@ -57,11 +233,19 @@ document.getElementById('register-btn').addEventListener('click', () => {
   document.getElementById('panel-password').placeholder = "Password";
   if (document.getElementById('panel-password-confirm'))
     document.getElementById('panel-password-confirm').style.display = "block";
+  if (panelRememberWrap) panelRememberWrap.style.display = "none";
   pendingFirstUseReset = null;
   sidePanel.classList.add('open');
 });
 
 closePanel.addEventListener('click', () => sidePanel.classList.remove('open'));
+
+if (panelRememberMe) {
+  panelRememberMe.checked = getDefaultRememberMeValue();
+  panelRememberMe.addEventListener("change", () => {
+    setRememberMePreference(Boolean(panelRememberMe.checked));
+  });
+}
 
 function setFirstUseResetMode(username, currentPassword) {
   pendingFirstUseReset = { username, currentPassword };
@@ -79,6 +263,7 @@ function setFirstUseResetMode(username, currentPassword) {
     confirmInput.value = "";
     confirmInput.style.display = "block";
   }
+  if (panelRememberWrap) panelRememberWrap.style.display = "none";
 }
 
 // Show success or error messages
@@ -128,6 +313,10 @@ panelForm.addEventListener('submit', async (e) => {
   const password = document.getElementById('panel-password').value.trim();
   const emailInput = document.getElementById('panel-email');
   const email = emailInput.style.display !== 'none' ? emailInput.value.trim() : null;
+  const rememberMe = !!(panelRememberMe && panelRememberMe.checked);
+  if (type === "login") {
+    setRememberMePreference(rememberMe);
+  }
 
   if (type === 'first_use_reset') {
     const confirmInput = document.getElementById('panel-password-confirm');
@@ -165,7 +354,7 @@ panelForm.addEventListener('submit', async (e) => {
       }
       showPanelMessage('Password reset complete. Logged in successfully!', 'success');
       setTimeout(() => {
-        window.location.href = '/dashboard';
+        window.location.href = getDashboardPageHref();
       }, 800);
       return;
     } catch (err) {
@@ -217,6 +406,7 @@ panelForm.addEventListener('submit', async (e) => {
       const formData = new URLSearchParams();
       formData.append('username', username);
       formData.append('password', password);
+      formData.append('remember_me', rememberMe ? 'true' : 'false');
 
       res = await fetch('/auth/login', {
         method: 'POST',
@@ -269,7 +459,7 @@ panelForm.addEventListener('submit', async (e) => {
     if (type === 'login') {
       // Redirect to dashboard after login
       setTimeout(() => {
-        window.location.href = '/dashboard';
+        window.location.href = getDashboardPageHref();
       }, 800);
     } else {
       // Just close panel after registration

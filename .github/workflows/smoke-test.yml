@@ -1,0 +1,61 @@
+name: Smoke Test
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: tavern
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Start Tavern server
+        env:
+          DATABASE_URL: sqlite:///./server/smoke_test.db
+          SECRET_KEY: ci-smoke-secret-key-change-me
+          COOKIE_SECURE: "false"
+          APP_VERSION: ci-smoke
+        run: |
+          python -m uvicorn app.main:app --app-dir server --host 127.0.0.1 --port 8000 > /tmp/tavern-smoke.log 2>&1 &
+          echo $! > /tmp/tavern-smoke.pid
+
+      - name: Wait for health endpoint
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8000/health >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Server failed to start"
+          cat /tmp/tavern-smoke.log || true
+          exit 1
+
+      - name: Run smoke test
+        run: python scripts/smoke_test.py --base-url http://127.0.0.1:8000
+
+      - name: Server log (on failure)
+        if: failure()
+        run: cat /tmp/tavern-smoke.log || true
+
+      - name: Stop server
+        if: always()
+        run: |
+          if [ -f /tmp/tavern-smoke.pid ]; then
+            kill "$(cat /tmp/tavern-smoke.pid)" || true
+          fi

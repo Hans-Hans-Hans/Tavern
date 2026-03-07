@@ -42,6 +42,9 @@ class VoiceConnectionManager:
                     "username": peer["username"],
                     "muted": peer.get("muted", False),
                     "deafened": peer.get("deafened", False),
+                    "camera_on": peer.get("camera_on", False),
+                    "screen_on": peer.get("screen_on", False),
+                    "link_stream_url": peer.get("link_stream_url"),
                 }
             )
         return result
@@ -79,7 +82,10 @@ async def websocket_voice(
     channel_public_id: str,
     db: Session = Depends(get_db),
 ):
-    user = await get_current_user_ws(websocket, db)
+    try:
+        user = await get_current_user_ws(websocket, db)
+    except WebSocketDisconnect:
+        return
 
     channel = message_service.get_channel_or_404(db, channel_public_id)
     message_service.verify_membership(db, channel.server_id, user.id)
@@ -98,6 +104,9 @@ async def websocket_voice(
         "username": user.username,
         "muted": False,
         "deafened": False,
+        "camera_on": False,
+        "screen_on": False,
+        "link_stream_url": None,
     }
     await manager.connect(channel_public_id, peer_id, peer_data)
 
@@ -120,6 +129,9 @@ async def websocket_voice(
                     "username": user.username,
                     "muted": False,
                     "deafened": False,
+                    "camera_on": False,
+                    "screen_on": False,
+                    "link_stream_url": None,
                 },
             },
             exclude_peer_id=peer_id,
@@ -146,8 +158,16 @@ async def websocket_voice(
             elif msg_type == "state":
                 muted = bool(data.get("muted", False))
                 deafened = bool(data.get("deafened", False))
+                camera_on = bool(data.get("camera_on", False))
+                screen_on = bool(data.get("screen_on", False))
+                link_stream_url = data.get("link_stream_url")
+                if link_stream_url is not None:
+                    link_stream_url = str(link_stream_url).strip() or None
                 peer_data["muted"] = muted
                 peer_data["deafened"] = deafened
+                peer_data["camera_on"] = camera_on
+                peer_data["screen_on"] = screen_on
+                peer_data["link_stream_url"] = link_stream_url
                 await manager.broadcast(
                     channel_public_id,
                     {
@@ -155,6 +175,9 @@ async def websocket_voice(
                         "peer_id": peer_id,
                         "muted": muted,
                         "deafened": deafened,
+                        "camera_on": camera_on,
+                        "screen_on": screen_on,
+                        "link_stream_url": link_stream_url,
                     },
                     exclude_peer_id=peer_id,
                 )

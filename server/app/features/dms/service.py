@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 from sqlalchemy.orm import Session
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, func
 from fastapi import HTTPException
 
 from app.features.users.models import User
@@ -51,14 +51,24 @@ def _assert_conversation_friendship(db: Session, conversation: DirectConversatio
 
 
 def list_user_conversations(db: Session, user_id: int):
-    convos = (
-        db.query(DirectConversation)
+    latest_message_subq = (
+        db.query(
+            DirectMessage.conversation_id.label("conversation_id"),
+            func.max(DirectMessage.created_at).label("last_message_at"),
+        )
+        .group_by(DirectMessage.conversation_id)
+        .subquery()
+    )
+
+    convo_rows = (
+        db.query(DirectConversation, latest_message_subq.c.last_message_at)
+        .outerjoin(latest_message_subq, latest_message_subq.c.conversation_id == DirectConversation.id)
         .filter(or_(DirectConversation.user_one_id == user_id, DirectConversation.user_two_id == user_id))
-        .order_by(DirectConversation.created_at.desc())
+        .order_by(func.coalesce(latest_message_subq.c.last_message_at, DirectConversation.created_at).desc())
         .all()
     )
     out = []
-    for convo in convos:
+    for convo, last_message_at in convo_rows:
         if not user_service.are_friends(db, convo.user_one_id, convo.user_two_id):
             continue
         other_user = convo.user_two if convo.user_one_id == user_id else convo.user_one
@@ -68,6 +78,7 @@ def list_user_conversations(db: Session, user_id: int):
                 "other_user_public_id": other_user.public_id,
                 "other_username": other_user.username,
                 "created_at": convo.created_at,
+                "last_message_at": last_message_at,
             }
         )
     return out
@@ -98,7 +109,10 @@ def list_messages(db: Session, conversation_public_id: str, user_id: int, limit:
             "public_id": m.public_id,
             "conversation_public_id": convo.public_id,
             "user_id": m.user_id,
+            "user_public_id": m.user.public_id,
             "username": m.user.username,
+            "username_color": m.user.username_color,
+            "name_emoji": m.user.name_emoji,
             "content": m.content,
             "created_at": m.created_at,
             "edited_at": m.edited_at,
@@ -120,8 +134,34 @@ def create_message(db: Session, conversation_public_id: str, user_id: int, conte
         "public_id": msg.public_id,
         "conversation_public_id": convo.public_id,
         "user_id": msg.user_id,
+        "user_public_id": msg.user.public_id,
         "username": msg.user.username,
+        "username_color": msg.user.username_color,
+        "name_emoji": msg.user.name_emoji,
         "content": msg.content,
         "created_at": msg.created_at,
         "edited_at": msg.edited_at,
     }
+
+
+def delete_message(db: Session, conversation_public_id: str, message_public_id: str, user_id: int):
+    convo = get_conversation_or_404(db, conversation_public_id)
+    _assert_conversation_member(convo, user_id)
+    _assert_conversation_friendship(db, convo)
+
+    msg = (
+        db.query(DirectMessage)
+        .filter(
+            DirectMessage.public_id == message_public_id,
+            DirectMessage.conversation_id == convo.id,
+        )
+        .first()
+    )
+    if not msg:
+        raise HTTPException(status_code=404, detail="Message not found")
+    if msg.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this message")
+
+    db.delete(msg)
+    db.commit()
+    return {"detail": "Message deleted"}

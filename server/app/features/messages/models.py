@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text, UniqueConstraint
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text, UniqueConstraint, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime, UTC
 from app.db.base import Base
@@ -29,10 +29,14 @@ class Message(Base):
         DateTime(timezone=True),
         nullable=True  # Stores last edit timestamp; null if never edited
     )
+    is_pinned = Column(Boolean, nullable=False, default=False)
+    pinned_at = Column(DateTime(timezone=True), nullable=True)
+    pinned_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     # SQLAlchemy relationships
     channel = relationship("Channel", back_populates="messages")  # Link back to channel
-    user = relationship("User")  # Link to user who sent the message
+    user = relationship("User", foreign_keys=[user_id])  # Link to user who sent the message
+    pinned_by_user = relationship("User", foreign_keys=[pinned_by_user_id])
     parent_message = relationship("Message", remote_side=[id], backref="replies")
     reactions = relationship("MessageReaction", back_populates="message", cascade="all, delete-orphan")
 

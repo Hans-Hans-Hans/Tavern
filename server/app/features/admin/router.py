@@ -10,6 +10,7 @@ from app.db.deps import get_db
 from app.features.users.models import User, FriendRequest
 from app.features.users import service as user_service
 from app.features.servers.models import Server, ServerMember, ServerRole
+from app.features.servers import service as servers_service
 from app.features.channels.models import Channel
 from app.features.messages.models import Message, MessageReaction
 from app.features.dms.models import DirectConversation, DirectMessage
@@ -150,8 +151,7 @@ def admin_delete_user(
     # Remove user-owned servers entirely.
     owned_servers = db.query(Server).filter(Server.owner_id == target.id).all()
     for server in owned_servers:
-        db.delete(server)
-    db.flush()
+        servers_service.delete_server(db, server.public_id, current_user.id)
 
     # Remove all memberships in remaining servers.
     db.query(ServerMember).filter(ServerMember.user_id == target.id).delete(synchronize_session=False)
@@ -169,6 +169,10 @@ def admin_delete_user(
 
     # Remove authored/reaction content in server channels.
     db.query(MessageReaction).filter(MessageReaction.user_id == target.id).delete(synchronize_session=False)
+    db.query(Message).filter(Message.pinned_by_user_id == target.id).update(
+        {Message.pinned_by_user_id: None},
+        synchronize_session=False,
+    )
     db.query(Message).filter(Message.user_id == target.id).delete(synchronize_session=False)
 
     write_audit_event(

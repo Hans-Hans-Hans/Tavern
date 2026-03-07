@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.db.deps import get_db
 from app.features.users import service, schemas
@@ -20,14 +20,47 @@ def read_current_user(current_user: models.User = Depends(get_current_user)):
     return current_user
 
 
+@router.get("/me/appearance")
+def read_current_user_appearance(current_user: models.User = Depends(get_current_user)):
+    return {"appearance_settings": service.get_user_appearance_settings(current_user)}
+
+
+@router.put("/me/appearance")
+def update_current_user_appearance(
+    payload: schemas.UserAppearanceUpdate,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    updated = service.update_user_appearance_settings(db, current_user, payload.appearance_settings)
+    return {"appearance_settings": service.get_user_appearance_settings(updated)}
+
+
 @router.get("/friends", response_model=list[schemas.FriendUserOut])
 def list_friends(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     return service.list_friends(db, current_user.id)
 
 
+@router.post("/me/tutorial-complete")
+def mark_tutorial_complete(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not current_user.has_seen_tutorial:
+        current_user.has_seen_tutorial = True
+        db.commit()
+        db.refresh(current_user)
+    return {"detail": "Tutorial marked complete", "has_seen_tutorial": current_user.has_seen_tutorial}
+
+
 @router.get("/friend-requests")
 def list_friend_requests(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     return service.list_friend_requests(db, current_user.id)
+
+
+@router.get("/friend-requests/history", response_model=list[schemas.FriendRequestHistoryOut])
+def list_friend_request_history(
+    limit: int = Query(120, ge=1, le=500),
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return service.list_friend_request_history(db, current_user.id, limit)
 
 
 @router.post("/friend-requests/{target_public_id}", response_model=schemas.FriendRequestOut)

@@ -6,6 +6,7 @@ from app.db.deps import get_db
 from app.core.security_ws import get_current_user_ws
 from app.features.dms import service as dm_service
 from app.features.users import service as user_service
+from app.features.push import service as push_service
 
 router = APIRouter()
 
@@ -48,7 +49,10 @@ async def websocket_dm_messages(
     conversation_public_id: str,
     db: Session = Depends(get_db),
 ):
-    user = await get_current_user_ws(websocket, db)
+    try:
+        user = await get_current_user_ws(websocket, db)
+    except WebSocketDisconnect:
+        return
     convo = dm_service.get_conversation_or_404(db, conversation_public_id)
     if user.id not in (convo.user_one_id, convo.user_two_id):
         await websocket.close(code=1008)
@@ -71,6 +75,23 @@ async def websocket_dm_messages(
                     **message,
                     "created_at": str(message["created_at"]),
                     "edited_at": str(message["edited_at"]) if message.get("edited_at") else None,
+                },
+            )
+            recipient_ids = [uid for uid in (convo.user_one_id, convo.user_two_id) if uid != user.id]
+            push_service.send_push_to_user_ids_background(
+                recipient_ids,
+                {
+                    "type": "message_created",
+                    "mode": "dm",
+                    "conversation_public_id": conversation_public_id,
+                    "message_public_id": message["public_id"],
+                    "username": message["username"],
+                    "content": message["content"],
+                    "created_at": str(message["created_at"]),
+                    "title": f"DM - {message['username']}",
+                    "body": str(message["content"] or "")[:180],
+                    "url": f"/dashboard#dm={conversation_public_id}&message={message['public_id']}",
+                    "tag": f"tavern-dm-{conversation_public_id}-{message['public_id']}",
                 },
             )
     except WebSocketDisconnect:

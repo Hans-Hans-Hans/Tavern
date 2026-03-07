@@ -1,6 +1,7 @@
 from passlib.context import CryptContext
 from jose import JWTError, jwt, ExpiredSignatureError
 from datetime import datetime, timedelta, UTC
+from urllib.parse import unquote
 from app.core.config import settings
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends, HTTPException, status, Request
@@ -52,12 +53,9 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> models.
         headers={"www-authenticate": "Bearer"}
     )
 
-    token = request.cookies.get("access_token")
+    token = extract_access_token_from_cookie(request.cookies.get("access_token"))
     if not token:
         raise credentials_exception
-    # strip "Bearer " if present
-    if token.startswith("Bearer "):
-        token = token[7:]
 
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
@@ -81,3 +79,17 @@ def decode_access_token(token: str) -> dict:
     Raises JWTError or ExpiredSignatureError if invalid/expired.
     """
     return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+
+
+def extract_access_token_from_cookie(raw_token: str | None) -> str | None:
+    """
+    Normalize auth cookie values across browsers/proxies.
+    Supports plain token and legacy "Bearer <token>" storage.
+    """
+    if not raw_token:
+        return None
+
+    token = unquote(str(raw_token)).strip().strip('"').strip("'")
+    if token.lower().startswith("bearer "):
+        token = token[7:].strip()
+    return token or None
