@@ -502,6 +502,7 @@ panelForm.addEventListener('submit', async (e) => {
 
   try {
     let res;
+    let usedDirectRegister = false;
 
     if (type === 'register') {
       // Registration step 1: request verification code
@@ -526,20 +527,29 @@ panelForm.addEventListener('submit', async (e) => {
       });
     }
 
-    let data = await res.json();
+    let data = await res.json().catch(() => ({}));
 
     if (
       type === 'register' &&
-      !res.ok &&
-      String(data?.detail || '').toLowerCase().includes('verification is currently disabled')
+      !res.ok
     ) {
-      res = await fetch('/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ username, password, email })
-      });
-      data = await res.json().catch(() => ({}));
+      const detail = String(data?.detail || '').toLowerCase();
+      const shouldFallbackToDirectRegister =
+        detail.includes('verification is currently disabled') ||
+        detail.includes('method not allowed') ||
+        res.status === 404 ||
+        res.status === 405;
+
+      if (shouldFallbackToDirectRegister) {
+        res = await fetch('/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ username, password, email })
+        });
+        data = await res.json().catch(() => ({}));
+        usedDirectRegister = true;
+      }
     }
 
   if (!res.ok) {
@@ -574,6 +584,11 @@ panelForm.addEventListener('submit', async (e) => {
 
 
     if (type === 'register') {
+      if (usedDirectRegister) {
+        showPanelMessage('Account created successfully!', 'success');
+        setTimeout(() => sidePanel.classList.remove('open'), 500);
+        return;
+      }
       pendingEmailVerification = { email };
       setRegisterVerifyMode(email);
       showPanelMessage('Verification code sent. Check your email.', 'success');
