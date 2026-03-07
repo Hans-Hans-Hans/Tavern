@@ -1,85 +1,97 @@
 # Tavern
 
-Self-hosted realtime chat with servers, channels, DMs, voice, roles, and rich client customization.
+Tavern is a self-hosted realtime chat platform with servers, channels, DMs, voice, roles, presence, and rich client customization.
 
-## Highlights
-- Server/channel chat with WebSocket realtime updates
-- Direct messages and direct calling
-- Voice channels (mute/deafen/per-user volume)
-- Reactions, replies, threads, editing, deleting
-- Role-based server permissions and admin panel
-- Presence + typing indicators
-- Theme system, Labs toggles, and client customization
+## What It Includes
+- Realtime server/channel chat over WebSockets
+- Direct messages and DM calling
+- Voice channels (mute/deafen/per-user controls)
+- Reactions, replies, threads, pinning, edits, deletes
+- Server roles + permission controls
+- Admin endpoints and audit/logging features
+- Push notifications and installable PWA client
 
-## Tech Stack
-- Backend: FastAPI, SQLAlchemy, WebSockets
-- Frontend: HTML/CSS/Vanilla JS
-- DB: SQLite by default, PostgreSQL supported
+## Stack
+- Backend: FastAPI + SQLAlchemy
+- Frontend: Vanilla HTML/CSS/JS
+- Realtime: WebSockets
+- Databases: SQLite and PostgreSQL (`psycopg2`)
 
-## Quick Start (Local Python)
-1. Create `.env` at repo root:
-   - `SECRET_KEY=<strong-random-secret>`
-   - `DATABASE_URL=sqlite:///./server/tavern.db`
-   - `COOKIE_SECURE=false`
-   - `CORS_ORIGINS=http://127.0.0.1:8000,http://localhost:8000`
+## Local Quick Start
+1. Create `tavern/.env`:
+```env
+SECRET_KEY=replace-with-a-long-random-secret
+DATABASE_URL=sqlite:///./tavern.db
+COOKIE_SECURE=false
+COOKIE_SAMESITE=lax
+CORS_ORIGINS=http://127.0.0.1:8000,http://localhost:8000
+```
 2. Install dependencies:
-   - `pip install -r requirements.txt`
-3. Run:
-   - `uvicorn server.app.main:app --host 0.0.0.0 --port 8000`
+```bash
+pip install -r requirements.txt
+```
+3. Start backend from repo root:
+```bash
+uvicorn server.app.main:app --host 0.0.0.0 --port 8000
+```
 4. Open:
-   - `http://localhost:8000`
+- `http://127.0.0.1:8000`
 
-## Migrate SQLite to PostgreSQL
-1. Create a PostgreSQL database and connection URL.
-2. Run migration script from repo root:
-   - `python scripts/migrate_sqlite_to_postgres.py --source "sqlite:///./tavern.db" --target "postgresql+psycopg2://user:pass@host:5432/tavern"`
-3. Switch `.env`:
-   - `DATABASE_URL=postgresql+psycopg2://user:pass@host:5432/tavern`
-4. Restart Tavern.
+## PostgreSQL Migration (SQLite -> Postgres)
+1. Back up first:
+- `server/tavern.db`
+- `server/uploads/`
+- `.env`
+2. Set/confirm a Postgres URL:
+- `postgresql+psycopg2://user:pass@host:5432/tavern`
+3. Run migration from repo root:
+```bash
+python scripts/migrate_sqlite_to_postgres.py \
+  --source "sqlite:///./server/tavern.db" \
+  --target "postgresql+psycopg2://user:pass@host:5432/tavern"
+```
+4. Update `.env`:
+```env
+DATABASE_URL=postgresql+psycopg2://user:pass@host:5432/tavern
+```
+5. Restart backend.
+6. Verify active DB:
+```bash
+cd server
+..\venv\Scripts\python.exe -c "from app.db.session import engine; print(engine.dialect.name)"
+```
+Expected output: `postgresql`
 
 Notes:
-- Use `--truncate-target` only if target DB already has data you want to replace.
-- Script preserves IDs and resets PostgreSQL sequences after copy.
+- `--truncate-target` replaces existing target rows.
+- Migration preserves IDs and resets Postgres sequences.
+- Legacy SQLite FK-orphan rows are tolerated during migration import.
 
-## Docker and Portainer
-Production-oriented Docker files are included:
-- `Dockerfile`
-- `docker-compose.yml`
-- `.dockerignore`
+## Backups
+- Store backups under `backups/` (already gitignored).
+- Keep DB + uploads together for restorable snapshots.
 
-Full deployment instructions are in `HOWTO_DOCKER_PORTAINER.md`.
+## Deploy / Docker / Portainer
+- See [HOWTO_DOCKER_PORTAINER.md](HOWTO_DOCKER_PORTAINER.md).
 
-## Frontend Build/Sync Workflow
-Use the sync script to keep `client/public` and the served dist bundle in lockstep while stamping cache versions:
+## Useful Scripts
+- Cache/version asset sync:
+```bash
+python scripts/sync_client_assets.py --version 20260307-hotfix71
+```
+- Post-deploy smoke test:
+```bash
+python scripts/smoke_test.py --base-url http://127.0.0.1:8000 --username admin --password <password>
+```
 
-- `python scripts/sync_client_assets.py --version 20260227-hotfix4`
-
-This will:
-- stamp all frontend `?v=` asset query params
-- update `SERVICE_WORKER_URL` version in dashboard JS
-- copy `client/public` into `dist/tavern-server/_internal/client/public`
-
-## Deploy Smoke Test
-Run a quick post-deploy check:
-
-- `python scripts/smoke_test.py --base-url http://127.0.0.1:8000 --username admin --password <password>`
-
-The smoke test now verifies:
-- `/api/version` is available
-- dashboard footer includes cache meta
-- dashboard JS contains cache-meta renderer
-- mojibake markers are not present in dashboard HTML/JS/username payload
-
-## Security Notes
-- Do not commit `.env`.
+## Security Basics
+- Never commit `.env`.
 - Use a strong `SECRET_KEY`.
-- Set `COOKIE_SECURE=true` behind HTTPS.
-- Restrict `CORS_ORIGINS` to your real domain(s).
-- Persist volumes for DB/uploads/logs.
+- Use HTTPS in production with `COOKIE_SECURE=true`.
+- Restrict `CORS_ORIGINS` to real hostnames.
+- Persist DB/uploads/log volumes in production.
 
-## Default Bootstrap Admin
+## Bootstrap Admin
 - Username: `admin`
 - Password: `admin`
-- First login requires password reset.
-
-Change this immediately in production.
+- First login forces password reset.
