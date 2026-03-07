@@ -495,6 +495,8 @@ let inviteFriendSearchQuery = "";
 let inviteSelectedFriendPublicId = "";
 const unreadChannels = new Set();
 const unreadServers = new Set();
+const MESSAGE_PAGE_SIZE = 50;
+const historyPagingByContext = new Map();
 const channelLastSeen = new Map();
 const channelToServer = new Map();
 const channelTypeById = new Map();
@@ -764,7 +766,7 @@ const FRIEND_REQUEST_TOAST_POLL_MS = 30000;
 let notificationPollInFlight = false;
 let lastNotificationPollAt = 0;
 let lastFriendRequestToastPollAt = 0;
-const SERVICE_WORKER_URL = "/sw.js?v=20260306-hotfix70";
+const SERVICE_WORKER_URL = "/sw.js?v=20260307-hotfix71";
 const PUSH_HEALTHCHECK_MS = 2 * 60 * 1000;
 let pushHealthTimer = null;
 let pushSelfHealInFlight = false;
@@ -1275,6 +1277,39 @@ function setSendStatus(text = "", kind = "muted") {
 function getContextKey(mode, id) {
   if (!mode || !id) return "";
   return mode === "dm" ? `dm:${id}` : `ch:${id}`;
+}
+
+function getHistoryPaging(mode, id) {
+  const key = getContextKey(mode, id);
+  if (!key) return null;
+  let state = historyPagingByContext.get(key);
+  if (!state) {
+    state = { offset: 0, hasMore: true, loadingOlder: false };
+    historyPagingByContext.set(key, state);
+  }
+  return state;
+}
+
+function resetHistoryPaging(mode, id) {
+  const key = getContextKey(mode, id);
+  if (!key) return;
+  historyPagingByContext.set(key, { offset: 0, hasMore: true, loadingOlder: false });
+}
+
+async function maybeLoadOlderMessagesForActiveContext() {
+  if (!messagesPanel || messagesPanel.scrollTop > 72) return;
+  if (activeMode === "dm" && activeDmConversationId) {
+    await loadDmMessages(activeDmConversationId, false, { appendOlder: true });
+    return;
+  }
+  if (
+    activeMode === "server" &&
+    activeChannelId &&
+    activeChannelType !== "voice" &&
+    activeChannelType !== "notes"
+  ) {
+    await loadMessages(activeChannelId, false, { appendOlder: true });
+  }
 }
 
 function getActiveContextKey() {
@@ -5020,7 +5055,10 @@ function bindUtilityControls() {
       scrollMessagesToBottom();
       setJumpUnreadVisible(false);
     });
-    messagesPanel.addEventListener("scroll", updateJumpUnreadState);
+    messagesPanel.addEventListener("scroll", () => {
+      updateJumpUnreadState();
+      maybeLoadOlderMessagesForActiveContext().catch(() => {});
+    });
   }
 
   if (messageSearchToggleBtn && messageSearchBar) {
@@ -5285,6 +5323,17 @@ function closeDmMessageSocket() {
   }
 }
 
+function isChannelSocketConnected(channelPublicId) {
+  if (!channelPublicId) return false;
+  const socket = channelSockets.get(channelPublicId);
+  return Boolean(socket && socket.readyState === WebSocket.OPEN);
+}
+
+function isDmSocketConnected(conversationPublicId) {
+  if (!conversationPublicId || !dmMessageSocket) return false;
+  return dmMessageSocket.readyState === WebSocket.OPEN;
+}
+
 function openDmMessageSocket(conversationPublicId) {
   if (dmSocketBlocked) return;
   closeDmMessageSocket();
@@ -5298,17 +5347,31 @@ function openDmMessageSocket(conversationPublicId) {
   };
   dmMessageSocket.onmessage = async (event) => {
     let payload = null;
+    let eventType = "message_created";
     try {
       payload = JSON.parse(event.data || "{}");
+      eventType = payload?.event || "message_created";
       markSeenForContextIfPending("dm", conversationPublicId, payload.user_id);
     } catch {
       // Ignore malformed payload
     }
-    if (payload && payload.user_id !== currentUserId) {
+    if (eventType === "message_created" && payload && payload.user_id !== currentUserId) {
       emitIncomingMessageNotification("dm", conversationPublicId, payload);
     }
     if (activeMode === "dm" && activeDmConversationId === conversationPublicId) {
-      await loadDmMessages(conversationPublicId, true);
+      const nearBottom = messagesPanel
+        ? (messagesPanel.scrollTop + messagesPanel.clientHeight >= messagesPanel.scrollHeight - 64)
+        : true;
+      if (eventType === "message_created" && payload) {
+        appendRealtimeMessageToPanel(payload, {
+          context: "dm",
+          nearBottom,
+          mode: "dm",
+          contextId: conversationPublicId,
+        });
+      } else {
+        await loadDmMessages(conversationPublicId, eventType === "message_created" && nearBottom);
+      }
     }
   };
   dmMessageSocket.onclose = () => {
@@ -7013,9 +7076,24 @@ function bindUserAvatarImage(imgEl, userPublicId, { alt = "User avatar" } = {}) 
   imgEl.alt = alt;
   if (!userPublicId) {
     imgEl.style.visibility = "hidden";
+    imgEl.dataset.avatarBaseSrc = "";
+    imgEl.dataset.avatarUserPublicId = "";
     return;
   }
   const baseSrc = resolveMediaUrl(`/api/users/${userPublicId}/avatar`);
+  const currentSrc = String(imgEl.getAttribute("src") || "").trim();
+  const previousBaseSrc = String(imgEl.dataset.avatarBaseSrc || "").trim();
+  const previousUserPublicId = String(imgEl.dataset.avatarUserPublicId || "").trim();
+  if (
+    previousBaseSrc === baseSrc &&
+    previousUserPublicId === String(userPublicId) &&
+    currentSrc.startsWith(baseSrc)
+  ) {
+    imgEl.style.visibility = "visible";
+    return;
+  }
+  imgEl.dataset.avatarBaseSrc = baseSrc;
+  imgEl.dataset.avatarUserPublicId = String(userPublicId);
   imgEl.dataset.avatarRetry = "0";
   imgEl.onload = () => {
     imgEl.style.visibility = "visible";
@@ -8866,9 +8944,18 @@ async function connectChannelSocket(channelId) {
           markChannelRead(channelId);
           recalculateUnreadServers();
         }
-        await loadMessages(channelId, isNewMessage && nearBottom);
-        if (isNewMessage && !nearBottom && data.user_id !== currentUserId) {
-          setJumpUnreadVisible(true);
+        if (isNewMessage && !data.parent_message_public_id) {
+          appendRealtimeMessageToPanel(data, {
+            context: "channel",
+            nearBottom,
+            mode: "server",
+            contextId: channelId,
+          });
+        } else {
+          await loadMessages(channelId, isNewMessage && nearBottom);
+          if (isNewMessage && !nearBottom && data.user_id !== currentUserId) {
+            setJumpUnreadVisible(true);
+          }
         }
         if (threadModal?.classList.contains("open")) {
           if (isThreadReplyForOpenThread || eventType !== "message_created") {
@@ -9185,6 +9272,42 @@ function focusRenderedMessage(messagePublicId) {
   void target.offsetWidth;
   target.classList.add("message-jump-flash");
   setTimeout(() => target.classList.remove("message-jump-flash"), 1350);
+  return true;
+}
+
+function findRenderedMessageElement(messagePublicId) {
+  if (!messagesPanel || !messagePublicId) return null;
+  try {
+    const safeId = typeof CSS !== "undefined" && CSS.escape
+      ? CSS.escape(String(messagePublicId))
+      : String(messagePublicId).replace(/["\\]/g, "\\$&");
+    return messagesPanel.querySelector(`.message[data-message-id="${safeId}"]`);
+  } catch {
+    return null;
+  }
+}
+
+function appendRealtimeMessageToPanel(message, options = {}) {
+  if (!messagesPanel || !message?.public_id) return false;
+  if (findRenderedMessageElement(message.public_id)) return false;
+  const context = options.context || "channel";
+  const nearBottom = options.nearBottom !== false;
+  const mode = options.mode || "server";
+  const contextId = options.contextId || null;
+  const placeholder = messagesPanel.querySelector(".message-placeholder");
+  if (placeholder) placeholder.remove();
+  messagesPanel.appendChild(buildMessageElement(message, { context }));
+  const latest = message;
+  if (mode === "dm") cacheLatestMessageId("dm", contextId, latest);
+  else cacheLatestMessageId("server", contextId, latest);
+  if (nearBottom) {
+    scrollMessagesToBottom();
+    setJumpUnreadVisible(false);
+  } else {
+    setJumpUnreadVisible(true);
+  }
+  const paging = getHistoryPaging(mode, contextId);
+  if (paging) paging.offset += 1;
   return true;
 }
 
@@ -11230,24 +11353,66 @@ async function loadAdminPanel() {
   renderAdminAudit(audit);
 }
 
-async function loadDmMessages(conversationPublicId, shouldScrollToBottom = false) {
-  const res = await fetch(`/dms/${conversationPublicId}/messages`, { credentials: "include" });
-  if (!res.ok) {
-    messagesPanel.innerHTML = '<div class="message-placeholder">Could not load messages. Try again.</div>';
-    throw new Error(`Failed to load DM messages: ${res.status}`);
+async function loadDmMessages(conversationPublicId, shouldScrollToBottom = false, options = {}) {
+  const appendOlder = !!options.appendOlder;
+  const paging = getHistoryPaging("dm", conversationPublicId);
+  if (!paging) return;
+  if (appendOlder) {
+    if (paging.loadingOlder || !paging.hasMore) return;
+    paging.loadingOlder = true;
+  } else {
+    paging.offset = 0;
+    paging.hasMore = true;
+    paging.loadingOlder = false;
   }
-  const messages = await res.json();
-  const latest = messages[messages.length - 1];
-  if (latest?.public_id) {
-    cacheLatestMessageId("dm", conversationPublicId, latest);
+
+  try {
+    const params = new URLSearchParams();
+    params.set("limit", String(MESSAGE_PAGE_SIZE));
+    params.set("offset", String(appendOlder ? paging.offset : 0));
+    const res = await fetch(`/dms/${conversationPublicId}/messages?${params.toString()}`, { credentials: "include" });
+    if (!res.ok) {
+      if (!appendOlder) {
+        messagesPanel.innerHTML = '<div class="message-placeholder">Could not load messages. Try again.</div>';
+      }
+      throw new Error(`Failed to load DM messages: ${res.status}`);
+    }
+    const messages = await res.json();
+    const latest = messages[messages.length - 1];
+    if (latest?.public_id) {
+      cacheLatestMessageId("dm", conversationPublicId, latest);
+    }
+
+    if (appendOlder) {
+      if (!messages.length) {
+        paging.hasMore = false;
+        return;
+      }
+      const placeholder = messagesPanel.querySelector(".message-placeholder");
+      if (placeholder) placeholder.remove();
+      const prevHeight = messagesPanel.scrollHeight;
+      const frag = document.createDocumentFragment();
+      messages.forEach((msg) => {
+        frag.appendChild(buildMessageElement(msg, { context: "dm" }));
+      });
+      messagesPanel.prepend(frag);
+      const nextHeight = messagesPanel.scrollHeight;
+      messagesPanel.scrollTop += Math.max(0, nextHeight - prevHeight);
+    } else {
+      renderMessagesIncrementally(messages, (msg) => buildMessageElement(msg, { context: "dm" }), shouldScrollToBottom);
+      if (messageSearchCount) messageSearchCount.textContent = "0";
+      if (messageSearchInput) messageSearchInput.value = "";
+      renderTypingIndicator();
+      if (shouldScrollToBottom) setJumpUnreadVisible(false);
+      else updateJumpUnreadState();
+      refreshSendStatusForActiveContext();
+    }
+
+    paging.offset += messages.length;
+    paging.hasMore = messages.length === MESSAGE_PAGE_SIZE;
+  } finally {
+    if (appendOlder) paging.loadingOlder = false;
   }
-  renderMessagesIncrementally(messages, (msg) => buildMessageElement(msg, { context: "dm" }), shouldScrollToBottom);
-  if (messageSearchCount) messageSearchCount.textContent = "0";
-  if (messageSearchInput) messageSearchInput.value = "";
-  renderTypingIndicator();
-  if (shouldScrollToBottom) setJumpUnreadVisible(false);
-  else updateJumpUnreadState();
-  refreshSendStatusForActiveContext();
 }
 
 async function restoreLastActiveChat() {
@@ -11726,8 +11891,20 @@ function highlightActiveChannel() {
 // --------------------
 // Load Messages
 // --------------------
-async function loadMessages(channelPublicId, shouldScrollToBottom = false) {
+async function loadMessages(channelPublicId, shouldScrollToBottom = false, options = {}) {
   try {
+    const appendOlder = !!options.appendOlder;
+    const paging = getHistoryPaging("server", channelPublicId);
+    if (!paging) return;
+    if (appendOlder) {
+      if (paging.loadingOlder || !paging.hasMore) return;
+      paging.loadingOlder = true;
+    } else {
+      paging.offset = 0;
+      paging.hasMore = true;
+      paging.loadingOlder = false;
+    }
+
     const channelType = channelTypeById.get(channelPublicId) || (channelPublicId === activeChannelId ? activeChannelType : "text");
     if (channelType === "notes") {
       await loadNotesPage(channelPublicId);
@@ -11738,34 +11915,62 @@ async function loadMessages(channelPublicId, shouldScrollToBottom = false) {
       updateTextVsVoiceUI();
     }
     if (activeServerId) await ensureServerNicknames(activeServerId);
-    const res = await fetch(`/messages/${channelPublicId}`, { credentials: "include" });
+    const params = new URLSearchParams();
+    params.set("limit", String(MESSAGE_PAGE_SIZE));
+    params.set("offset", String(appendOlder ? paging.offset : 0));
+    const res = await fetch(`/messages/${channelPublicId}?${params.toString()}`, { credentials: "include" });
     if (!res.ok) {
-      messagesPanel.innerHTML = '<div class="message-placeholder">Could not load messages. Try again.</div>';
+      if (!appendOlder) {
+        messagesPanel.innerHTML = '<div class="message-placeholder">Could not load messages. Try again.</div>';
+      }
       throw new Error(`Failed to load messages: ${res.status}`);
     }
     const messages = await res.json();
 
-    renderMessagesIncrementally(messages, (msg) => buildMessageElement(msg), shouldScrollToBottom);
-    if (messageSearchCount) messageSearchCount.textContent = "0";
-    if (messageSearchInput) messageSearchInput.value = "";
-
-    const latest = messages[messages.length - 1];
-    if (latest?.public_id) {
-      cacheLatestMessageId("server", channelPublicId, latest);
-    }
-    if (latest?.created_at) {
-      channelLastSeen.set(channelPublicId, new Date(latest.created_at).getTime());
+    if (appendOlder) {
+      if (!messages.length) {
+        paging.hasMore = false;
+        return;
+      }
+      const placeholder = messagesPanel.querySelector(".message-placeholder");
+      if (placeholder) placeholder.remove();
+      const prevHeight = messagesPanel.scrollHeight;
+      const frag = document.createDocumentFragment();
+      messages.forEach((msg) => {
+        frag.appendChild(buildMessageElement(msg));
+      });
+      messagesPanel.prepend(frag);
+      const nextHeight = messagesPanel.scrollHeight;
+      messagesPanel.scrollTop += Math.max(0, nextHeight - prevHeight);
     } else {
-      channelLastSeen.set(channelPublicId, Date.now());
+      renderMessagesIncrementally(messages, (msg) => buildMessageElement(msg), shouldScrollToBottom);
+      if (messageSearchCount) messageSearchCount.textContent = "0";
+      if (messageSearchInput) messageSearchInput.value = "";
+
+      const latest = messages[messages.length - 1];
+      if (latest?.public_id) {
+        cacheLatestMessageId("server", channelPublicId, latest);
+      }
+      if (latest?.created_at) {
+        channelLastSeen.set(channelPublicId, new Date(latest.created_at).getTime());
+      } else {
+        channelLastSeen.set(channelPublicId, Date.now());
+      }
+      markChannelRead(channelPublicId);
+      recalculateUnreadServers();
+      renderTypingIndicator();
+      if (shouldScrollToBottom) setJumpUnreadVisible(false);
+      else updateJumpUnreadState();
+      refreshSendStatusForActiveContext();
     }
-    markChannelRead(channelPublicId);
-    recalculateUnreadServers();
-    renderTypingIndicator();
-    if (shouldScrollToBottom) setJumpUnreadVisible(false);
-    else updateJumpUnreadState();
-    refreshSendStatusForActiveContext();
+
+    paging.offset += messages.length;
+    paging.hasMore = messages.length === MESSAGE_PAGE_SIZE;
   } catch (err) {
     console.error("Error loading messages:", err);
+  } finally {
+    const paging = getHistoryPaging("server", channelPublicId);
+    if (paging) paging.loadingOlder = false;
   }
 }
 
@@ -12415,11 +12620,15 @@ if (sendMessageBtn) {
       clearActiveDraft();
       if (activeMode === "dm") {
         setDeliveredForContext("dm", activeDmConversationId, createdMessage);
-        await loadDmMessages(activeDmConversationId, true);
+        if (!isDmSocketConnected(activeDmConversationId)) {
+          await loadDmMessages(activeDmConversationId, true);
+        }
       } else {
         setPendingReply(null);
         setDeliveredForContext("server", activeChannelId, createdMessage);
-        await loadMessages(activeChannelId, true);
+        if (!isChannelSocketConnected(activeChannelId)) {
+          await loadMessages(activeChannelId, true);
+        }
       }
     } catch (err) {
       const isTimeout = err?.name === "AbortError";
@@ -13532,3 +13741,4 @@ window.setTimeout(() => {
 window.setTimeout(() => {
   maybeCheckDesktopWrapperUpdate().catch(() => {});
 }, 1500);
+

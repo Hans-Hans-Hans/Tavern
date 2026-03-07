@@ -91,7 +91,13 @@ def get_conversation_or_404(db: Session, conversation_public_id: str) -> DirectC
     return convo
 
 
-def list_messages(db: Session, conversation_public_id: str, user_id: int, limit: int = 100):
+def list_messages(
+    db: Session,
+    conversation_public_id: str,
+    user_id: int,
+    limit: int = 50,
+    offset: int = 0,
+):
     convo = get_conversation_or_404(db, conversation_public_id)
     _assert_conversation_member(convo, user_id)
     _assert_conversation_friendship(db, convo)
@@ -101,6 +107,7 @@ def list_messages(db: Session, conversation_public_id: str, user_id: int, limit:
         .filter(DirectMessage.conversation_id == convo.id)
         .order_by(DirectMessage.created_at.desc())
         .limit(limit)
+        .offset(offset)
         .all()
     )
     messages = list(reversed(newest))

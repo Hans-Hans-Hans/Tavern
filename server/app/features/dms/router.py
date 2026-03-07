@@ -34,11 +34,18 @@ def create_or_get_conversation(
 @router.get("/{conversation_public_id}/messages", response_model=List[schemas.DirectMessageOut])
 def list_messages(
     conversation_public_id: str,
-    limit: int = Query(100, le=200),
+    limit: int = Query(50, le=200),
+    offset: int = Query(0, ge=0),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return service.list_messages(db, conversation_public_id, current_user.id, limit=limit)
+    return service.list_messages(
+        db,
+        conversation_public_id,
+        current_user.id,
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.post("/{conversation_public_id}/messages", response_model=schemas.DirectMessageOut)
