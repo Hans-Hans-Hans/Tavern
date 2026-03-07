@@ -205,12 +205,36 @@ def admin_delete_user(
     ).delete(synchronize_session=False)
 
     # Remove DM content and conversations involving this user.
+    dm_conversation_ids = [
+        row[0]
+        for row in db.query(DirectConversation.id).filter(
+            or_(DirectConversation.user_one_id == target.id, DirectConversation.user_two_id == target.id)
+        ).all()
+        if row and row[0] is not None
+    ]
+    if dm_conversation_ids:
+        db.query(DirectMessage).filter(DirectMessage.conversation_id.in_(dm_conversation_ids)).delete(
+            synchronize_session=False
+        )
     db.query(DirectMessage).filter(DirectMessage.user_id == target.id).delete(synchronize_session=False)
     db.query(DirectConversation).filter(
         or_(DirectConversation.user_one_id == target.id, DirectConversation.user_two_id == target.id)
     ).delete(synchronize_session=False)
 
     # Remove authored/reaction content in server channels.
+    authored_message_ids = [
+        row[0]
+        for row in db.query(Message.id).filter(Message.user_id == target.id).all()
+        if row and row[0] is not None
+    ]
+    if authored_message_ids:
+        db.query(Message).filter(Message.parent_message_id.in_(authored_message_ids)).update(
+            {Message.parent_message_id: None},
+            synchronize_session=False,
+        )
+        db.query(MessageReaction).filter(MessageReaction.message_id.in_(authored_message_ids)).delete(
+            synchronize_session=False
+        )
     db.query(MessageReaction).filter(MessageReaction.user_id == target.id).delete(synchronize_session=False)
     db.query(Message).filter(Message.pinned_by_user_id == target.id).update(
         {Message.pinned_by_user_id: None},
