@@ -448,6 +448,15 @@ const adminAuditListEl = document.getElementById("admin-audit-list");
 const adminRefreshBtn = document.getElementById("admin-refresh-btn");
 const adminRequireEmailVerificationInput = document.getElementById("admin-require-email-verification");
 const adminSaveSettingsBtn = document.getElementById("admin-save-settings-btn");
+const adminSmtpHostInput = document.getElementById("admin-smtp-host");
+const adminSmtpPortInput = document.getElementById("admin-smtp-port");
+const adminSmtpUsernameInput = document.getElementById("admin-smtp-username");
+const adminSmtpPasswordInput = document.getElementById("admin-smtp-password");
+const adminSmtpPasswordStatus = document.getElementById("admin-smtp-password-status");
+const adminSmtpFromEmailInput = document.getElementById("admin-smtp-from-email");
+const adminSmtpUseTlsInput = document.getElementById("admin-smtp-use-tls");
+const adminSmtpUseSslInput = document.getElementById("admin-smtp-use-ssl");
+const adminEmailVerificationTtlInput = document.getElementById("admin-email-verification-ttl");
 const serverMembersModal = document.getElementById("server-members-modal");
 const membersServerName = document.getElementById("members-server-name");
 const membersListEl = document.getElementById("members-list");
@@ -768,7 +777,7 @@ const FRIEND_REQUEST_TOAST_POLL_MS = 30000;
 let notificationPollInFlight = false;
 let lastNotificationPollAt = 0;
 let lastFriendRequestToastPollAt = 0;
-const SERVICE_WORKER_URL = "/sw.js?v=20260307-hotfix72";
+const SERVICE_WORKER_URL = "/sw.js?v=20260307-hotfix73";
 const PUSH_HEALTHCHECK_MS = 2 * 60 * 1000;
 let pushHealthTimer = null;
 let pushSelfHealInFlight = false;
@@ -11372,6 +11381,19 @@ function renderAdminSettings(settings) {
   if (adminRequireEmailVerificationInput) {
     adminRequireEmailVerificationInput.checked = Boolean(settings?.require_email_verification);
   }
+  if (adminSmtpHostInput) adminSmtpHostInput.value = String(settings?.smtp_host || "");
+  if (adminSmtpPortInput) adminSmtpPortInput.value = String(settings?.smtp_port || 587);
+  if (adminSmtpUsernameInput) adminSmtpUsernameInput.value = String(settings?.smtp_username || "");
+  if (adminSmtpFromEmailInput) adminSmtpFromEmailInput.value = String(settings?.smtp_from_email || "");
+  if (adminSmtpUseTlsInput) adminSmtpUseTlsInput.checked = Boolean(settings?.smtp_use_tls);
+  if (adminSmtpUseSslInput) adminSmtpUseSslInput.checked = Boolean(settings?.smtp_use_ssl);
+  if (adminEmailVerificationTtlInput) {
+    adminEmailVerificationTtlInput.value = String(settings?.email_verification_ttl_minutes || 10);
+  }
+  if (adminSmtpPasswordInput) adminSmtpPasswordInput.value = "";
+  if (adminSmtpPasswordStatus) {
+    adminSmtpPasswordStatus.textContent = settings?.smtp_password_configured ? "Configured" : "Not configured";
+  }
 }
 
 async function loadAdminPanel() {
@@ -13043,8 +13065,24 @@ if (adminSaveSettingsBtn) {
     try {
       adminSaveSettingsBtn.disabled = true;
       const requireEmailVerification = Boolean(adminRequireEmailVerificationInput?.checked);
-      const updated = await patchAdminSettings({
+      const smtpPortRaw = Number.parseInt(String(adminSmtpPortInput?.value || "587"), 10);
+      const ttlRaw = Number.parseInt(String(adminEmailVerificationTtlInput?.value || "10"), 10);
+      const payload = {
         require_email_verification: requireEmailVerification,
+        smtp_host: String(adminSmtpHostInput?.value || "").trim(),
+        smtp_port: Number.isFinite(smtpPortRaw) ? smtpPortRaw : 587,
+        smtp_username: String(adminSmtpUsernameInput?.value || "").trim(),
+        smtp_from_email: String(adminSmtpFromEmailInput?.value || "").trim(),
+        smtp_use_tls: Boolean(adminSmtpUseTlsInput?.checked),
+        smtp_use_ssl: Boolean(adminSmtpUseSslInput?.checked),
+        email_verification_ttl_minutes: Number.isFinite(ttlRaw) ? ttlRaw : 10,
+      };
+      const newPassword = String(adminSmtpPasswordInput?.value || "");
+      if (newPassword) {
+        payload.smtp_password = newPassword;
+      }
+      const updated = await patchAdminSettings({
+        ...payload,
       });
       renderAdminSettings(updated);
       showToast("Admin settings saved");

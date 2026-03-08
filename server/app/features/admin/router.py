@@ -6,10 +6,23 @@ from datetime import UTC, datetime, timedelta
 from app.core.security import get_current_user
 from app.core.audit import read_recent_audit_events, write_audit_event
 from app.core.app_settings import (
+    EMAIL_VERIFICATION_TTL_MINUTES_KEY,
     REQUIRE_EMAIL_VERIFICATION_KEY,
+    SMTP_FROM_EMAIL_KEY,
+    SMTP_HOST_KEY,
+    SMTP_PASSWORD_KEY,
+    SMTP_PORT_KEY,
+    SMTP_USERNAME_KEY,
+    SMTP_USE_SSL_KEY,
+    SMTP_USE_TLS_KEY,
     get_bool_setting,
+    get_int_setting,
+    get_string_setting,
+    set_int_setting,
+    set_string_setting,
     set_bool_setting,
 )
+from app.core.config import settings
 from app.core.runtime_metrics import count_voice_joins
 from app.db.deps import get_db
 from app.features.users.models import User, FriendRequest
@@ -76,6 +89,18 @@ def admin_get_settings(
             REQUIRE_EMAIL_VERIFICATION_KEY,
             default=False,
         ),
+        "smtp_host": get_string_setting(db, SMTP_HOST_KEY, settings.SMTP_HOST),
+        "smtp_port": get_int_setting(db, SMTP_PORT_KEY, int(settings.SMTP_PORT or 587)),
+        "smtp_username": get_string_setting(db, SMTP_USERNAME_KEY, settings.SMTP_USERNAME),
+        "smtp_from_email": get_string_setting(db, SMTP_FROM_EMAIL_KEY, settings.SMTP_FROM_EMAIL),
+        "smtp_use_tls": get_bool_setting(db, SMTP_USE_TLS_KEY, bool(settings.SMTP_USE_TLS)),
+        "smtp_use_ssl": get_bool_setting(db, SMTP_USE_SSL_KEY, bool(settings.SMTP_USE_SSL)),
+        "email_verification_ttl_minutes": get_int_setting(
+            db,
+            EMAIL_VERIFICATION_TTL_MINUTES_KEY,
+            int(settings.EMAIL_VERIFICATION_TTL_MINUTES),
+        ),
+        "smtp_password_configured": bool(get_string_setting(db, SMTP_PASSWORD_KEY, settings.SMTP_PASSWORD).strip()),
     }
 
 
@@ -85,20 +110,86 @@ def admin_patch_settings(
     current_user: User = Depends(require_superadmin),
     db: Session = Depends(get_db),
 ):
-    require_email_verification = bool(payload.get("require_email_verification", False))
-    applied_value = set_bool_setting(
-        db,
-        REQUIRE_EMAIL_VERIFICATION_KEY,
-        require_email_verification,
-    )
+    if "require_email_verification" in payload:
+        set_bool_setting(
+            db,
+            REQUIRE_EMAIL_VERIFICATION_KEY,
+            bool(payload.get("require_email_verification")),
+        )
+    if "smtp_host" in payload:
+        set_string_setting(db, SMTP_HOST_KEY, str(payload.get("smtp_host") or ""))
+    if "smtp_port" in payload:
+        raw_port = int(payload.get("smtp_port") or 587)
+        if raw_port <= 0 or raw_port > 65535:
+            raise HTTPException(status_code=400, detail="smtp_port must be between 1 and 65535")
+        set_int_setting(db, SMTP_PORT_KEY, raw_port)
+    if "smtp_username" in payload:
+        set_string_setting(db, SMTP_USERNAME_KEY, str(payload.get("smtp_username") or ""))
+    if "smtp_from_email" in payload:
+        set_string_setting(db, SMTP_FROM_EMAIL_KEY, str(payload.get("smtp_from_email") or ""))
+    if "smtp_use_tls" in payload:
+        set_bool_setting(db, SMTP_USE_TLS_KEY, bool(payload.get("smtp_use_tls")))
+    if "smtp_use_ssl" in payload:
+        set_bool_setting(db, SMTP_USE_SSL_KEY, bool(payload.get("smtp_use_ssl")))
+    if "email_verification_ttl_minutes" in payload:
+        raw_ttl = int(payload.get("email_verification_ttl_minutes") or 10)
+        if raw_ttl <= 0:
+            raise HTTPException(status_code=400, detail="email_verification_ttl_minutes must be greater than 0")
+        set_int_setting(db, EMAIL_VERIFICATION_TTL_MINUTES_KEY, raw_ttl)
+    if "smtp_password" in payload:
+        incoming_password = payload.get("smtp_password")
+        if incoming_password is None:
+            pass
+        elif str(incoming_password) == "":
+            set_string_setting(db, SMTP_PASSWORD_KEY, "")
+        else:
+            set_string_setting(db, SMTP_PASSWORD_KEY, str(incoming_password))
+
+    result = {
+        "require_email_verification": get_bool_setting(
+            db,
+            REQUIRE_EMAIL_VERIFICATION_KEY,
+            default=False,
+        ),
+        "smtp_host": get_string_setting(db, SMTP_HOST_KEY, settings.SMTP_HOST),
+        "smtp_port": get_int_setting(db, SMTP_PORT_KEY, int(settings.SMTP_PORT or 587)),
+        "smtp_username": get_string_setting(db, SMTP_USERNAME_KEY, settings.SMTP_USERNAME),
+        "smtp_from_email": get_string_setting(db, SMTP_FROM_EMAIL_KEY, settings.SMTP_FROM_EMAIL),
+        "smtp_use_tls": get_bool_setting(db, SMTP_USE_TLS_KEY, bool(settings.SMTP_USE_TLS)),
+        "smtp_use_ssl": get_bool_setting(db, SMTP_USE_SSL_KEY, bool(settings.SMTP_USE_SSL)),
+        "email_verification_ttl_minutes": get_int_setting(
+            db,
+            EMAIL_VERIFICATION_TTL_MINUTES_KEY,
+            int(settings.EMAIL_VERIFICATION_TTL_MINUTES),
+        ),
+        "smtp_password_configured": bool(get_string_setting(db, SMTP_PASSWORD_KEY, settings.SMTP_PASSWORD).strip()),
+    }
     write_audit_event(
         event_type="admin_settings_updated",
         actor_user_id=current_user.id,
         actor_public_id=current_user.public_id,
         target={"settings": "global"},
-        details={"require_email_verification": applied_value},
+        details={
+            "updated_keys": sorted(
+                [
+                    key
+                    for key in (
+                        "require_email_verification",
+                        "smtp_host",
+                        "smtp_port",
+                        "smtp_username",
+                        "smtp_password",
+                        "smtp_from_email",
+                        "smtp_use_tls",
+                        "smtp_use_ssl",
+                        "email_verification_ttl_minutes",
+                    )
+                    if key in payload
+                ]
+            )
+        },
     )
-    return {"require_email_verification": applied_value}
+    return result
 
 
 @router.get("/users")

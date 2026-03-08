@@ -1,12 +1,26 @@
 import smtplib
 from email.message import EmailMessage
 
+from sqlalchemy.orm import Session
+
+from app.core.app_settings import (
+    SMTP_FROM_EMAIL_KEY,
+    SMTP_HOST_KEY,
+    SMTP_PASSWORD_KEY,
+    SMTP_PORT_KEY,
+    SMTP_USERNAME_KEY,
+    SMTP_USE_SSL_KEY,
+    SMTP_USE_TLS_KEY,
+    get_bool_setting,
+    get_int_setting,
+    get_string_setting,
+)
 from app.core.config import settings
 
 
-def send_verification_code_email(to_email: str, code: str, ttl_minutes: int) -> None:
-    host = str(settings.SMTP_HOST or "").strip()
-    from_email = str(settings.SMTP_FROM_EMAIL or "").strip()
+def send_verification_code_email(db: Session, to_email: str, code: str, ttl_minutes: int) -> None:
+    host = get_string_setting(db, SMTP_HOST_KEY, settings.SMTP_HOST).strip()
+    from_email = get_string_setting(db, SMTP_FROM_EMAIL_KEY, settings.SMTP_FROM_EMAIL).strip()
     if not host or not from_email:
         raise RuntimeError("SMTP is not configured")
 
@@ -23,11 +37,11 @@ def send_verification_code_email(to_email: str, code: str, ttl_minutes: int) -> 
         )
     )
 
-    port = int(settings.SMTP_PORT or 587)
-    username = str(settings.SMTP_USERNAME or "").strip()
-    password = str(settings.SMTP_PASSWORD or "")
-    use_tls = bool(settings.SMTP_USE_TLS)
-    use_ssl = bool(settings.SMTP_USE_SSL)
+    port = int(get_int_setting(db, SMTP_PORT_KEY, int(settings.SMTP_PORT or 587)))
+    username = get_string_setting(db, SMTP_USERNAME_KEY, settings.SMTP_USERNAME).strip()
+    password = get_string_setting(db, SMTP_PASSWORD_KEY, settings.SMTP_PASSWORD)
+    use_tls = bool(get_bool_setting(db, SMTP_USE_TLS_KEY, bool(settings.SMTP_USE_TLS)))
+    use_ssl = bool(get_bool_setting(db, SMTP_USE_SSL_KEY, bool(settings.SMTP_USE_SSL)))
 
     if use_ssl:
         with smtplib.SMTP_SSL(host, port, timeout=20) as server:
@@ -42,4 +56,3 @@ def send_verification_code_email(to_email: str, code: str, ttl_minutes: int) -> 
         if username:
             server.login(username, password)
         server.send_message(msg)
-

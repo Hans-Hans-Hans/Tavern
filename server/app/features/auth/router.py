@@ -19,8 +19,10 @@ from app.core.security import (
 from app.core.config import settings
 from app.core.rate_limit import limiter
 from app.core.app_settings import (
+    EMAIL_VERIFICATION_TTL_MINUTES_KEY,
     REQUIRE_EMAIL_VERIFICATION_KEY,
     get_bool_setting,
+    get_int_setting,
 )
 from app.core.email_delivery import send_verification_code_email
 from app.features.auth import schemas as auth_schemas
@@ -102,7 +104,16 @@ def register_request_code(request: Request, user_data: UserCreate, db: Session =
     verification_code = f"{secrets.randbelow(1_000_000):06d}"
     code_hash = hash_password(verification_code)
     password_hash = hash_password(user_data.password)
-    ttl_minutes = max(1, int(settings.EMAIL_VERIFICATION_TTL_MINUTES))
+    ttl_minutes = max(
+        1,
+        int(
+            get_int_setting(
+                db,
+                EMAIL_VERIFICATION_TTL_MINUTES_KEY,
+                int(settings.EMAIL_VERIFICATION_TTL_MINUTES),
+            )
+        ),
+    )
     expires_at = datetime.now(UTC) + timedelta(minutes=ttl_minutes)
 
     pending = db.query(PendingEmailVerification).filter(PendingEmailVerification.email == normalized_email).first()
@@ -125,7 +136,7 @@ def register_request_code(request: Request, user_data: UserCreate, db: Session =
     db.commit()
 
     try:
-        send_verification_code_email(normalized_email, verification_code, ttl_minutes)
+        send_verification_code_email(db, normalized_email, verification_code, ttl_minutes)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Failed to send verification email: {exc}") from exc
 
