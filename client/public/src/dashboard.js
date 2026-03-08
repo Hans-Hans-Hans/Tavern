@@ -777,7 +777,7 @@ const FRIEND_REQUEST_TOAST_POLL_MS = 30000;
 let notificationPollInFlight = false;
 let lastNotificationPollAt = 0;
 let lastFriendRequestToastPollAt = 0;
-const SERVICE_WORKER_URL = "/sw.js?v=20260307-hotfix73";
+const SERVICE_WORKER_URL = "/sw.js?v=20260308-hotfix74";
 const PUSH_HEALTHCHECK_MS = 2 * 60 * 1000;
 let pushHealthTimer = null;
 let pushSelfHealInFlight = false;
@@ -8069,13 +8069,25 @@ async function startScreenShare() {
 }
 
 function buildVoiceAudioConstraints() {
+  const enableEc = Boolean(voiceSettings.echoCancellation);
+  const enableNs = Boolean(voiceSettings.noiseSuppression);
   return {
-    // Keep app-side processing simple (optional EQ), but use browser capture DSP for stable calls.
-    echoCancellation: Boolean(voiceSettings.echoCancellation),
-    noiseSuppression: Boolean(voiceSettings.noiseSuppression),
+    // Prefer browser/hardware DSP first; app-side EQ remains optional on top.
+    echoCancellation: enableEc,
+    noiseSuppression: enableNs,
     autoGainControl: true,
-    channelCount: 1,
-    sampleRate: 48000,
+    channelCount: { ideal: 1 },
+    sampleRate: { ideal: 48000 },
+    sampleSize: { ideal: 16 },
+    latency: { ideal: 0.02 },
+    advanced: [
+      { googEchoCancellation: enableEc },
+      { googEchoCancellation2: enableEc },
+      { googDAEchoCancellation: enableEc },
+      { googNoiseSuppression: enableNs },
+      { googNoiseSuppression2: enableNs },
+      { googAutoGainControl: true },
+    ],
   };
 }
 
@@ -8090,6 +8102,14 @@ async function applyVoiceConstraintsToStream(stream) {
   if (supported.autoGainControl) next.autoGainControl = true;
   if (supported.channelCount) next.channelCount = 1;
   if (supported.sampleRate) next.sampleRate = 48000;
+  next.advanced = [
+    { googEchoCancellation: Boolean(voiceSettings.echoCancellation) },
+    { googEchoCancellation2: Boolean(voiceSettings.echoCancellation) },
+    { googDAEchoCancellation: Boolean(voiceSettings.echoCancellation) },
+    { googNoiseSuppression: Boolean(voiceSettings.noiseSuppression) },
+    { googNoiseSuppression2: Boolean(voiceSettings.noiseSuppression) },
+    { googAutoGainControl: true },
+  ];
   if (Object.keys(next).length === 0) return;
   try {
     await track.applyConstraints(next);
@@ -8118,6 +8138,16 @@ function ensureVoiceAudioContext() {
     voiceAudioContext.resume().catch(() => {});
   }
   return voiceAudioContext;
+}
+
+function applySpeechContentHint(stream) {
+  const track = stream?.getAudioTracks?.()[0];
+  if (!track) return;
+  try {
+    track.contentHint = "speech";
+  } catch {
+    // Some browsers ignore contentHint.
+  }
 }
 
 function teardownLocalVoiceProcessor() {
@@ -8352,6 +8382,8 @@ async function refreshLocalVoiceCaptureFromSettings({ showStatusToast = false } 
 
   localVoiceStream = nextProcessed;
   rawLocalVoiceStream = nextRaw;
+  applySpeechContentHint(rawLocalVoiceStream);
+  applySpeechContentHint(localVoiceStream);
   applyLocalMuteState();
   if (voiceSelfPeerId) {
     detachVoiceLevelSource(voiceSelfPeerId);
@@ -8549,7 +8581,9 @@ async function ensureLocalVoiceStream() {
     video: false,
   });
   await applyVoiceConstraintsToStream(rawLocalVoiceStream);
+  applySpeechContentHint(rawLocalVoiceStream);
   localVoiceStream = buildProcessedVoiceStream(rawLocalVoiceStream);
+  applySpeechContentHint(localVoiceStream);
   applyLocalMuteState();
   if (voiceSelfPeerId) attachVoiceLevelStream(voiceSelfPeerId, localVoiceStream);
   renderLocalVoiceVideoTiles();
