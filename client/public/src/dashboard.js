@@ -223,6 +223,9 @@ const settingsConnectionsSwState = document.getElementById("settings-connections
 const settingsConnectionsHealthJson = document.getElementById("settings-connections-health-json");
 const settingsVoiceEchoCancellationInput = document.getElementById("settings-voice-echo-cancellation");
 const settingsVoiceNoiseSuppressionInput = document.getElementById("settings-voice-noise-suppression");
+const settingsVoiceDenoiseEnabledInput = document.getElementById("settings-voice-denoise-enabled");
+const settingsVoiceDenoiseStrengthInput = document.getElementById("settings-voice-denoise-strength");
+const settingsVoiceDenoiseStrengthValue = document.getElementById("settings-voice-denoise-strength-value");
 const settingsVoiceEqEnabledInput = document.getElementById("settings-voice-eq-enabled");
 const settingsVoiceEqLowInput = document.getElementById("settings-voice-eq-low");
 const settingsVoiceEqLowValue = document.getElementById("settings-voice-eq-low-value");
@@ -632,6 +635,8 @@ const VOICE_SETTINGS_STORAGE_KEY = "tavern.voiceSettings";
 const DEFAULT_VOICE_SETTINGS = {
   echoCancellation: true,
   noiseSuppression: true,
+  denoiseEnabled: false,
+  denoiseStrength: 40,
   eqEnabled: true,
   eqLowGain: 0,
   eqMidGain: 0,
@@ -777,7 +782,7 @@ const FRIEND_REQUEST_TOAST_POLL_MS = 30000;
 let notificationPollInFlight = false;
 let lastNotificationPollAt = 0;
 let lastFriendRequestToastPollAt = 0;
-const SERVICE_WORKER_URL = "/sw.js?v=20260308-hotfix75";
+const SERVICE_WORKER_URL = "/sw.js?v=20260308-hotfix76";
 const PUSH_HEALTHCHECK_MS = 2 * 60 * 1000;
 let pushHealthTimer = null;
 let pushSelfHealInFlight = false;
@@ -2745,6 +2750,8 @@ function normalizeVoiceSettings(rawSettings) {
   return {
     echoCancellation: Boolean(raw.echoCancellation ?? DEFAULT_VOICE_SETTINGS.echoCancellation),
     noiseSuppression: Boolean(raw.noiseSuppression ?? DEFAULT_VOICE_SETTINGS.noiseSuppression),
+    denoiseEnabled: Boolean(raw.denoiseEnabled ?? DEFAULT_VOICE_SETTINGS.denoiseEnabled),
+    denoiseStrength: clamp(Number(raw.denoiseStrength ?? DEFAULT_VOICE_SETTINGS.denoiseStrength), 0, 100),
     eqEnabled: Boolean(raw.eqEnabled ?? DEFAULT_VOICE_SETTINGS.eqEnabled),
     eqLowGain: clamp(Number(raw.eqLowGain ?? DEFAULT_VOICE_SETTINGS.eqLowGain), -12, 12),
     eqMidGain: clamp(Number(raw.eqMidGain ?? DEFAULT_VOICE_SETTINGS.eqMidGain), -12, 12),
@@ -2837,6 +2844,9 @@ function applyVoiceVideoTileLayoutSettings() {
 function updateVoiceControlValues() {
   if (settingsVoiceEchoCancellationInput) settingsVoiceEchoCancellationInput.checked = !!voiceSettings.echoCancellation;
   if (settingsVoiceNoiseSuppressionInput) settingsVoiceNoiseSuppressionInput.checked = !!voiceSettings.noiseSuppression;
+  if (settingsVoiceDenoiseEnabledInput) settingsVoiceDenoiseEnabledInput.checked = !!voiceSettings.denoiseEnabled;
+  if (settingsVoiceDenoiseStrengthInput) settingsVoiceDenoiseStrengthInput.value = String(clamp(Number(voiceSettings.denoiseStrength ?? 40), 0, 100));
+  if (settingsVoiceDenoiseStrengthValue) settingsVoiceDenoiseStrengthValue.textContent = `${Math.round(clamp(Number(voiceSettings.denoiseStrength ?? 40), 0, 100))}%`;
   if (settingsVoiceEqEnabledInput) settingsVoiceEqEnabledInput.checked = !!voiceSettings.eqEnabled;
   if (settingsVoiceEqLowInput) settingsVoiceEqLowInput.value = String(voiceSettings.eqLowGain);
   if (settingsVoiceEqMidInput) settingsVoiceEqMidInput.value = String(voiceSettings.eqMidGain);
@@ -4903,6 +4913,18 @@ function bindVoiceControls() {
     settingsVoiceNoiseSuppressionInput.addEventListener("change", () => {
       voiceSettings.noiseSuppression = Boolean(settingsVoiceNoiseSuppressionInput.checked);
       applyNow(true);
+    });
+  }
+  if (settingsVoiceDenoiseEnabledInput) {
+    settingsVoiceDenoiseEnabledInput.addEventListener("change", () => {
+      voiceSettings.denoiseEnabled = Boolean(settingsVoiceDenoiseEnabledInput.checked);
+      applyNow(true);
+    });
+  }
+  if (settingsVoiceDenoiseStrengthInput) {
+    settingsVoiceDenoiseStrengthInput.addEventListener("input", () => {
+      voiceSettings.denoiseStrength = clamp(Number(settingsVoiceDenoiseStrengthInput.value), 0, 100);
+      scheduleApply();
     });
   }
   if (settingsVoiceEqLowInput) {
@@ -8216,38 +8238,76 @@ function stopStreamTracks(stream, seenTrackIds = null) {
   });
 }
 
+function attachDenoiseNodes(ctx, inputNode, nodes) {
+  const denoiseStrength = clamp(Number(voiceSettings.denoiseStrength ?? 40), 0, 100) / 100;
+
+  const highPass = ctx.createBiquadFilter();
+  highPass.type = "highpass";
+  highPass.frequency.value = 80 + Math.round(100 * denoiseStrength);
+  highPass.Q.value = 0.7;
+
+  const lowPass = ctx.createBiquadFilter();
+  lowPass.type = "lowpass";
+  lowPass.frequency.value = 8500 - Math.round(3200 * denoiseStrength);
+  lowPass.Q.value = 0.7;
+
+  const compressor = ctx.createDynamicsCompressor();
+  compressor.threshold.value = -52 + (20 * denoiseStrength);
+  compressor.knee.value = 24;
+  compressor.ratio.value = 2 + (2 * denoiseStrength);
+  compressor.attack.value = 0.003;
+  compressor.release.value = 0.18;
+
+  inputNode.connect(highPass);
+  highPass.connect(lowPass);
+  lowPass.connect(compressor);
+  nodes.push(highPass, lowPass, compressor);
+  return compressor;
+}
+
 function buildProcessedVoiceStream(rawStream) {
   teardownLocalVoiceProcessor();
   const ctx = ensureVoiceAudioContext();
   if (!ctx || !rawStream) return rawStream;
-  if (!voiceSettings.eqEnabled) return rawStream;
+  if (!voiceSettings.eqEnabled && !voiceSettings.denoiseEnabled) return rawStream;
 
   const source = ctx.createMediaStreamSource(rawStream);
-  const eqLow = ctx.createBiquadFilter();
-  eqLow.type = "lowshelf";
-  eqLow.frequency.value = 160;
-  eqLow.gain.value = voiceSettings.eqLowGain;
+  const nodes = [source];
+  let lastNode = source;
 
-  const eqMid = ctx.createBiquadFilter();
-  eqMid.type = "peaking";
-  eqMid.frequency.value = 1250;
-  eqMid.Q.value = 0.9;
-  eqMid.gain.value = voiceSettings.eqMidGain;
+  if (voiceSettings.denoiseEnabled) {
+    lastNode = attachDenoiseNodes(ctx, lastNode, nodes);
+  }
 
-  const eqHigh = ctx.createBiquadFilter();
-  eqHigh.type = "highshelf";
-  eqHigh.frequency.value = 4300;
-  eqHigh.gain.value = voiceSettings.eqHighGain;
+  if (voiceSettings.eqEnabled) {
+    const eqLow = ctx.createBiquadFilter();
+    eqLow.type = "lowshelf";
+    eqLow.frequency.value = 160;
+    eqLow.gain.value = voiceSettings.eqLowGain;
+
+    const eqMid = ctx.createBiquadFilter();
+    eqMid.type = "peaking";
+    eqMid.frequency.value = 1250;
+    eqMid.Q.value = 0.9;
+    eqMid.gain.value = voiceSettings.eqMidGain;
+
+    const eqHigh = ctx.createBiquadFilter();
+    eqHigh.type = "highshelf";
+    eqHigh.frequency.value = 4300;
+    eqHigh.gain.value = voiceSettings.eqHighGain;
+
+    lastNode.connect(eqLow);
+    eqLow.connect(eqMid);
+    eqMid.connect(eqHigh);
+    lastNode = eqHigh;
+    nodes.push(eqLow, eqMid, eqHigh);
+  }
 
   const destination = ctx.createMediaStreamDestination();
-  source.connect(eqLow);
-  eqLow.connect(eqMid);
-  eqMid.connect(eqHigh);
-  eqHigh.connect(destination);
+  lastNode.connect(destination);
+  nodes.push(destination);
 
-  localVoiceProcessor = {
-    nodes: [source, eqLow, eqMid, eqHigh, destination],
-  };
+  localVoiceProcessor = { nodes };
   return destination.stream;
 }
 
@@ -8289,32 +8349,44 @@ function buildProcessedVoiceStreamForSelfTest(rawStream) {
   teardownMicSelfTestGraph();
   const ctx = ensureVoiceAudioContext();
   if (!ctx || !rawStream) return rawStream;
-  if (!voiceSettings.eqEnabled) return rawStream;
+  if (!voiceSettings.eqEnabled && !voiceSettings.denoiseEnabled) return rawStream;
 
   const source = ctx.createMediaStreamSource(rawStream);
-  const eqLow = ctx.createBiquadFilter();
-  eqLow.type = "lowshelf";
-  eqLow.frequency.value = 160;
-  eqLow.gain.value = voiceSettings.eqLowGain;
+  const nodes = [source];
+  let lastNode = source;
 
-  const eqMid = ctx.createBiquadFilter();
-  eqMid.type = "peaking";
-  eqMid.frequency.value = 1250;
-  eqMid.Q.value = 0.9;
-  eqMid.gain.value = voiceSettings.eqMidGain;
+  if (voiceSettings.denoiseEnabled) {
+    lastNode = attachDenoiseNodes(ctx, lastNode, nodes);
+  }
 
-  const eqHigh = ctx.createBiquadFilter();
-  eqHigh.type = "highshelf";
-  eqHigh.frequency.value = 4300;
-  eqHigh.gain.value = voiceSettings.eqHighGain;
+  if (voiceSettings.eqEnabled) {
+    const eqLow = ctx.createBiquadFilter();
+    eqLow.type = "lowshelf";
+    eqLow.frequency.value = 160;
+    eqLow.gain.value = voiceSettings.eqLowGain;
+
+    const eqMid = ctx.createBiquadFilter();
+    eqMid.type = "peaking";
+    eqMid.frequency.value = 1250;
+    eqMid.Q.value = 0.9;
+    eqMid.gain.value = voiceSettings.eqMidGain;
+
+    const eqHigh = ctx.createBiquadFilter();
+    eqHigh.type = "highshelf";
+    eqHigh.frequency.value = 4300;
+    eqHigh.gain.value = voiceSettings.eqHighGain;
+
+    lastNode.connect(eqLow);
+    eqLow.connect(eqMid);
+    eqMid.connect(eqHigh);
+    lastNode = eqHigh;
+    nodes.push(eqLow, eqMid, eqHigh);
+  }
 
   const destination = ctx.createMediaStreamDestination();
-  source.connect(eqLow);
-  eqLow.connect(eqMid);
-  eqMid.connect(eqHigh);
-  eqHigh.connect(destination);
-
-  micSelfTestNodes = [source, eqLow, eqMid, eqHigh, destination];
+  lastNode.connect(destination);
+  nodes.push(destination);
+  micSelfTestNodes = nodes;
   return destination.stream;
 }
 
