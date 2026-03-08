@@ -777,7 +777,7 @@ const FRIEND_REQUEST_TOAST_POLL_MS = 30000;
 let notificationPollInFlight = false;
 let lastNotificationPollAt = 0;
 let lastFriendRequestToastPollAt = 0;
-const SERVICE_WORKER_URL = "/sw.js?v=20260308-hotfix74";
+const SERVICE_WORKER_URL = "/sw.js?v=20260308-hotfix75";
 const PUSH_HEALTHCHECK_MS = 2 * 60 * 1000;
 let pushHealthTimer = null;
 let pushSelfHealInFlight = false;
@@ -2788,6 +2788,18 @@ function getScreenShareVideoConstraints() {
     width: { ideal: 1280, max: 1280 },
     height: { ideal: 720, max: 720 },
     frameRate: { ideal: 15, max: 20 },
+  };
+}
+
+function getScreenShareAudioConstraints() {
+  // Browser-specific hints for tab/system audio capture support.
+  return {
+    echoCancellation: false,
+    noiseSuppression: false,
+    autoGainControl: false,
+    suppressLocalAudioPlayback: false,
+    systemAudio: "include",
+    selfBrowserSurface: "include",
   };
 }
 
@@ -7933,19 +7945,40 @@ async function ensureLocalCameraStream() {
 
 async function ensureLocalScreenStream() {
   if (localScreenStream?.getVideoTracks?.().length) return localScreenStream;
+  let startedWithoutAudio = false;
   try {
     localScreenStream = await navigator.mediaDevices.getDisplayMedia({
       video: getScreenShareVideoConstraints(),
-      audio: true,
+      audio: getScreenShareAudioConstraints(),
     });
   } catch (err) {
-    // Some browsers/platforms reject audio capture for display media; fall back to video-only.
-    localScreenStream = await navigator.mediaDevices.getDisplayMedia({
-      video: getScreenShareVideoConstraints(),
-      audio: false,
-    });
     try {
-      showToast("Screen sharing started without system audio");
+      // Some browsers reject advanced audio constraints; retry with plain audio request.
+      localScreenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: getScreenShareVideoConstraints(),
+        audio: true,
+      });
+    } catch {
+      // Some browsers/platforms reject audio capture for display media; fall back to video-only.
+      localScreenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: getScreenShareVideoConstraints(),
+        audio: false,
+      });
+      startedWithoutAudio = true;
+    }
+  }
+  const audioTracks = localScreenStream.getAudioTracks?.() || [];
+  audioTracks.forEach((track) => {
+    track.enabled = true;
+    try {
+      track.contentHint = "music";
+    } catch {
+      // Some browsers ignore contentHint.
+    }
+  });
+  if (startedWithoutAudio || audioTracks.length === 0) {
+    try {
+      showToast("Screen share has no audio. Share a browser tab and enable tab audio.");
     } catch {
       // ignore toast failures
     }
