@@ -30,14 +30,6 @@ class Settings:
     VAPID_PUBLIC_KEY: str = os.getenv("VAPID_PUBLIC_KEY", "").strip()
     VAPID_PRIVATE_KEY: str = os.getenv("VAPID_PRIVATE_KEY", "").strip()
     VAPID_SUBJECT: str = os.getenv("VAPID_SUBJECT", "mailto:admin@tavern.local").strip()
-    SMTP_HOST: str = os.getenv("SMTP_HOST", "").strip()
-    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
-    SMTP_USERNAME: str = os.getenv("SMTP_USERNAME", "").strip()
-    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
-    SMTP_FROM_EMAIL: str = os.getenv("SMTP_FROM_EMAIL", "").strip()
-    SMTP_USE_TLS: bool = os.getenv("SMTP_USE_TLS", "true").lower() in {"1", "true", "yes", "on"}
-    SMTP_USE_SSL: bool = os.getenv("SMTP_USE_SSL", "false").lower() in {"1", "true", "yes", "on"}
-    EMAIL_VERIFICATION_TTL_MINUTES: int = int(os.getenv("EMAIL_VERIFICATION_TTL_MINUTES", "10"))
     COOKIE_SECURE: bool = os.getenv("COOKIE_SECURE", "false").lower() in {"1", "true", "yes", "on"}
     _raw_cookie_samesite: str = os.getenv("COOKIE_SAMESITE", "lax").strip().lower()
     if _raw_cookie_samesite not in {"lax", "strict", "none"}:

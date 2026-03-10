@@ -128,29 +128,6 @@ def update_user(db: Session, public_id: str, user_in: schemas.UserUpdate):
     return user
 
 
-def create_user_with_hashed_password(
-    db: Session,
-    username: str,
-    email: str,
-    hashed_password: str,
-    is_superadmin: bool = False,
-    must_reset_password: bool = False,
-):
-    username = normalize_username(username)
-    email = str(email or "").strip().lower()
-    user = models.User(
-        username=username,
-        email=email,
-        hashed_password=hashed_password,
-        is_superadmin=is_superadmin,
-        must_reset_password=must_reset_password,
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user
-
-
 def get_user_appearance_settings(user: models.User) -> dict | None:
     raw = str(user.appearance_settings or "").strip()
     if not raw:
