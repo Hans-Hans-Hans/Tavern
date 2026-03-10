@@ -2,27 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 from datetime import UTC, datetime, timedelta
+import hashlib
+import secrets
 
 from app.core.security import get_current_user
 from app.core.audit import read_recent_audit_events, write_audit_event
 from app.core.app_settings import (
-    EMAIL_VERIFICATION_TTL_MINUTES_KEY,
-    REQUIRE_EMAIL_VERIFICATION_KEY,
-    SMTP_FROM_EMAIL_KEY,
-    SMTP_HOST_KEY,
-    SMTP_PASSWORD_KEY,
-    SMTP_PORT_KEY,
-    SMTP_USERNAME_KEY,
-    SMTP_USE_SSL_KEY,
-    SMTP_USE_TLS_KEY,
+    REQUIRE_REGISTRATION_CODE_KEY,
     get_bool_setting,
-    get_int_setting,
-    get_string_setting,
-    set_int_setting,
-    set_string_setting,
     set_bool_setting,
 )
-from app.core.config import settings
 from app.core.runtime_metrics import count_voice_joins
 from app.db.deps import get_db
 from app.features.users.models import User, FriendRequest
@@ -33,6 +22,7 @@ from app.features.channels.models import Channel
 from app.features.messages.models import Message, MessageReaction
 from app.features.dms.models import DirectConversation, DirectMessage
 from app.features.push.models import PushSubscription
+from app.features.auth.models import RegistrationCode
 
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
@@ -42,6 +32,26 @@ def require_superadmin(current_user: User = Depends(get_current_user)) -> User:
     if not current_user.is_superadmin:
         raise HTTPException(status_code=403, detail="Superadmin access required")
     return current_user
+
+
+REGISTRATION_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+
+def _normalize_registration_code(raw: str) -> str:
+    text = str(raw or "").strip().upper().replace(" ", "").replace("-", "")
+    if not text:
+        return ""
+    return "-".join([text[i:i + 4] for i in range(0, len(text), 4)])
+
+
+def _registration_code_digest(code: str) -> str:
+    normalized = "".join(ch for ch in str(code or "").strip().upper() if ch.isalnum())
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def _generate_registration_code(length: int = 12) -> str:
+    token = "".join(secrets.choice(REGISTRATION_CODE_ALPHABET) for _ in range(max(8, int(length))))
+    return _normalize_registration_code(token)
 
 
 @router.get("/overview")
@@ -84,23 +94,11 @@ def admin_get_settings(
 ):
     _ = current_user
     return {
-        "require_email_verification": get_bool_setting(
+        "require_registration_code": get_bool_setting(
             db,
-            REQUIRE_EMAIL_VERIFICATION_KEY,
+            REQUIRE_REGISTRATION_CODE_KEY,
             default=False,
         ),
-        "smtp_host": get_string_setting(db, SMTP_HOST_KEY, settings.SMTP_HOST),
-        "smtp_port": get_int_setting(db, SMTP_PORT_KEY, int(settings.SMTP_PORT or 587)),
-        "smtp_username": get_string_setting(db, SMTP_USERNAME_KEY, settings.SMTP_USERNAME),
-        "smtp_from_email": get_string_setting(db, SMTP_FROM_EMAIL_KEY, settings.SMTP_FROM_EMAIL),
-        "smtp_use_tls": get_bool_setting(db, SMTP_USE_TLS_KEY, bool(settings.SMTP_USE_TLS)),
-        "smtp_use_ssl": get_bool_setting(db, SMTP_USE_SSL_KEY, bool(settings.SMTP_USE_SSL)),
-        "email_verification_ttl_minutes": get_int_setting(
-            db,
-            EMAIL_VERIFICATION_TTL_MINUTES_KEY,
-            int(settings.EMAIL_VERIFICATION_TTL_MINUTES),
-        ),
-        "smtp_password_configured": bool(get_string_setting(db, SMTP_PASSWORD_KEY, settings.SMTP_PASSWORD).strip()),
     }
 
 
@@ -110,59 +108,19 @@ def admin_patch_settings(
     current_user: User = Depends(require_superadmin),
     db: Session = Depends(get_db),
 ):
-    if "require_email_verification" in payload:
+    if "require_registration_code" in payload:
         set_bool_setting(
             db,
-            REQUIRE_EMAIL_VERIFICATION_KEY,
-            bool(payload.get("require_email_verification")),
+            REQUIRE_REGISTRATION_CODE_KEY,
+            bool(payload.get("require_registration_code")),
         )
-    if "smtp_host" in payload:
-        set_string_setting(db, SMTP_HOST_KEY, str(payload.get("smtp_host") or ""))
-    if "smtp_port" in payload:
-        raw_port = int(payload.get("smtp_port") or 587)
-        if raw_port <= 0 or raw_port > 65535:
-            raise HTTPException(status_code=400, detail="smtp_port must be between 1 and 65535")
-        set_int_setting(db, SMTP_PORT_KEY, raw_port)
-    if "smtp_username" in payload:
-        set_string_setting(db, SMTP_USERNAME_KEY, str(payload.get("smtp_username") or ""))
-    if "smtp_from_email" in payload:
-        set_string_setting(db, SMTP_FROM_EMAIL_KEY, str(payload.get("smtp_from_email") or ""))
-    if "smtp_use_tls" in payload:
-        set_bool_setting(db, SMTP_USE_TLS_KEY, bool(payload.get("smtp_use_tls")))
-    if "smtp_use_ssl" in payload:
-        set_bool_setting(db, SMTP_USE_SSL_KEY, bool(payload.get("smtp_use_ssl")))
-    if "email_verification_ttl_minutes" in payload:
-        raw_ttl = int(payload.get("email_verification_ttl_minutes") or 10)
-        if raw_ttl <= 0:
-            raise HTTPException(status_code=400, detail="email_verification_ttl_minutes must be greater than 0")
-        set_int_setting(db, EMAIL_VERIFICATION_TTL_MINUTES_KEY, raw_ttl)
-    if "smtp_password" in payload:
-        incoming_password = payload.get("smtp_password")
-        if incoming_password is None:
-            pass
-        elif str(incoming_password) == "":
-            set_string_setting(db, SMTP_PASSWORD_KEY, "")
-        else:
-            set_string_setting(db, SMTP_PASSWORD_KEY, str(incoming_password))
 
     result = {
-        "require_email_verification": get_bool_setting(
+        "require_registration_code": get_bool_setting(
             db,
-            REQUIRE_EMAIL_VERIFICATION_KEY,
+            REQUIRE_REGISTRATION_CODE_KEY,
             default=False,
         ),
-        "smtp_host": get_string_setting(db, SMTP_HOST_KEY, settings.SMTP_HOST),
-        "smtp_port": get_int_setting(db, SMTP_PORT_KEY, int(settings.SMTP_PORT or 587)),
-        "smtp_username": get_string_setting(db, SMTP_USERNAME_KEY, settings.SMTP_USERNAME),
-        "smtp_from_email": get_string_setting(db, SMTP_FROM_EMAIL_KEY, settings.SMTP_FROM_EMAIL),
-        "smtp_use_tls": get_bool_setting(db, SMTP_USE_TLS_KEY, bool(settings.SMTP_USE_TLS)),
-        "smtp_use_ssl": get_bool_setting(db, SMTP_USE_SSL_KEY, bool(settings.SMTP_USE_SSL)),
-        "email_verification_ttl_minutes": get_int_setting(
-            db,
-            EMAIL_VERIFICATION_TTL_MINUTES_KEY,
-            int(settings.EMAIL_VERIFICATION_TTL_MINUTES),
-        ),
-        "smtp_password_configured": bool(get_string_setting(db, SMTP_PASSWORD_KEY, settings.SMTP_PASSWORD).strip()),
     }
     write_audit_event(
         event_type="admin_settings_updated",
@@ -174,15 +132,7 @@ def admin_patch_settings(
                 [
                     key
                     for key in (
-                        "require_email_verification",
-                        "smtp_host",
-                        "smtp_port",
-                        "smtp_username",
-                        "smtp_password",
-                        "smtp_from_email",
-                        "smtp_use_tls",
-                        "smtp_use_ssl",
-                        "email_verification_ttl_minutes",
+                        "require_registration_code",
                     )
                     if key in payload
                 ]
@@ -190,6 +140,92 @@ def admin_patch_settings(
         },
     )
     return result
+
+
+@router.get("/registration-codes")
+def admin_list_registration_codes(
+    current_user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db),
+):
+    _ = current_user
+    rows = db.query(RegistrationCode).order_by(RegistrationCode.created_at.desc()).limit(200).all()
+    return [
+        {
+            "public_id": row.public_id,
+            "note": row.note,
+            "created_at": row.created_at,
+            "used_at": row.used_at,
+            "revoked_at": row.revoked_at,
+            "created_by_user_id": row.created_by_user_id,
+            "used_by_user_id": row.used_by_user_id,
+            "is_active": bool(row.used_at is None and row.revoked_at is None),
+        }
+        for row in rows
+    ]
+
+
+@router.post("/registration-codes")
+def admin_create_registration_code(
+    payload: dict,
+    current_user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db),
+):
+    note = str(payload.get("note") or "").strip()[:200] or None
+    created_code = ""
+    created_digest = ""
+    for _ in range(8):
+        created_code = _generate_registration_code()
+        created_digest = _registration_code_digest(created_code)
+        exists = db.query(RegistrationCode).filter(RegistrationCode.code_digest == created_digest).first()
+        if not exists:
+            break
+    if not created_code or not created_digest:
+        raise HTTPException(status_code=500, detail="Could not generate registration code")
+    row = RegistrationCode(
+        code_digest=created_digest,
+        note=note,
+        created_by_user_id=current_user.id,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    write_audit_event(
+        event_type="admin_registration_code_created",
+        actor_user_id=current_user.id,
+        actor_public_id=current_user.public_id,
+        target={"registration_code_public_id": row.public_id},
+        details={"note": note},
+    )
+    return {
+        "public_id": row.public_id,
+        "code": created_code,
+        "note": row.note,
+        "created_at": row.created_at,
+        "is_active": True,
+    }
+
+
+@router.delete("/registration-codes/{code_public_id}")
+def admin_revoke_registration_code(
+    code_public_id: str,
+    current_user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db),
+):
+    row = db.query(RegistrationCode).filter(RegistrationCode.public_id == code_public_id).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Registration code not found")
+    if row.used_at is not None:
+        raise HTTPException(status_code=400, detail="Registration code is already used")
+    if row.revoked_at is None:
+        row.revoked_at = datetime.now(UTC)
+        db.commit()
+    write_audit_event(
+        event_type="admin_registration_code_revoked",
+        actor_user_id=current_user.id,
+        actor_public_id=current_user.public_id,
+        target={"registration_code_public_id": row.public_id},
+    )
+    return {"detail": "Registration code revoked"}
 
 
 @router.get("/users")

@@ -8,13 +8,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tavern">
-<link rel="manifest" href="/manifest.webmanifest?v=20260308-hotfix76">
+<link rel="manifest" href="/manifest.webmanifest?v=20260310-hotfix77">
 <link rel="apple-touch-icon" href="/favicon.svg">
 
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="stylesheet" href="css/dashboard.css?v=20260308-hotfix76">
+<link rel="stylesheet" href="css/dashboard.css?v=20260310-hotfix77">
 </head>
 <body>
 <header class="app-header">
@@ -762,52 +762,21 @@
     <div id="admin-overview" class="admin-overview-grid"></div>
     <div class="settings-subtitle">Registration Settings</div>
     <div class="settings-action-row">
-      <label for="admin-require-email-verification" style="display:flex;align-items:center;gap:8px;">
-        <input id="admin-require-email-verification" type="checkbox">
-        Require email verification for new accounts
+      <label for="admin-require-registration-code" style="display:flex;align-items:center;gap:8px;">
+        <input id="admin-require-registration-code" type="checkbox">
+        Require one-time registration code for new accounts
       </label>
       <button id="admin-save-settings-btn" type="button">Save Settings</button>
     </div>
-    <div class="settings-subtitle">SMTP Settings</div>
-    <div class="settings-control-row">
-      <label for="admin-smtp-host">SMTP Host</label>
-      <input id="admin-smtp-host" type="text" placeholder="smtp.example.com">
-      <span>Mail server hostname</span>
-    </div>
-    <div class="settings-control-row">
-      <label for="admin-smtp-port">SMTP Port</label>
-      <input id="admin-smtp-port" type="number" min="1" max="65535" placeholder="587">
-      <span>Common: 587 (TLS) or 465 (SSL)</span>
-    </div>
-    <div class="settings-control-row">
-      <label for="admin-smtp-username">SMTP Username</label>
-      <input id="admin-smtp-username" type="text" placeholder="smtp-user">
-      <span>Optional for unauthenticated relays</span>
-    </div>
-    <div class="settings-control-row">
-      <label for="admin-smtp-password">SMTP Password</label>
-      <input id="admin-smtp-password" type="password" placeholder="Leave blank to keep existing">
-      <span id="admin-smtp-password-status">Not configured</span>
-    </div>
-    <div class="settings-control-row">
-      <label for="admin-smtp-from-email">From Email</label>
-      <input id="admin-smtp-from-email" type="email" placeholder="no-reply@example.com">
-      <span>Sender address shown in verification emails</span>
-    </div>
-    <div class="settings-control-row">
-      <label for="admin-email-verification-ttl">Code TTL (minutes)</label>
-      <input id="admin-email-verification-ttl" type="number" min="1" max="1440" placeholder="10">
-      <span>How long verification codes remain valid</span>
-    </div>
+    <div class="settings-subtitle">One-time Registration Codes</div>
     <div class="settings-action-row">
-      <label for="admin-smtp-use-tls" style="display:flex;align-items:center;gap:8px;">
-        <input id="admin-smtp-use-tls" type="checkbox">
-        Use STARTTLS
-      </label>
-      <label for="admin-smtp-use-ssl" style="display:flex;align-items:center;gap:8px;">
-        <input id="admin-smtp-use-ssl" type="checkbox">
-        Use SSL
-      </label>
+      <input id="admin-registration-code-note" type="text" placeholder="Optional note for this code">
+      <button id="admin-generate-registration-code-btn" type="button">Generate Code</button>
+    </div>
+    <div id="admin-registration-codes-list" class="admin-users-list"></div>
+    <div class="settings-subtitle">Codes are shown once at creation. Copy and share manually.</div>
+    <div class="settings-action-row">
+      <button id="admin-refresh-registration-codes-btn" type="button">Refresh Codes</button>
     </div>
     <div class="admin-users-header">
       <h4>Users</h4>
@@ -847,12 +816,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
-<script src="src/features/notifications/helpers.js?v=20260308-hotfix76"></script>
-<script src="src/features/session/helpers.js?v=20260308-hotfix76"></script>
-<script src="src/features/session/lifecycle.js?v=20260308-hotfix76"></script>
-<script src="src/features/runtime/diagnostics.js?v=20260308-hotfix76"></script>
-<script src="src/features/runtime/network_gates.js?v=20260308-hotfix76"></script>
-<script src="src/dashboard.js?v=20260308-hotfix76"></script>
+<script src="src/features/notifications/helpers.js?v=20260310-hotfix77"></script>
+<script src="src/features/session/helpers.js?v=20260310-hotfix77"></script>
+<script src="src/features/session/lifecycle.js?v=20260310-hotfix77"></script>
+<script src="src/features/runtime/diagnostics.js?v=20260310-hotfix77"></script>
+<script src="src/features/runtime/network_gates.js?v=20260310-hotfix77"></script>
+<script src="src/dashboard.js?v=20260310-hotfix77"></script>
 </body>
 </html>
 

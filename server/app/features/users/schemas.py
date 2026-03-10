@@ -134,6 +134,7 @@ class UserUpdate(BaseModel):
     username_color: Optional[str] = None
     name_emoji: Optional[str] = None
     custom_status: Optional[str] = None
+    strip_upload_metadata: Optional[bool] = None
 
     @field_validator("username")
     @classmethod

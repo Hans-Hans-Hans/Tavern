@@ -1,6 +1,8 @@
 from pydantic import BaseModel, field_validator
 import re
 
+from app.features.users.schemas import UserCreate
+
 
 class FirstUseResetRequest(BaseModel):
     username: str
@@ -20,24 +22,17 @@ class FirstUseResetRequest(BaseModel):
         return value
 
 
-class RegisterRequestCodeResponse(BaseModel):
-    detail: str
-    expires_in_seconds: int
+class RegisterRequest(UserCreate):
+    registration_code: str | None = None
 
-
-class RegisterVerifyCodeRequest(BaseModel):
-    email: str
-    code: str
-
-    @field_validator("email")
+    @field_validator("registration_code")
     @classmethod
-    def normalize_email(cls, value: str) -> str:
-        return str(value or "").strip().lower()
-
-    @field_validator("code")
-    @classmethod
-    def validate_code(cls, value: str) -> str:
-        raw = str(value or "").strip()
-        if not re.match(r"^\d{6}$", raw):
-            raise ValueError("Verification code must be 6 digits")
+    def normalize_registration_code(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        raw = str(value or "").strip().upper()
+        if not raw:
+            return None
+        if not re.match(r"^[A-Z0-9\-]{4,64}$", raw):
+            raise ValueError("registration_code must be 4-64 chars using A-Z, 0-9, or '-'")
         return raw

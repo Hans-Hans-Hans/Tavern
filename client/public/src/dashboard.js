@@ -449,17 +449,12 @@ const adminOverviewEl = document.getElementById("admin-overview");
 const adminUsersListEl = document.getElementById("admin-users-list");
 const adminAuditListEl = document.getElementById("admin-audit-list");
 const adminRefreshBtn = document.getElementById("admin-refresh-btn");
-const adminRequireEmailVerificationInput = document.getElementById("admin-require-email-verification");
+const adminRequireRegistrationCodeInput = document.getElementById("admin-require-registration-code");
 const adminSaveSettingsBtn = document.getElementById("admin-save-settings-btn");
-const adminSmtpHostInput = document.getElementById("admin-smtp-host");
-const adminSmtpPortInput = document.getElementById("admin-smtp-port");
-const adminSmtpUsernameInput = document.getElementById("admin-smtp-username");
-const adminSmtpPasswordInput = document.getElementById("admin-smtp-password");
-const adminSmtpPasswordStatus = document.getElementById("admin-smtp-password-status");
-const adminSmtpFromEmailInput = document.getElementById("admin-smtp-from-email");
-const adminSmtpUseTlsInput = document.getElementById("admin-smtp-use-tls");
-const adminSmtpUseSslInput = document.getElementById("admin-smtp-use-ssl");
-const adminEmailVerificationTtlInput = document.getElementById("admin-email-verification-ttl");
+const adminRegistrationCodeNoteInput = document.getElementById("admin-registration-code-note");
+const adminGenerateRegistrationCodeBtn = document.getElementById("admin-generate-registration-code-btn");
+const adminRegistrationCodesList = document.getElementById("admin-registration-codes-list");
+const adminRefreshRegistrationCodesBtn = document.getElementById("admin-refresh-registration-codes-btn");
 const serverMembersModal = document.getElementById("server-members-modal");
 const membersServerName = document.getElementById("members-server-name");
 const membersListEl = document.getElementById("members-list");
@@ -782,7 +777,7 @@ const FRIEND_REQUEST_TOAST_POLL_MS = 30000;
 let notificationPollInFlight = false;
 let lastNotificationPollAt = 0;
 let lastFriendRequestToastPollAt = 0;
-const SERVICE_WORKER_URL = "/sw.js?v=20260308-hotfix76";
+const SERVICE_WORKER_URL = "/sw.js?v=20260310-hotfix77";
 const PUSH_HEALTHCHECK_MS = 2 * 60 * 1000;
 let pushHealthTimer = null;
 let pushSelfHealInFlight = false;
@@ -11330,6 +11325,37 @@ async function patchAdminSettings(payload) {
   return res.json();
 }
 
+async function fetchAdminRegistrationCodes() {
+  const res = await fetch("/admin/registration-codes", { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to load registration codes");
+  return res.json();
+}
+
+async function createAdminRegistrationCode(note = "") {
+  const res = await fetch("/admin/registration-codes", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ note: String(note || "").trim() }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.detail || "Failed to generate registration code");
+  }
+  return res.json();
+}
+
+async function revokeAdminRegistrationCode(codePublicId) {
+  const res = await fetch(`/admin/registration-codes/${codePublicId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.detail || "Failed to revoke registration code");
+  }
+}
+
 async function patchAdminUserFlags(userPublicId, payload) {
   const res = await fetch(`/admin/users/${userPublicId}`, {
     method: "PATCH",
@@ -11517,35 +11543,74 @@ function renderAdminUsers(users) {
 }
 
 function renderAdminSettings(settings) {
-  if (adminRequireEmailVerificationInput) {
-    adminRequireEmailVerificationInput.checked = Boolean(settings?.require_email_verification);
-  }
-  if (adminSmtpHostInput) adminSmtpHostInput.value = String(settings?.smtp_host || "");
-  if (adminSmtpPortInput) adminSmtpPortInput.value = String(settings?.smtp_port || 587);
-  if (adminSmtpUsernameInput) adminSmtpUsernameInput.value = String(settings?.smtp_username || "");
-  if (adminSmtpFromEmailInput) adminSmtpFromEmailInput.value = String(settings?.smtp_from_email || "");
-  if (adminSmtpUseTlsInput) adminSmtpUseTlsInput.checked = Boolean(settings?.smtp_use_tls);
-  if (adminSmtpUseSslInput) adminSmtpUseSslInput.checked = Boolean(settings?.smtp_use_ssl);
-  if (adminEmailVerificationTtlInput) {
-    adminEmailVerificationTtlInput.value = String(settings?.email_verification_ttl_minutes || 10);
-  }
-  if (adminSmtpPasswordInput) adminSmtpPasswordInput.value = "";
-  if (adminSmtpPasswordStatus) {
-    adminSmtpPasswordStatus.textContent = settings?.smtp_password_configured ? "Configured" : "Not configured";
+  if (adminRequireRegistrationCodeInput) {
+    adminRequireRegistrationCodeInput.checked = Boolean(settings?.require_registration_code);
   }
 }
 
+function renderAdminRegistrationCodes(codes) {
+  if (!adminRegistrationCodesList) return;
+  adminRegistrationCodesList.innerHTML = "";
+  const list = Array.isArray(codes) ? codes : [];
+  if (!list.length) {
+    adminRegistrationCodesList.innerHTML = '<div class="message-placeholder">No registration codes yet.</div>';
+    return;
+  }
+  list.forEach((code) => {
+    const row = document.createElement("div");
+    row.className = "admin-user-row";
+
+    const meta = document.createElement("div");
+    meta.className = "admin-user-meta";
+    const name = document.createElement("div");
+    name.className = "admin-user-name";
+    name.textContent = code.note ? `Code (${code.note})` : "Code";
+    const detail = document.createElement("div");
+    detail.className = "admin-user-email";
+    detail.textContent = `created: ${formatTimestamp(code.created_at) || code.created_at || "-"} • status: ${
+      code.revoked_at ? "revoked" : (code.used_at ? "used" : "active")
+    }`;
+    meta.appendChild(name);
+    meta.appendChild(detail);
+    row.appendChild(meta);
+
+    const actions = document.createElement("div");
+    actions.className = "admin-user-actions";
+    if (!code.used_at && !code.revoked_at) {
+      const revokeBtn = document.createElement("button");
+      revokeBtn.type = "button";
+      revokeBtn.textContent = "Revoke";
+      revokeBtn.classList.add("danger");
+      revokeBtn.addEventListener("click", async () => {
+        try {
+          await revokeAdminRegistrationCode(code.public_id);
+          const codesNext = await fetchAdminRegistrationCodes();
+          renderAdminRegistrationCodes(codesNext);
+          showToast("Registration code revoked");
+        } catch (err) {
+          alert(err.message || "Failed to revoke code");
+        }
+      });
+      actions.appendChild(revokeBtn);
+    }
+    row.appendChild(actions);
+    adminRegistrationCodesList.appendChild(row);
+  });
+}
+
 async function loadAdminPanel() {
-  const [overview, users, audit, settings] = await Promise.all([
+  const [overview, users, audit, settings, registrationCodes] = await Promise.all([
     fetchAdminOverview(),
     fetchAdminUsers(),
     fetchAdminAudit(),
     fetchAdminSettings(),
+    fetchAdminRegistrationCodes(),
   ]);
   renderAdminOverview(overview);
   renderAdminUsers(users);
   renderAdminAudit(audit);
   renderAdminSettings(settings);
+  renderAdminRegistrationCodes(registrationCodes);
 }
 
 async function loadDmMessages(conversationPublicId, shouldScrollToBottom = false, options = {}) {
@@ -13203,32 +13268,46 @@ if (adminSaveSettingsBtn) {
   adminSaveSettingsBtn.addEventListener("click", async () => {
     try {
       adminSaveSettingsBtn.disabled = true;
-      const requireEmailVerification = Boolean(adminRequireEmailVerificationInput?.checked);
-      const smtpPortRaw = Number.parseInt(String(adminSmtpPortInput?.value || "587"), 10);
-      const ttlRaw = Number.parseInt(String(adminEmailVerificationTtlInput?.value || "10"), 10);
-      const payload = {
-        require_email_verification: requireEmailVerification,
-        smtp_host: String(adminSmtpHostInput?.value || "").trim(),
-        smtp_port: Number.isFinite(smtpPortRaw) ? smtpPortRaw : 587,
-        smtp_username: String(adminSmtpUsernameInput?.value || "").trim(),
-        smtp_from_email: String(adminSmtpFromEmailInput?.value || "").trim(),
-        smtp_use_tls: Boolean(adminSmtpUseTlsInput?.checked),
-        smtp_use_ssl: Boolean(adminSmtpUseSslInput?.checked),
-        email_verification_ttl_minutes: Number.isFinite(ttlRaw) ? ttlRaw : 10,
-      };
-      const newPassword = String(adminSmtpPasswordInput?.value || "");
-      if (newPassword) {
-        payload.smtp_password = newPassword;
-      }
-      const updated = await patchAdminSettings({
-        ...payload,
-      });
+      const requireRegistrationCode = Boolean(adminRequireRegistrationCodeInput?.checked);
+      const updated = await patchAdminSettings({ require_registration_code: requireRegistrationCode });
       renderAdminSettings(updated);
       showToast("Admin settings saved");
     } catch (err) {
       alert(err.message || "Failed to save admin settings");
     } finally {
       adminSaveSettingsBtn.disabled = false;
+    }
+  });
+}
+
+if (adminGenerateRegistrationCodeBtn) {
+  adminGenerateRegistrationCodeBtn.addEventListener("click", async () => {
+    try {
+      adminGenerateRegistrationCodeBtn.disabled = true;
+      const created = await createAdminRegistrationCode(String(adminRegistrationCodeNoteInput?.value || ""));
+      if (adminRegistrationCodeNoteInput) adminRegistrationCodeNoteInput.value = "";
+      const codeValue = String(created?.code || "");
+      if (codeValue) {
+        navigator.clipboard?.writeText?.(codeValue).catch(() => {});
+        window.alert(`One-time registration code:\n\n${codeValue}\n\n(Copied to clipboard if available)`);
+      }
+      const codes = await fetchAdminRegistrationCodes();
+      renderAdminRegistrationCodes(codes);
+    } catch (err) {
+      alert(err.message || "Failed to generate registration code");
+    } finally {
+      adminGenerateRegistrationCodeBtn.disabled = false;
+    }
+  });
+}
+
+if (adminRefreshRegistrationCodesBtn) {
+  adminRefreshRegistrationCodesBtn.addEventListener("click", async () => {
+    try {
+      const codes = await fetchAdminRegistrationCodes();
+      renderAdminRegistrationCodes(codes);
+    } catch (err) {
+      alert(err.message || "Failed to refresh registration codes");
     }
   });
 }

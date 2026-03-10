@@ -4,6 +4,7 @@ from app.core.models import AppSetting
 
 
 REQUIRE_EMAIL_VERIFICATION_KEY = "require_email_verification"
+REQUIRE_REGISTRATION_CODE_KEY = "require_registration_code"
 SMTP_HOST_KEY = "smtp_host"
 SMTP_PORT_KEY = "smtp_port"
 SMTP_USERNAME_KEY = "smtp_username"

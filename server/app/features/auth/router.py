@@ -1,4 +1,4 @@
-import secrets
+import hashlib
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request, Form
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, UTC
@@ -7,29 +7,23 @@ from fastapi.responses import JSONResponse
 
 from app.db.deps import get_db
 from app.features.users import service
-from app.features.users.schemas import UserCreate, UserOutPrivate
+from app.features.users.schemas import UserOutPrivate
 from app.core.security import (
     create_access_token,
     decode_access_token,
     get_current_user,
     extract_access_token_from_cookie,
-    hash_password,
-    verify_password,
 )
 from app.core.config import settings
 from app.core.rate_limit import limiter
 from app.core.app_settings import (
-    EMAIL_VERIFICATION_TTL_MINUTES_KEY,
-    REQUIRE_EMAIL_VERIFICATION_KEY,
+    REQUIRE_REGISTRATION_CODE_KEY,
     get_bool_setting,
-    get_int_setting,
 )
-from app.core.email_delivery import send_verification_code_email
 from app.features.auth import schemas as auth_schemas
-from app.features.auth.models import PendingEmailVerification
+from app.features.auth.models import RegistrationCode
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
-MAX_VERIFICATION_ATTEMPTS = 8
 
 
 def _session_payload_from_token(token: str) -> dict:
@@ -66,132 +60,44 @@ def _set_auth_cookie(response: JSONResponse, access_token: str, remember_me: boo
 
 @router.post("/register", response_model=UserOutPrivate)
 @limiter.limit("8/hour")
-def register(request: Request, user_data: UserCreate, db: Session = Depends(get_db)):
-    if get_bool_setting(db, REQUIRE_EMAIL_VERIFICATION_KEY, default=False):
-        raise HTTPException(
-            status_code=400,
-            detail="Email verification is required. Request a code first.",
-        )
+def register(request: Request, payload: auth_schemas.RegisterRequest, db: Session = Depends(get_db)):
+    user_data = payload
     existing = db.query(service.models.User).filter(service.models.User.email == user_data.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
-    
+    existing_username = db.query(service.models.User).filter(service.models.User.username == user_data.username).first()
+    if existing_username:
+        raise HTTPException(status_code=400, detail="Username already taken")
+
+    require_registration_code = get_bool_setting(db, REQUIRE_REGISTRATION_CODE_KEY, default=False)
+    code_row = None
+    if require_registration_code:
+        normalized_code = "".join(ch for ch in str(payload.registration_code or "").strip().upper() if ch.isalnum())
+        if not normalized_code:
+            raise HTTPException(status_code=400, detail="Registration code is required")
+        code_digest = hashlib.sha256(normalized_code.encode("utf-8")).hexdigest()
+        code_row = (
+            db.query(RegistrationCode)
+            .filter(
+                RegistrationCode.code_digest == code_digest,
+                RegistrationCode.used_at.is_(None),
+                RegistrationCode.revoked_at.is_(None),
+            )
+            .first()
+        )
+        if not code_row:
+            raise HTTPException(status_code=400, detail="Invalid or already-used registration code")
+
     user = service.create_user(
         db,
         username=user_data.username,
         email=user_data.email,
         password=user_data.password,
     )
-    service.send_system_announcement_if_needed(db, user)
-    return user
-
-
-@router.post("/register/request-code", response_model=auth_schemas.RegisterRequestCodeResponse)
-@limiter.limit("8/hour")
-def register_request_code(request: Request, user_data: UserCreate, db: Session = Depends(get_db)):
-    if not get_bool_setting(db, REQUIRE_EMAIL_VERIFICATION_KEY, default=False):
-        raise HTTPException(status_code=400, detail="Email verification is currently disabled by admin")
-
-    normalized_email = str(user_data.email or "").strip().lower()
-    normalized_username = str(user_data.username or "").strip()
-    existing_email = db.query(service.models.User).filter(service.models.User.email == normalized_email).first()
-    if existing_email:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    existing_username = db.query(service.models.User).filter(service.models.User.username == normalized_username).first()
-    if existing_username:
-        raise HTTPException(status_code=400, detail="Username already taken")
-
-    verification_code = f"{secrets.randbelow(1_000_000):06d}"
-    code_hash = hash_password(verification_code)
-    password_hash = hash_password(user_data.password)
-    ttl_minutes = max(
-        1,
-        int(
-            get_int_setting(
-                db,
-                EMAIL_VERIFICATION_TTL_MINUTES_KEY,
-                int(settings.EMAIL_VERIFICATION_TTL_MINUTES),
-            )
-        ),
-    )
-    expires_at = datetime.now(UTC) + timedelta(minutes=ttl_minutes)
-
-    pending = db.query(PendingEmailVerification).filter(PendingEmailVerification.email == normalized_email).first()
-    if pending:
-        pending.username = normalized_username
-        pending.password_hash = password_hash
-        pending.code_hash = code_hash
-        pending.attempt_count = 0
-        pending.expires_at = expires_at
-    else:
-        pending = PendingEmailVerification(
-            email=normalized_email,
-            username=normalized_username,
-            password_hash=password_hash,
-            code_hash=code_hash,
-            attempt_count=0,
-            expires_at=expires_at,
-        )
-        db.add(pending)
-    db.commit()
-
-    try:
-        send_verification_code_email(db, normalized_email, verification_code, ttl_minutes)
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Failed to send verification email: {exc}") from exc
-
-    return {
-        "detail": "Verification code sent",
-        "expires_in_seconds": ttl_minutes * 60,
-    }
-
-
-@router.post("/register/verify-code", response_model=UserOutPrivate)
-@limiter.limit("20/hour")
-def register_verify_code(
-    request: Request,
-    payload: auth_schemas.RegisterVerifyCodeRequest,
-    db: Session = Depends(get_db),
-):
-    if not get_bool_setting(db, REQUIRE_EMAIL_VERIFICATION_KEY, default=False):
-        raise HTTPException(status_code=400, detail="Email verification is currently disabled by admin")
-
-    pending = db.query(PendingEmailVerification).filter(PendingEmailVerification.email == payload.email).first()
-    if not pending:
-        raise HTTPException(status_code=404, detail="No pending verification for this email")
-    if pending.expires_at < datetime.now(UTC):
-        db.delete(pending)
+    if code_row:
+        code_row.used_at = datetime.now(UTC)
+        code_row.used_by_user_id = user.id
         db.commit()
-        raise HTTPException(status_code=400, detail="Verification code expired")
-    if int(pending.attempt_count or 0) >= MAX_VERIFICATION_ATTEMPTS:
-        db.delete(pending)
-        db.commit()
-        raise HTTPException(status_code=400, detail="Too many failed attempts. Request a new code.")
-
-    if not verify_password(payload.code, pending.code_hash):
-        pending.attempt_count = int(pending.attempt_count or 0) + 1
-        db.commit()
-        raise HTTPException(status_code=400, detail="Invalid verification code")
-
-    existing_email = db.query(service.models.User).filter(service.models.User.email == pending.email).first()
-    if existing_email:
-        db.delete(pending)
-        db.commit()
-        raise HTTPException(status_code=400, detail="Email already registered")
-    existing_username = db.query(service.models.User).filter(service.models.User.username == pending.username).first()
-    if existing_username:
-        db.delete(pending)
-        db.commit()
-        raise HTTPException(status_code=400, detail="Username already taken")
-
-    user = service.create_user_with_hashed_password(
-        db,
-        username=pending.username,
-        email=pending.email,
-        hashed_password=pending.password_hash,
-    )
-    db.delete(pending)
-    db.commit()
     service.send_system_announcement_if_needed(db, user)
     return user
 

@@ -211,7 +211,6 @@ const panelRememberWrap = document.getElementById('panel-remember-wrap');
 const panelRememberMe = document.getElementById('panel-remember-me');
 const panelSubmitBtn = document.getElementById('panel-submit');
 let pendingFirstUseReset = null;
-let pendingEmailVerification = null;
 
 function resetPanelAuthFields() {
   const emailInput = document.getElementById('panel-email');
@@ -243,42 +242,6 @@ function resetPanelAuthFields() {
   }
 }
 
-function setRegisterVerifyMode(email) {
-  const emailInput = document.getElementById('panel-email');
-  const usernameInput = document.getElementById('panel-username');
-  const passwordInput = document.getElementById('panel-password');
-  const confirmInput = document.getElementById('panel-password-confirm');
-  const verificationCodeInput = document.getElementById('panel-verification-code');
-
-  panelTitle.textContent = "Verify Email";
-  panelForm.dataset.type = "register_verify";
-  if (emailInput) {
-    emailInput.style.display = "block";
-    emailInput.readOnly = true;
-    emailInput.value = email || "";
-  }
-  if (usernameInput) {
-    usernameInput.style.display = "none";
-    usernameInput.disabled = true;
-  }
-  if (passwordInput) {
-    passwordInput.style.display = "none";
-    passwordInput.disabled = true;
-  }
-  if (confirmInput) {
-    confirmInput.style.display = "none";
-    confirmInput.disabled = true;
-  }
-  if (verificationCodeInput) {
-    verificationCodeInput.style.display = "block";
-    verificationCodeInput.disabled = false;
-    verificationCodeInput.value = "";
-    verificationCodeInput.focus();
-  }
-  if (panelRememberWrap) panelRememberWrap.style.display = "none";
-  if (panelSubmitBtn) panelSubmitBtn.textContent = "Verify Code";
-}
-
 document.getElementById('login-btn').addEventListener('click', () => {
   resetPanelAuthFields();
   panelTitle.textContent = "Login";
@@ -287,7 +250,6 @@ document.getElementById('login-btn').addEventListener('click', () => {
   if (panelRememberWrap) panelRememberWrap.style.display = "flex";
   if (panelRememberMe) panelRememberMe.checked = getDefaultRememberMeValue();
   pendingFirstUseReset = null;
-  pendingEmailVerification = null;
   sidePanel.classList.add('open');
 });
 
@@ -298,10 +260,11 @@ document.getElementById('register-btn').addEventListener('click', () => {
   document.getElementById('panel-email').style.display = "block";
   if (document.getElementById('panel-password-confirm'))
     document.getElementById('panel-password-confirm').style.display = "block";
-  if (panelSubmitBtn) panelSubmitBtn.textContent = "Send Verification Code";
+  const registrationCodeInput = document.getElementById('panel-verification-code');
+  if (registrationCodeInput) registrationCodeInput.style.display = "block";
+  if (panelSubmitBtn) panelSubmitBtn.textContent = "Create Account";
   if (panelRememberWrap) panelRememberWrap.style.display = "none";
   pendingFirstUseReset = null;
-  pendingEmailVerification = null;
   sidePanel.classList.add('open');
 });
 
@@ -383,7 +346,7 @@ panelForm.addEventListener('submit', async (e) => {
   const emailInput = document.getElementById('panel-email');
   const email = emailInput.style.display !== 'none' ? emailInput.value.trim() : null;
   const verificationCodeInput = document.getElementById('panel-verification-code');
-  const verificationCode = verificationCodeInput && verificationCodeInput.style.display !== 'none'
+  const registrationCode = verificationCodeInput && verificationCodeInput.style.display !== 'none'
     ? verificationCodeInput.value.trim()
     : "";
   const rememberMe = !!(panelRememberMe && panelRememberMe.checked);
@@ -437,43 +400,6 @@ panelForm.addEventListener('submit', async (e) => {
     }
   }
 
-  if (type === 'register_verify') {
-    if (!pendingEmailVerification?.email) {
-      showPanelMessage('No pending verification request. Start registration again.', 'error');
-      return;
-    }
-    if (!/^\d{6}$/.test(verificationCode)) {
-      showPanelMessage('Enter the 6-digit verification code.', 'error');
-      return;
-    }
-    try {
-      const verifyRes = await fetch('/auth/register/verify-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          email: pendingEmailVerification.email,
-          code: verificationCode
-        })
-      });
-      const verifyData = await verifyRes.json().catch(() => ({}));
-      if (!verifyRes.ok) {
-        showPanelMessage(verifyData?.detail || 'Verification failed', 'error');
-        return;
-      }
-      showPanelMessage('Email verified. Account created successfully!', 'success');
-      pendingEmailVerification = null;
-      setTimeout(() => {
-        sidePanel.classList.remove('open');
-      }, 800);
-      return;
-    } catch (err) {
-      console.error(err);
-      showPanelMessage('Network error', 'error');
-      return;
-    }
-  }
-
   // Front-end password confirm only for registration
   // Front-end validation only for registration
   if (type === 'register') {
@@ -502,15 +428,13 @@ panelForm.addEventListener('submit', async (e) => {
 
   try {
     let res;
-    let usedDirectRegister = false;
 
     if (type === 'register') {
-      // Registration step 1: request verification code
-      res = await fetch('/auth/register/request-code', {
+      res = await fetch('/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ username, password, email })
+        body: JSON.stringify({ username, password, email, registration_code: registrationCode || null })
       });
     } else {
       // Login expects form-urlencoded
@@ -528,29 +452,6 @@ panelForm.addEventListener('submit', async (e) => {
     }
 
     let data = await res.json().catch(() => ({}));
-
-    if (
-      type === 'register' &&
-      !res.ok
-    ) {
-      const detail = String(data?.detail || '').toLowerCase();
-      const shouldFallbackToDirectRegister =
-        detail.includes('verification is currently disabled') ||
-        detail.includes('method not allowed') ||
-        res.status === 404 ||
-        res.status === 405;
-
-      if (shouldFallbackToDirectRegister) {
-        res = await fetch('/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ username, password, email })
-        });
-        data = await res.json().catch(() => ({}));
-        usedDirectRegister = true;
-      }
-    }
 
   if (!res.ok) {
     if (type === 'login' && data?.detail === 'PASSWORD_RESET_REQUIRED') {
@@ -584,14 +485,8 @@ panelForm.addEventListener('submit', async (e) => {
 
 
     if (type === 'register') {
-      if (usedDirectRegister) {
-        showPanelMessage('Account created successfully!', 'success');
-        setTimeout(() => sidePanel.classList.remove('open'), 500);
-        return;
-      }
-      pendingEmailVerification = { email };
-      setRegisterVerifyMode(email);
-      showPanelMessage('Verification code sent. Check your email.', 'success');
+      showPanelMessage('Account created successfully!', 'success');
+      setTimeout(() => sidePanel.classList.remove('open'), 500);
       return;
     }
 
