@@ -42,6 +42,13 @@ class Server(Base):
         cascade="all, delete-orphan"  # Deleting server deletes channels
     )
 
+    # Relationship to roles
+    roles = relationship(
+        "ServerRole",
+        back_populates="server",
+        cascade="all, delete-orphan"  # Deleting server deletes roles
+    )
+
 
 # Server members table
 class ServerMember(Base):
@@ -80,4 +87,4 @@ class ServerRole(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC))
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC))
 
-    server = relationship("Server")
+    server = relationship("Server", back_populates="roles")
