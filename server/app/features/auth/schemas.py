@@ -8,6 +8,7 @@ class FirstUseResetRequest(BaseModel):
     username: str
     current_password: str
     new_password: str
+    remember_me: bool = False
 
     @field_validator("new_password")
     @classmethod

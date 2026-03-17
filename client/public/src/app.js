@@ -277,9 +277,9 @@ if (panelRememberMe) {
   });
 }
 
-function setFirstUseResetMode(username, currentPassword) {
+function setFirstUseResetMode(username, currentPassword, rememberMe) {
   resetPanelAuthFields();
-  pendingFirstUseReset = { username, currentPassword };
+  pendingFirstUseReset = { username, currentPassword, rememberMe: Boolean(rememberMe) };
   panelTitle.textContent = "Reset Password";
   panelForm.dataset.type = "first_use_reset";
   document.getElementById('panel-email').style.display = "none";
@@ -380,7 +380,8 @@ panelForm.addEventListener('submit', async (e) => {
         body: JSON.stringify({
           username: pendingFirstUseReset.username,
           current_password: pendingFirstUseReset.currentPassword,
-          new_password: password
+          new_password: password,
+          remember_me: Boolean(pendingFirstUseReset.rememberMe)
         })
       });
       const resetData = await resetRes.json().catch(() => ({}));
@@ -455,7 +456,7 @@ panelForm.addEventListener('submit', async (e) => {
 
   if (!res.ok) {
     if (type === 'login' && data?.detail === 'PASSWORD_RESET_REQUIRED') {
-      setFirstUseResetMode(username, password);
+      setFirstUseResetMode(username, password, rememberMe);
       showPanelMessage('Password reset required. Enter a new password.', 'error');
       return;
     }

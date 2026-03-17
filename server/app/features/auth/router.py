@@ -143,9 +143,14 @@ def first_use_reset(request: Request, payload: auth_schemas.FirstUseResetRequest
 
     service.set_user_password(db, user, payload.new_password, must_reset_password=False)
     service.send_system_announcement_if_needed(db, user)
-    access_token = create_access_token(data={"sub": user.public_id})
+    remember_me = bool(payload.remember_me)
+    access_expires = timedelta(days=max(1, int(settings.PERSISTENT_LOGIN_EXPIRE_DAYS))) if remember_me else None
+    access_token = create_access_token(
+        data={"sub": user.public_id, "remember_me": remember_me},
+        expires_delta=access_expires,
+    )
     response = JSONResponse(content={"message": "Password reset complete"})
-    _set_auth_cookie(response, access_token)
+    _set_auth_cookie(response, access_token, remember_me=remember_me)
     return response
 
 
