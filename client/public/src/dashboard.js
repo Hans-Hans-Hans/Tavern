@@ -3662,6 +3662,9 @@ function rebuildCustomSelectOptions(state) {
     btn.setAttribute("aria-selected", option.selected ? "true" : "false");
     btn.textContent = String(option.textContent || option.label || option.value || "").trim() || " ";
     btn.disabled = !!option.disabled;
+    btn.addEventListener("pointerdown", (event) => {
+      event.stopPropagation();
+    });
     btn.addEventListener("click", () => {
       if (select.disabled || option.disabled) return;
       select.value = option.value;
@@ -3677,7 +3680,6 @@ function rebuildCustomSelectOptions(state) {
 
 function enhanceCustomSelect(select) {
   if (!(select instanceof HTMLSelectElement)) return null;
-  if (select.dataset?.nativeSelect === "1") return null;
   if (select.multiple || Number(select.size) > 1) return null;
   let state = customSelectStates.get(select);
   if (!state) {
