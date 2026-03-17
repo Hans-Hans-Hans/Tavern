@@ -1,6 +1,6 @@
 services:
   tavern:
-    image: tavern:latest
+    image: ghcr.io/hans-hans-hans/tavern:latest
     container_name: tavern
     restart: unless-stopped
     environment:
