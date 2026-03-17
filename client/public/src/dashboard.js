@@ -536,6 +536,20 @@ const onlineUserPublicIds = new Set();
 let voiceSocket = null;
 let voiceSocketChannelId = null;
 let voiceSelfPeerId = null;
+const MUSIC_BOT_PEER_ID = "musicbot";
+let voiceMusicBotState = {
+  invited: false,
+  url: null,
+  track_title: null,
+  playing: false,
+  queue_length: 0,
+  requested_by_user_public_id: null,
+  requested_by_username: null,
+};
+let musicBotAudioEl = null;
+let musicBotIframeEl = null;
+let musicBotIframeProvider = "generic";
+let musicBotVolume = 100;
 let localVoiceStream = null;
 let rawLocalVoiceStream = null;
 let localVoiceProcessor = null;
@@ -554,6 +568,7 @@ const peerRemoteVideoTrackSlots = new Map();
 const pendingRemoteVideoStreams = new Map();
 const watchedPeerStreamIds = new Set();
 const peerMeta = new Map();
+const voiceChannelOccupancy = new Map();
 const peerVolumeLevels = new Map();
 const peerAudioSources = new Map();
 let voiceAudioContext = null;
@@ -777,7 +792,7 @@ const FRIEND_REQUEST_TOAST_POLL_MS = 30000;
 let notificationPollInFlight = false;
 let lastNotificationPollAt = 0;
 let lastFriendRequestToastPollAt = 0;
-const SERVICE_WORKER_URL = "/sw.js?v=20260310-hotfix77";
+const SERVICE_WORKER_URL = "/sw.js?v=20260316-musicbot2";
 const PUSH_HEALTHCHECK_MS = 2 * 60 * 1000;
 let pushHealthTimer = null;
 let pushSelfHealInFlight = false;
@@ -5284,11 +5299,36 @@ function applyDmPresenceIndicators() {
   });
 }
 
+function applyVoiceOccupancyUpdate(voiceChannelsPayload) {
+  voiceChannelOccupancy.clear();
+  if (!voiceChannelsPayload || typeof voiceChannelsPayload !== "object") {
+    renderVoiceUsersInChannelsPanel();
+    return;
+  }
+  Object.entries(voiceChannelsPayload).forEach(([channelId, entries]) => {
+    if (!channelId || !Array.isArray(entries)) return;
+    const normalized = entries
+      .map((entry) => ({
+        user_public_id: entry?.user_public_id ? String(entry.user_public_id) : null,
+        username: entry?.username ? String(entry.username) : "Unknown",
+        muted: !!entry?.muted,
+        deafened: !!entry?.deafened,
+        camera_on: !!entry?.camera_on,
+        screen_on: !!entry?.screen_on,
+        link_stream_url: entry?.link_stream_url ? String(entry.link_stream_url) : null,
+      }))
+      .filter((entry) => !!entry.user_public_id);
+    if (normalized.length) voiceChannelOccupancy.set(channelId, normalized);
+  });
+  renderVoiceUsersInChannelsPanel();
+}
+
 function closePresenceSocket() {
   if (!presenceSocket) return;
   presenceSocket.onclose = null;
   presenceSocket.close();
   presenceSocket = null;
+  applyVoiceOccupancyUpdate({});
   setRealtimeState("presence", false, 0);
   if (presenceReconnectTimer) {
     clearTimeout(presenceReconnectTimer);
@@ -5316,6 +5356,7 @@ function connectPresenceSocket() {
       (data.online_user_public_ids || []).forEach((id) => {
         if (typeof id === "string" && id) onlineUserPublicIds.add(id);
       });
+      applyVoiceOccupancyUpdate(data.voice_channels || {});
       applyDmPresenceIndicators();
       if (serverMembersModal?.classList.contains("open")) {
         loadServerMembersModal().catch(() => {});
@@ -5328,6 +5369,7 @@ function connectPresenceSocket() {
   presenceSocket.onclose = () => {
     const opened = Boolean(presenceSocket?._opened);
     presenceSocket = null;
+    applyVoiceOccupancyUpdate({});
     if (presenceReconnectTimer) clearTimeout(presenceReconnectTimer);
     if (!opened) {
       presenceSocketFailureCount += 1;
@@ -7082,12 +7124,10 @@ function applyDeafenOutput() {
   peerVideoElements.forEach((entry, key) => {
     if (!entry) return;
     if (!String(key).endsWith(":link") && key !== "local:link") return;
-    if (entry.video) {
-      // Link videos are local media elements, so mute can follow deafen directly.
-      entry.video.muted = true;
-    }
+    if (entry.video) entry.video.muted = key === `${MUSIC_BOT_PEER_ID}:link` ? isDeafened : true;
     if (entry.iframe) applyEmbeddedLinkAudioMute(entry);
   });
+  applyMusicBotPlaybackVolume();
 }
 
 function applyLocalMuteState() {
@@ -7106,6 +7146,7 @@ function updateVoiceMediaButtons() {
 }
 
 function getPeerDisplayName(peerId) {
+  if (peerId === MUSIC_BOT_PEER_ID) return "Music Bot";
   const peer = peerMeta.get(peerId);
   if (!peer) return peerId === voiceSelfPeerId ? "You" : "Peer";
   return `${peer.username}${peerId === voiceSelfPeerId ? " (you)" : ""}`;
@@ -7595,6 +7636,180 @@ function parseEmbeddableStreamUrl(rawUrl) {
   return { kind: "iframe", src: url.href, label: "Link Stream", provider: "generic" };
 }
 
+function normalizeMusicBotState(rawState) {
+  if (!rawState || typeof rawState !== "object") {
+    return {
+      invited: false,
+      url: null,
+      track_title: null,
+      playing: false,
+      queue_length: 0,
+      requested_by_user_public_id: null,
+      requested_by_username: null,
+    };
+  }
+  return {
+    invited: !!rawState.invited,
+    url: rawState.url ? String(rawState.url).trim() : null,
+    track_title: rawState.track_title ? String(rawState.track_title).trim() : null,
+    playing: !!rawState.playing,
+    queue_length: Math.max(0, Number(rawState.queue_length || 0)),
+    requested_by_user_public_id: rawState.requested_by_user_public_id ? String(rawState.requested_by_user_public_id) : null,
+    requested_by_username: rawState.requested_by_username ? String(rawState.requested_by_username) : null,
+  };
+}
+
+function applyMusicBotState(nextState) {
+  voiceMusicBotState = normalizeMusicBotState(nextState);
+  if (!voiceMusicBotState.invited) watchedPeerStreamIds.delete(MUSIC_BOT_PEER_ID);
+  renderVoiceUsers();
+  renderMusicBotStreamTile();
+}
+
+function getMusicBotTrackTitle() {
+  const explicit = String(voiceMusicBotState?.track_title || "").trim();
+  if (explicit) return explicit;
+  const fallbackUrl = String(voiceMusicBotState?.url || "").trim();
+  if (!fallbackUrl) return "";
+  try {
+    const parsed = new URL(fallbackUrl);
+    const lastToken = parsed.pathname.split("/").filter(Boolean).pop() || parsed.hostname;
+    return decodeURIComponent(lastToken).replace(/[-_]+/g, " ").trim();
+  } catch {
+    return fallbackUrl;
+  }
+}
+
+function clearMusicBotPlaybackElements() {
+  try {
+    if (musicBotAudioEl) {
+      musicBotAudioEl.pause?.();
+      musicBotAudioEl.src = "";
+      musicBotAudioEl.remove();
+    }
+  } catch {}
+  musicBotAudioEl = null;
+  if (musicBotIframeEl) {
+    musicBotIframeEl.remove();
+    musicBotIframeEl = null;
+  }
+  musicBotIframeProvider = "generic";
+}
+
+function ensureMusicBotAudioElement() {
+  if (musicBotAudioEl && musicBotAudioEl.isConnected) return musicBotAudioEl;
+  const el = document.createElement("audio");
+  el.autoplay = true;
+  el.playsInline = true;
+  el.style.display = "none";
+  document.body.appendChild(el);
+  musicBotAudioEl = el;
+  return el;
+}
+
+function ensureMusicBotIframeElement(src, provider = "generic") {
+  if (!src) return null;
+  const needReplace = !musicBotIframeEl || !musicBotIframeEl.isConnected || musicBotIframeEl.src !== src;
+  if (needReplace) {
+    if (musicBotIframeEl) musicBotIframeEl.remove();
+    const iframe = document.createElement("iframe");
+    iframe.allow = "autoplay; encrypted-media";
+    iframe.referrerPolicy = "strict-origin-when-cross-origin";
+    iframe.src = src;
+    iframe.style.position = "fixed";
+    iframe.style.left = "-9999px";
+    iframe.style.top = "0";
+    iframe.style.width = "1px";
+    iframe.style.height = "1px";
+    iframe.style.opacity = "0";
+    iframe.style.pointerEvents = "none";
+    iframe.style.border = "0";
+    document.body.appendChild(iframe);
+    musicBotIframeEl = iframe;
+  }
+  musicBotIframeProvider = provider || "generic";
+  return musicBotIframeEl;
+}
+
+function applyMusicBotPlaybackVolume() {
+  if (musicBotAudioEl) {
+    const shouldPlay = !!voiceMusicBotState?.playing;
+    musicBotAudioEl.muted = isDeafened || !shouldPlay;
+    musicBotAudioEl.volume = clamp(Number(musicBotVolume || 100) / 100, 0, 1);
+    if (shouldPlay) {
+      musicBotAudioEl.play?.().catch(() => {});
+    } else {
+      musicBotAudioEl.pause?.();
+    }
+  }
+  if (!musicBotIframeEl) return;
+  try {
+    if (musicBotIframeProvider === "youtube") {
+      const shouldPlay = !!voiceMusicBotState?.playing;
+      const shouldMute = isDeafened || !shouldPlay || Number(musicBotVolume || 100) <= 0;
+      musicBotIframeEl.contentWindow?.postMessage(
+        JSON.stringify({
+          event: "command",
+          func: shouldMute ? "mute" : "unMute",
+          args: [],
+        }),
+        "*"
+      );
+      musicBotIframeEl.contentWindow?.postMessage(
+        JSON.stringify({
+          event: "command",
+          func: shouldPlay ? "playVideo" : "pauseVideo",
+          args: [],
+        }),
+        "*"
+      );
+      if (!shouldMute) {
+        musicBotIframeEl.contentWindow?.postMessage(
+          JSON.stringify({
+            event: "command",
+            func: "setVolume",
+            args: [Math.max(0, Math.min(100, Number(musicBotVolume || 100)))],
+          }),
+          "*"
+        );
+      }
+      return;
+    }
+    if (musicBotIframeProvider === "vimeo") {
+      const shouldPlay = !!voiceMusicBotState?.playing;
+      const vol = isDeafened ? 0 : clamp(Number(musicBotVolume || 100) / 100, 0, 1);
+      musicBotIframeEl.contentWindow?.postMessage({ method: "setVolume", value: vol }, "*");
+      musicBotIframeEl.contentWindow?.postMessage({ method: shouldPlay ? "play" : "pause" }, "*");
+    }
+  } catch {}
+}
+
+async function resolveMusicTrackTitle(rawUrl, parsedEntry) {
+  const raw = String(rawUrl || "").trim();
+  if (!raw) return "";
+  try {
+    if (parsedEntry?.provider === "youtube") {
+      const endpoint = `https://www.youtube.com/oembed?url=${encodeURIComponent(raw)}&format=json`;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 3500);
+      const res = await fetch(endpoint, { signal: controller.signal });
+      clearTimeout(timer);
+      if (res.ok) {
+        const data = await res.json();
+        const title = String(data?.title || "").trim();
+        if (title) return title.slice(0, 180);
+      }
+    }
+  } catch {}
+  if (parsedEntry?.label === "YouTube" || parsedEntry?.label === "Vimeo") return parsedEntry.label;
+  try {
+    const parsed = new URL(raw);
+    return parsed.hostname.replace(/^www\./, "");
+  } catch {
+    return "Track";
+  }
+}
+
 async function requestFullscreenForElement(el) {
   if (!el) return;
   try {
@@ -7829,6 +8044,7 @@ function clearAllVoiceVideoTiles() {
   if (voiceVideoGrid) voiceVideoGrid.innerHTML = "";
   peerVideoElements.clear();
   pendingRemoteVideoStreams.clear();
+  clearMusicBotPlaybackElements();
   updateVoiceVideoGridVisibility();
 }
 
@@ -7885,6 +8101,7 @@ function updateRemotePeerVideoTileLabels() {
   peerVideoElements.forEach((entry, key) => {
     if (key.startsWith("local:")) return;
     const [peerId, source = "camera"] = key.split(":");
+    if (peerId === MUSIC_BOT_PEER_ID) return;
     if (!entry?.labelEl) return;
     const sourceLabel = source === "screen" ? "Screen" : source === "link" ? "Link Stream" : "Camera";
     entry.labelEl.textContent = `${getPeerDisplayName(peerId)} - ${sourceLabel}`;
@@ -7926,6 +8143,43 @@ function renderRemoteLinkStreamTile(peerId) {
     if (tile?.tile) tile.tile.classList.toggle("hidden", !isRemoteStreamTileVisible(key));
   }
   updateVoiceVideoGridVisibility();
+}
+
+function renderMusicBotStreamTile() {
+  const key = `${MUSIC_BOT_PEER_ID}:link`;
+  removeVoiceVideoTile(key);
+  const isOpen = watchedPeerStreamIds.has(MUSIC_BOT_PEER_ID);
+  const rawUrl = voiceMusicBotState?.invited && voiceMusicBotState?.url ? String(voiceMusicBotState.url) : "";
+  if (!isOpen || !rawUrl) {
+    clearMusicBotPlaybackElements();
+    return;
+  }
+  const parsed = parseEmbeddableStreamUrl(rawUrl);
+  if (!parsed) {
+    clearMusicBotPlaybackElements();
+    return;
+  }
+  if (parsed.kind === "video") {
+    if (musicBotIframeEl) {
+      musicBotIframeEl.remove();
+      musicBotIframeEl = null;
+    }
+    const audioEl = ensureMusicBotAudioElement();
+    if (audioEl.src !== parsed.src) audioEl.src = parsed.src;
+    applyMusicBotPlaybackVolume();
+    audioEl.play?.().catch(() => {});
+    return;
+  }
+  if (musicBotAudioEl) {
+    try {
+      musicBotAudioEl.pause?.();
+      musicBotAudioEl.src = "";
+      musicBotAudioEl.remove();
+    } catch {}
+    musicBotAudioEl = null;
+  }
+  ensureMusicBotIframeElement(parsed.src, parsed.provider);
+  applyMusicBotPlaybackVolume();
 }
 
 function getCombinedLocalVoiceStreams() {
@@ -8555,6 +8809,12 @@ function renderVoiceUsers() {
   if (!voiceUsersList) return;
   const entries = [...peerMeta.values()].sort((a, b) => a.username.localeCompare(b.username));
   voiceUsersList.innerHTML = "";
+  voiceUsersList.oncontextmenu = (event) => {
+    if (event.target?.closest?.(".voice-user-row")) return;
+    event.preventDefault();
+    event.stopPropagation();
+    showMusicBotContextMenu(event.clientX, event.clientY);
+  };
   entries.forEach((peer) => {
     const row = document.createElement("div");
     row.className = "voice-user-row";
@@ -8566,6 +8826,25 @@ function renderVoiceUsers() {
         toggleVoiceStreamWatchForPeer(peer.peer_id);
       });
     }
+    row.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      showContextMenu(event.clientX, event.clientY, [
+        {
+          label: (peer.screen_on || peer.link_stream_url)
+            ? (watchedPeerStreamIds.has(peer.peer_id) ? "Stop Watching Stream" : "Watch Stream")
+            : "No Active Stream",
+          onClick: () => {
+            if (!(peer.screen_on || peer.link_stream_url)) return;
+            toggleVoiceStreamWatchForPeer(peer.peer_id);
+          },
+        },
+        {
+          label: "Music Bot Controls",
+          onClick: () => showMusicBotContextMenu(event.clientX, event.clientY),
+        },
+      ]);
+    });
 
     const left = document.createElement("div");
     left.className = "voice-user-left";
@@ -8620,15 +8899,162 @@ function renderVoiceUsers() {
 
     voiceUsersList.appendChild(row);
   });
+
+  if (voiceMusicBotState?.invited) {
+    const botRow = document.createElement("div");
+    botRow.className = "voice-user-row";
+    const botHasStream = !!(voiceMusicBotState.url && String(voiceMusicBotState.url).trim());
+    const isOpen = watchedPeerStreamIds.has(MUSIC_BOT_PEER_ID);
+    botRow.title = botHasStream ? "Click the music bot avatar to open/close playback" : "Right-click to queue a music URL";
+    botRow.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      showMusicBotContextMenu(event.clientX, event.clientY);
+    });
+
+    const left = document.createElement("div");
+    left.className = "voice-user-left";
+    const avatar = document.createElement("div");
+    avatar.className = "voice-user-avatar";
+    avatar.textContent = "♪";
+    avatar.style.display = "inline-flex";
+    avatar.style.alignItems = "center";
+    avatar.style.justifyContent = "center";
+    avatar.style.fontWeight = "700";
+    avatar.style.cursor = botHasStream ? "pointer" : "default";
+    avatar.title = botHasStream
+      ? (isOpen ? "Stop music bot playback" : "Start music bot playback")
+      : "No track queued";
+    if (botHasStream) {
+      avatar.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (watchedPeerStreamIds.has(MUSIC_BOT_PEER_ID)) watchedPeerStreamIds.delete(MUSIC_BOT_PEER_ID);
+        else watchedPeerStreamIds.add(MUSIC_BOT_PEER_ID);
+        renderMusicBotStreamTile();
+        renderVoiceUsers();
+      });
+    }
+    left.appendChild(avatar);
+
+    const label = document.createElement("span");
+    label.className = "voice-user-name";
+    label.textContent = "Music Bot";
+    left.appendChild(label);
+
+    const statusText = document.createElement("span");
+    statusText.className = "voice-user-status";
+    if (botHasStream) {
+      const title = getMusicBotTrackTitle();
+      const queueSuffix = Number(voiceMusicBotState.queue_length || 0) > 1
+        ? ` (+${Number(voiceMusicBotState.queue_length || 0) - 1} queued)`
+        : "";
+      if (voiceMusicBotState.playing) {
+        statusText.textContent = title ? `Now Playing: ${title}${queueSuffix}` : `Now Playing${queueSuffix}`;
+      } else {
+        statusText.textContent = title ? `Paused: ${title}${queueSuffix}` : `Paused${queueSuffix}`;
+      }
+    } else {
+      statusText.textContent = "Idle";
+    }
+    left.appendChild(statusText);
+
+    if (botHasStream) {
+      const controls = document.createElement("span");
+      controls.className = "voice-user-badges";
+      controls.style.gap = "6px";
+
+      const playPauseBtn = document.createElement("button");
+      playPauseBtn.type = "button";
+      playPauseBtn.className = "voice-btn secondary";
+      playPauseBtn.textContent = voiceMusicBotState.playing ? "Pause" : "Play";
+      playPauseBtn.style.padding = "2px 8px";
+      playPauseBtn.style.fontSize = "11px";
+      playPauseBtn.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        toggleMusicBotPlayPause();
+      });
+
+      const skipBtn = document.createElement("button");
+      skipBtn.type = "button";
+      skipBtn.className = "voice-btn secondary";
+      skipBtn.textContent = "Skip";
+      skipBtn.style.padding = "2px 8px";
+      skipBtn.style.fontSize = "11px";
+      skipBtn.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        skipMusicBotTrack();
+      });
+
+      controls.appendChild(playPauseBtn);
+      controls.appendChild(skipBtn);
+      left.appendChild(controls);
+    }
+
+    const badges = document.createElement("span");
+    badges.className = "voice-user-badges";
+    badges.innerHTML = `${botHasStream ? '<i class="fas fa-music" title="Music Playing"></i>' : '<i class="fas fa-robot" title="Bot Invited"></i>'}`;
+    left.appendChild(badges);
+    botRow.appendChild(left);
+
+    const wave = document.createElement("div");
+    wave.className = "voice-wave";
+    const waveFill = document.createElement("span");
+    waveFill.className = "voice-wave-fill";
+    waveFill.style.transform = botHasStream ? "scaleX(0.6)" : "scaleX(0.05)";
+    waveFill.style.opacity = botHasStream ? "0.8" : "0.3";
+    wave.appendChild(waveFill);
+    botRow.appendChild(wave);
+
+    const volume = document.createElement("input");
+    volume.type = "range";
+    volume.min = "0";
+    volume.max = "200";
+    volume.value = String(Math.max(0, Math.min(200, Number(musicBotVolume || 100))));
+    volume.className = "voice-volume-slider";
+    volume.addEventListener("pointerdown", (event) => event.stopPropagation());
+    volume.addEventListener("click", (event) => event.stopPropagation());
+    volume.addEventListener("input", () => {
+      musicBotVolume = clamp(Number(volume.value), 0, 200);
+      applyMusicBotPlaybackVolume();
+    });
+    botRow.appendChild(volume);
+
+    voiceUsersList.appendChild(botRow);
+  }
   renderVoiceUsersInChannelsPanel();
 }
 
 function renderVoiceUsersInChannelsPanel() {
   if (!channelsPanel) return;
+  const entriesByChannel = new Map();
+  voiceChannelOccupancy.forEach((entries, channelId) => {
+    entriesByChannel.set(channelId, [...entries].sort((a, b) => a.username.localeCompare(b.username)));
+  });
   const activeVoiceChannelId = voiceSocketChannelId || null;
-  const entries = activeVoiceChannelId
-    ? [...peerMeta.values()].sort((a, b) => a.username.localeCompare(b.username))
-    : [];
+  if (activeVoiceChannelId && peerMeta.size > 0) {
+    entriesByChannel.set(
+      activeVoiceChannelId,
+      [...peerMeta.values()].sort((a, b) => a.username.localeCompare(b.username))
+    );
+  }
+  if (activeVoiceChannelId && voiceMusicBotState?.invited) {
+    const current = entriesByChannel.get(activeVoiceChannelId) || [];
+    current.push({
+      peer_id: MUSIC_BOT_PEER_ID,
+      user_public_id: null,
+      username: "Music Bot",
+      muted: false,
+      deafened: false,
+      camera_on: false,
+      screen_on: false,
+      link_stream_url: voiceMusicBotState.url ? String(voiceMusicBotState.url) : null,
+    });
+    entriesByChannel.set(activeVoiceChannelId, current.sort((a, b) => a.username.localeCompare(b.username)));
+  }
+  const selfPublicId = String(currentUser?.public_id || "");
 
   channelsPanel.querySelectorAll(".channel-item[data-channel-type='voice']").forEach((el) => {
     let listEl = el.querySelector(".channel-voice-members");
@@ -8638,27 +9064,41 @@ function renderVoiceUsersInChannelsPanel() {
       el.appendChild(listEl);
     }
 
-    const isActiveVoiceRow = el.dataset.channelId === activeVoiceChannelId && entries.length > 0;
-    el.classList.toggle("has-voice-members", isActiveVoiceRow);
+    const channelId = String(el.dataset.channelId || "");
+    const entries = entriesByChannel.get(channelId) || [];
+    const hasVoiceMembers = entries.length > 0;
+    el.classList.toggle("has-voice-members", hasVoiceMembers);
     listEl.innerHTML = "";
-    if (!isActiveVoiceRow) return;
+    if (!hasVoiceMembers) return;
 
     entries.forEach((peer) => {
       const row = document.createElement("div");
       row.className = "channel-voice-member";
 
-      const avatar = document.createElement("img");
-      avatar.className = "channel-voice-member-avatar";
-      bindUserAvatarImage(avatar, peer.user_public_id, { alt: "" });
-      attachPublicUserProfileTrigger(avatar, peer.user_public_id);
-      const hasStream = Boolean(peer.screen_on || peer.link_stream_url);
-      avatar.style.boxShadow = hasStream ? "0 0 0 2px rgba(230,64,64,0.9)" : "";
-      avatar.style.border = hasStream ? "1px solid rgba(255,255,255,0.65)" : "";
-      row.appendChild(avatar);
+      if (peer.peer_id === MUSIC_BOT_PEER_ID) {
+        const avatar = document.createElement("div");
+        avatar.className = "channel-voice-member-avatar";
+        avatar.textContent = "♪";
+        avatar.style.display = "inline-flex";
+        avatar.style.alignItems = "center";
+        avatar.style.justifyContent = "center";
+        avatar.style.fontWeight = "700";
+        row.appendChild(avatar);
+      } else {
+        const avatar = document.createElement("img");
+        avatar.className = "channel-voice-member-avatar";
+        bindUserAvatarImage(avatar, peer.user_public_id, { alt: "" });
+        attachPublicUserProfileTrigger(avatar, peer.user_public_id);
+        const hasStream = Boolean(peer.screen_on || peer.link_stream_url);
+        avatar.style.boxShadow = hasStream ? "0 0 0 2px rgba(230,64,64,0.9)" : "";
+        avatar.style.border = hasStream ? "1px solid rgba(255,255,255,0.65)" : "";
+        row.appendChild(avatar);
+      }
 
       const name = document.createElement("span");
       name.className = "channel-voice-member-name";
-      name.textContent = `${peer.username}${peer.peer_id === voiceSelfPeerId ? " (you)" : ""}`;
+      const isSelf = (peer.peer_id && peer.peer_id === voiceSelfPeerId) || (peer.user_public_id && peer.user_public_id === selfPublicId);
+      name.textContent = `${peer.username}${isSelf ? " (you)" : ""}`;
       attachPublicUserProfileTrigger(name, peer.user_public_id);
       row.appendChild(name);
 
@@ -8713,6 +9153,98 @@ function sendVoiceSignal(targetPeerId, signal) {
       signal,
     })
   );
+}
+
+function sendMusicBotControl(action, extras = {}) {
+  if (!voiceSocket || voiceSocket.readyState !== WebSocket.OPEN) {
+    showToast("Join a voice channel first");
+    return;
+  }
+  const payload = { type: "music_bot_control", action, ...extras };
+  voiceSocket.send(JSON.stringify(payload));
+}
+
+function setMusicBotPlaying(playing) {
+  sendMusicBotControl("set_playing", { playing: !!playing });
+}
+
+function toggleMusicBotPlayPause() {
+  if (!voiceMusicBotState?.url) {
+    showToast("Queue a song first");
+    return;
+  }
+  setMusicBotPlaying(!voiceMusicBotState.playing);
+}
+
+function skipMusicBotTrack() {
+  if (!voiceMusicBotState?.url) {
+    showToast("No song to skip");
+    return;
+  }
+  sendMusicBotControl("skip");
+}
+
+function inviteMusicBot() {
+  sendMusicBotControl("invite");
+  showToast("Music bot invited");
+}
+
+function removeMusicBot() {
+  sendMusicBotControl("remove");
+  showToast("Music bot removed");
+}
+
+async function setMusicBotUrl() {
+  if (!voiceMusicBotState?.invited) {
+    showToast("Invite the music bot first");
+    return;
+  }
+  const raw = window.prompt("Paste a music URL (YouTube, Vimeo, or direct media):", voiceMusicBotState.url || "");
+  if (!raw || !raw.trim()) return;
+  const parsed = parseEmbeddableStreamUrl(raw);
+  if (!parsed) {
+    showToast("Unsupported or invalid link");
+    return;
+  }
+  const title = await resolveMusicTrackTitle(raw.trim(), parsed);
+  sendMusicBotControl("set_url", { url: raw.trim(), title });
+}
+
+function clearMusicBotUrl() {
+  if (!voiceMusicBotState?.invited) return;
+  sendMusicBotControl("clear_url");
+  showToast("Music bot queue cleared");
+}
+
+function showMusicBotContextMenu(x, y) {
+  const invited = !!voiceMusicBotState?.invited;
+  const hasUrl = !!(voiceMusicBotState?.url && String(voiceMusicBotState.url).trim());
+  showContextMenu(x, y, [
+    invited
+      ? { label: "Set Music URL", onClick: () => setMusicBotUrl() }
+      : { label: "Invite Music Bot", onClick: () => inviteMusicBot() },
+    {
+      label: voiceMusicBotState?.playing ? "Pause" : "Play",
+      onClick: () => toggleMusicBotPlayPause(),
+    },
+    {
+      label: "Skip",
+      onClick: () => skipMusicBotTrack(),
+    },
+    {
+      label: hasUrl ? "Replace URL" : "Queue URL",
+      onClick: () => setMusicBotUrl(),
+    },
+    {
+      label: "Clear URL",
+      onClick: () => clearMusicBotUrl(),
+    },
+    {
+      label: "Remove Music Bot",
+      danger: true,
+      onClick: () => removeMusicBot(),
+    },
+  ]);
 }
 
 async function createPeerConnection(peerId, makeOffer) {
@@ -8860,6 +9392,7 @@ async function joinVoiceChannel(channelPublicId, wsPathPrefix = "/ws/voice/") {
     }
 
     if (data.type === "peers") {
+      applyMusicBotState(data.music_bot || null);
       voiceSelfPeerId = data.self_peer_id;
       addVoicePeer({
         peer_id: voiceSelfPeerId,
@@ -8877,10 +9410,18 @@ async function joinVoiceChannel(channelPublicId, wsPathPrefix = "/ws/voice/") {
         addVoicePeer(peer);
         await createPeerConnection(peer.peer_id, true);
       }
+      if (voiceMusicBotState?.invited && voiceMusicBotState?.url) {
+        watchedPeerStreamIds.add(MUSIC_BOT_PEER_ID);
+        renderMusicBotStreamTile();
+      }
     } else if (data.type === "peer_joined") {
       addVoicePeer(data.peer);
     } else if (data.type === "peer_left") {
       removeVoicePeer(data.peer_id);
+    } else if (data.type === "music_bot_state") {
+      applyMusicBotState(data.music_bot || null);
+      if (voiceMusicBotState?.invited && voiceMusicBotState?.url) watchedPeerStreamIds.add(MUSIC_BOT_PEER_ID);
+      renderMusicBotStreamTile();
     } else if (data.type === "peer_state") {
       const peer = peerMeta.get(data.peer_id);
       if (peer) {
@@ -8906,6 +9447,7 @@ async function joinVoiceChannel(channelPublicId, wsPathPrefix = "/ws/voice/") {
         renderVoiceUsers();
         updateRemotePeerVideoTileLabels();
         renderRemoteLinkStreamTile(data.peer_id);
+        renderMusicBotStreamTile();
       }
     } else if (data.type === "signal") {
       await handleVoiceSignal(data.from_peer_id, data.signal);
@@ -8916,6 +9458,7 @@ async function joinVoiceChannel(channelPublicId, wsPathPrefix = "/ws/voice/") {
     setVoiceStatus("Disconnected");
     closeVoiceSocket();
     resetVoicePeers();
+    applyMusicBotState(null);
     if (activeMode === "dm") {
       activeChannelType = "text";
       updateTextVsVoiceUI();
@@ -8926,6 +9469,7 @@ async function joinVoiceChannel(channelPublicId, wsPathPrefix = "/ws/voice/") {
 function leaveVoiceChannel() {
   closeVoiceSocket();
   resetVoicePeers();
+  applyMusicBotState(null);
   dmCallActive = false;
   const seen = new Set();
   stopStreamTracks(localCameraStream, seen);
@@ -8974,6 +9518,7 @@ function removeStaleChannelState(channelId) {
   unreadChannels.delete(channelId);
   channelLastSeen.delete(channelId);
   channelPresence.delete(channelId);
+  voiceChannelOccupancy.delete(channelId);
   clearTypingForChannel(channelId);
   channelToServer.delete(channelId);
   channelTypeById.delete(channelId);
@@ -14049,5 +14594,3 @@ window.setTimeout(() => {
 window.setTimeout(() => {
   maybeCheckDesktopWrapperUpdate().catch(() => {});
 }, 1500);
-
-

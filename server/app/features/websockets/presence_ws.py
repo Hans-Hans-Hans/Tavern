@@ -1,6 +1,7 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 from sqlalchemy.orm import Session
 from typing import Dict
+import contextlib
 
 from app.db.deps import get_db
 from app.core.security_ws import get_current_user_ws
@@ -24,7 +25,17 @@ class PresenceManager:
         return sorted(set(self.connections.values()))
 
     async def broadcast_presence(self):
-        payload = {"event": "presence_update", "online_user_public_ids": self.online_users()}
+        voice_channels = {}
+        with contextlib.suppress(Exception):
+            from app.features.websockets.voice_ws import manager as voice_manager
+
+            voice_channels = voice_manager.voice_occupancy_snapshot()
+
+        payload = {
+            "event": "presence_update",
+            "online_user_public_ids": self.online_users(),
+            "voice_channels": voice_channels,
+        }
         dead = []
         for ws in list(self.connections.keys()):
             try:

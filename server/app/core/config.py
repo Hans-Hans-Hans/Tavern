@@ -55,6 +55,7 @@ class Settings:
             if normalized
         }
     )
+    DISCORD_BOT_TOKEN: str = os.getenv("DISCORD_BOT_TOKEN", "").strip()
 
 
 settings = Settings()

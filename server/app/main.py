@@ -219,6 +219,8 @@ from app.features.websockets.presence_ws import manager as presence_ws_manager
 from app.features.websockets.voice_ws import manager as voice_ws_manager
 from app.features.admin.router import router as admin_router
 from app.features.push.router import router as push_router
+from app.features.discord_bot.router import router as discord_router
+from app.features.discord_bot.service import discord_bot_manager
 
 app.include_router(auth_router)
 app.include_router(users_router)
@@ -233,6 +235,17 @@ app.include_router(dm_call_ws_router)
 app.include_router(presence_ws_router)
 app.include_router(admin_router)
 app.include_router(push_router)
+app.include_router(discord_router)
+
+
+@app.on_event("startup")
+async def _startup_discord_bot():
+    await discord_bot_manager.start_if_configured()
+
+
+@app.on_event("shutdown")
+async def _shutdown_discord_bot():
+    await discord_bot_manager.stop()
 
 @app.get("/health")
 async def health_check():

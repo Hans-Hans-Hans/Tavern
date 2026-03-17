@@ -25,6 +25,7 @@ DATABASE_URL=sqlite:///./tavern.db
 COOKIE_SECURE=false
 COOKIE_SAMESITE=lax
 CORS_ORIGINS=http://127.0.0.1:8000,http://localhost:8000
+DISCORD_BOT_TOKEN=your-discord-bot-token
 ```
 2. Install dependencies:
 ```bash
@@ -90,6 +91,25 @@ python scripts/smoke_test.py --base-url http://127.0.0.1:8000 --username admin -
 - Use HTTPS in production with `COOKIE_SECURE=true`.
 - Restrict `CORS_ORIGINS` to real hostnames.
 - Persist DB/uploads/log volumes in production.
+
+## Discord Bot Integration
+- Set `DISCORD_BOT_TOKEN` in `.env` and restart the backend.
+- Install/update dependencies (`pip install -r requirements.txt`) so `discord.py` and `PyNaCl` are available.
+- Invite your bot with permissions for:
+  - `Send Messages`
+  - `Connect` and `Speak` (for voice joins)
+  - `Manage Channels` (for voice channel name status updates)
+
+Admin-only API endpoints:
+- `GET /discord/status`
+- `POST /discord/message` with `{ "channel_id": "...", "content": "..." }`
+- `POST /discord/voice/join` with `{ "channel_id": "...", "self_mute": false, "self_deaf": false }`
+- `POST /discord/voice/leave` with `{ "guild_id": "..." }` or `{}` for all guild voice sessions
+- `POST /discord/voice/sync-name` with `{ "channel_id": "..." }`
+
+Voice status behavior:
+- Whenever members join/leave a Discord voice channel, the bot updates that channel's name to include current occupants.
+- When a channel empties, its original base name is restored.
 
 ## Bootstrap Admin
 - Username: `admin`
