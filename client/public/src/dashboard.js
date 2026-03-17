@@ -38,6 +38,12 @@ const createChannelModal = document.getElementById("create-channel-modal");
 const submitChannelBtn = document.getElementById("submit-channel");
 const channelNameInput = document.getElementById("new-channel-name");
 const channelTypeInput = document.getElementById("new-channel-type");
+const REQUIRED_CHANNEL_TYPES = [
+  { value: "text", label: "Text" },
+  { value: "voice", label: "Voice" },
+  { value: "notes", label: "Notes" },
+  { value: "battlemap", label: "Battlemap" },
+];
 const inviteMemberModal = document.getElementById("invite-member-modal");
 const inviteServerName = document.getElementById("invite-server-name");
 const inviteUserPublicIdInput = document.getElementById("invite-user-public-id");
@@ -98,6 +104,24 @@ const screenVoiceBtn = document.getElementById("screen-voice-btn");
 const linkStreamVoiceBtn = document.getElementById("link-stream-voice-btn");
 const watchSharesVoiceBtn = document.getElementById("watch-shares-voice-btn");
 const voiceVideoGrid = document.getElementById("voice-video-grid");
+
+function ensureCreateChannelTypeOptions() {
+  if (!channelTypeInput) return;
+  const existingValues = new Set(
+    [...channelTypeInput.options].map((opt) => String(opt.value || "").trim().toLowerCase()).filter(Boolean),
+  );
+  REQUIRED_CHANNEL_TYPES.forEach((entry) => {
+    if (existingValues.has(entry.value)) return;
+    const opt = document.createElement("option");
+    opt.value = entry.value;
+    opt.textContent = entry.label;
+    channelTypeInput.appendChild(opt);
+  });
+  if (![...channelTypeInput.options].some((opt) => String(opt.value || "").trim().toLowerCase() === channelTypeInput.value)) {
+    channelTypeInput.value = "text";
+  }
+}
+ensureCreateChannelTypeOptions();
 const userSettingsModal = document.getElementById("user-settings-modal");
 const publicUserProfileModal = document.getElementById("public-user-profile-modal");
 const publicUserProfileAvatar = document.getElementById("public-user-profile-avatar");
