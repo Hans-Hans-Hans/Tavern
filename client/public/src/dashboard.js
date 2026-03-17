@@ -3677,6 +3677,7 @@ function rebuildCustomSelectOptions(state) {
 
 function enhanceCustomSelect(select) {
   if (!(select instanceof HTMLSelectElement)) return null;
+  if (select.dataset?.nativeSelect === "1") return null;
   if (select.multiple || Number(select.size) > 1) return null;
   let state = customSelectStates.get(select);
   if (!state) {
