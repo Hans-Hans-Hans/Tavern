@@ -43,6 +43,7 @@ const discordImportModal = document.getElementById("discord-import-modal");
 const discordImportServerLabel = document.getElementById("discord-import-server-label");
 const discordConnectBtn = document.getElementById("discord-connect-btn");
 const discordRefreshSessionBtn = document.getElementById("discord-refresh-session-btn");
+const discordDisconnectBtn = document.getElementById("discord-disconnect-btn");
 const discordSessionStatus = document.getElementById("discord-session-status");
 const discordGuildSelect = document.getElementById("discord-guild-select");
 const discordImportReplaceExistingInput = document.getElementById("discord-import-replace-existing");
@@ -11401,6 +11402,22 @@ async function runDiscordOauthImport(payload) {
   return res.json();
 }
 
+async function disconnectDiscordOauthSession() {
+  const res = await fetch("/discord/oauth/logout", {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    let detail = "Failed to disconnect Discord session";
+    try {
+      const data = await res.json();
+      if (data?.detail) detail = data.detail;
+    } catch {}
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
 async function refreshDiscordImportModalState() {
   if (!discordSessionStatus || !discordGuildSelect) return;
   discordSessionStatus.textContent = "Checking connection...";
@@ -13408,6 +13425,18 @@ if (discordRefreshSessionBtn) {
     refreshDiscordImportModalState().catch((err) => {
       alert(err?.message || "Failed to refresh Discord session");
     });
+  });
+}
+
+if (discordDisconnectBtn) {
+  discordDisconnectBtn.addEventListener("click", async () => {
+    try {
+      await disconnectDiscordOauthSession();
+      await refreshDiscordImportModalState();
+      showToast("Disconnected Discord session");
+    } catch (err) {
+      alert(err?.message || "Failed to disconnect Discord session");
+    }
   });
 }
 
