@@ -842,7 +842,7 @@ const FRIEND_REQUEST_TOAST_POLL_MS = 30000;
 let notificationPollInFlight = false;
 let lastNotificationPollAt = 0;
 let lastFriendRequestToastPollAt = 0;
-const SERVICE_WORKER_URL = "/sw.js?v=20260328-categoryfix2";
+const SERVICE_WORKER_URL = "/sw.js?v=20260328-categoryfix3";
 const PUSH_HEALTHCHECK_MS = 2 * 60 * 1000;
 let pushHealthTimer = null;
 let pushSelfHealInFlight = false;
@@ -12806,7 +12806,7 @@ async function loadChannels(serverPublicId, options = {}) {
           state.collapsed = { ...(state.collapsed || {}), [categoryId]: !isCollapsed };
           serverChannelLayouts.set(serverPublicId, state);
           queueSaveServerLayoutState(serverPublicId);
-          loadChannels(serverPublicId, options);
+          loadChannels(serverPublicId);
         };
         categoryToggle.addEventListener("click", toggleCategoryCollapsed);
         categoryLabel.addEventListener("click", toggleCategoryCollapsed);
@@ -12974,7 +12974,7 @@ async function loadChannels(serverPublicId, options = {}) {
         state.collapsed = { ...(state.collapsed || {}), [categoryId]: !isCollapsed };
         serverChannelLayouts.set(serverPublicId, state);
         queueSaveServerLayoutState(serverPublicId);
-        loadChannels(serverPublicId, options);
+        loadChannels(serverPublicId);
       };
       categoryToggle.addEventListener("click", toggleCategoryCollapsed);
       categoryLabel.addEventListener("click", toggleCategoryCollapsed);
