@@ -842,7 +842,7 @@ const FRIEND_REQUEST_TOAST_POLL_MS = 30000;
 let notificationPollInFlight = false;
 let lastNotificationPollAt = 0;
 let lastFriendRequestToastPollAt = 0;
-const SERVICE_WORKER_URL = "/sw.js?v=20260328-categoryfix3";
+const SERVICE_WORKER_URL = "/sw.js?v=20260328-categoryfix4";
 const PUSH_HEALTHCHECK_MS = 2 * 60 * 1000;
 let pushHealthTimer = null;
 let pushSelfHealInFlight = false;
@@ -12743,6 +12743,7 @@ function highlightActiveServer() {
 async function loadChannels(serverPublicId, options = {}) {
   try {
     await ensureServerNicknames(serverPublicId, true);
+    const localLayoutState = getServerLayoutState(serverPublicId);
     const [channelsRes, layoutRes, categoriesRes] = await Promise.all([
       fetch(`/channels/server/${serverPublicId}`, { credentials: "include" }),
       fetch(`/channels/server/${serverPublicId}/layout`, { credentials: "include" }),
@@ -12753,12 +12754,25 @@ async function loadChannels(serverPublicId, options = {}) {
     const categories = categoriesRes.ok ? await categoriesRes.json() : [];
     const serverLayout = layoutRes.ok
       ? normalizeServerLayoutBundle(await layoutRes.json())
-      : getServerLayoutState(serverPublicId);
-    serverChannelLayouts.set(serverPublicId, serverLayout);
+      : localLayoutState;
+    const mergedLayout = {
+      layoutTokens:
+        Array.isArray(localLayoutState?.layoutTokens) && localLayoutState.layoutTokens.length
+          ? [...localLayoutState.layoutTokens]
+          : Array.isArray(serverLayout?.layoutTokens)
+            ? [...serverLayout.layoutTokens]
+            : [],
+      separators: {},
+      collapsed: {
+        ...(serverLayout?.collapsed || {}),
+        ...(localLayoutState?.collapsed || {}),
+      },
+    };
+    serverChannelLayouts.set(serverPublicId, mergedLayout);
     const channelIcons = getStoredObject(getChannelIconsStorageKey(serverPublicId), {});
     const channelsById = new Map(channels.map((ch) => [ch.public_id, ch]));
-    const collapsedCategories = { ...(serverLayout.collapsed || {}) };
-    let layout = Array.isArray(serverLayout.layoutTokens) ? [...serverLayout.layoutTokens] : [];
+    const collapsedCategories = { ...(mergedLayout.collapsed || {}) };
+    let layout = Array.isArray(mergedLayout.layoutTokens) ? [...mergedLayout.layoutTokens] : [];
     const hadLegacySepTokens = layout.some((token) => String(token || "").startsWith("sep:"));
     if (layout.length === 0) {
       layout = channels.map((channel) => `ch:${channel.public_id}`);
