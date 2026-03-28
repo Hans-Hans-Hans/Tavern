@@ -277,6 +277,7 @@ def save_server_channel_layout(
     layout_tokens: list[str],
     separators: dict[str, str],
     collapsed: dict[str, bool],
+    category_assignments: dict[str, str | None] | None = None,
 ):
     server = server_service.get_server_by_public_id(db, server_public_id)
     if not server:
@@ -286,8 +287,10 @@ def save_server_channel_layout(
 
     channels = db.query(Channel).filter(Channel.server_id == server.id).all()
     valid_channel_ids = {str(ch.public_id) for ch in channels}
+    channel_by_public_id = {str(ch.public_id): ch for ch in channels}
     category_rows = db.query(ChannelCategory).filter(ChannelCategory.server_id == server.id).all()
     valid_category_ids = {str(cat.public_id) for cat in category_rows}
+    category_by_public_id = {str(cat.public_id): cat for cat in category_rows}
 
     safe_layout: list[str] = []
     for token in layout_tokens or []:
@@ -309,6 +312,48 @@ def save_server_channel_layout(
     for token in existing_channel_tokens:
         if token not in safe_layout:
             safe_layout.append(token)
+
+    raw_assignments = category_assignments or {}
+    safe_assignments: dict[str, str | None] = {}
+    for key, value in raw_assignments.items():
+        channel_public_id = str(key or "").strip()
+        if not channel_public_id or channel_public_id not in valid_channel_ids:
+            continue
+        if value is None:
+            safe_assignments[channel_public_id] = None
+            continue
+        category_public_id = str(value or "").strip()
+        if not category_public_id:
+            safe_assignments[channel_public_id] = None
+            continue
+        if category_public_id in valid_category_ids:
+            safe_assignments[channel_public_id] = category_public_id
+
+    for token in safe_layout:
+        channel_public_id = token[3:]
+        channel = channel_by_public_id.get(channel_public_id)
+        if not channel:
+            continue
+        if channel_public_id not in safe_assignments:
+            continue
+        assigned_category_public_id = safe_assignments[channel_public_id]
+        assigned_category = (
+            category_by_public_id.get(assigned_category_public_id)
+            if assigned_category_public_id
+            else None
+        )
+        channel.category_id = assigned_category.id if assigned_category else None
+
+    # Re-number channel positions inside each category according to the saved layout order.
+    channel_position_by_category: dict[int | None, int] = {}
+    for token in safe_layout:
+        channel = channel_by_public_id.get(token[3:])
+        if not channel:
+            continue
+        category_id = int(channel.category_id) if channel.category_id is not None else None
+        next_position = channel_position_by_category.get(category_id, 0)
+        channel.position = next_position
+        channel_position_by_category[category_id] = next_position + 1
 
     server.channel_layout = json.dumps(safe_layout, separators=(",", ":"), ensure_ascii=False)
     # Separators are deprecated in favor of Discord-style categories.

@@ -842,7 +842,7 @@ const FRIEND_REQUEST_TOAST_POLL_MS = 30000;
 let notificationPollInFlight = false;
 let lastNotificationPollAt = 0;
 let lastFriendRequestToastPollAt = 0;
-const SERVICE_WORKER_URL = "/sw.js?v=20260328-categoryfix4";
+const SERVICE_WORKER_URL = "/sw.js?v=20260328-categoryfix5";
 const PUSH_HEALTHCHECK_MS = 2 * 60 * 1000;
 let pushHealthTimer = null;
 let pushSelfHealInFlight = false;
@@ -11525,12 +11525,28 @@ function normalizeServerLayoutBundle(raw) {
     if (!id) return;
     collapsed[id] = !!value;
   });
-  return { layoutTokens, separators, collapsed };
+  const categoryAssignments = {};
+  const sourceCategoryAssignments =
+    bundle.category_assignments && typeof bundle.category_assignments === "object"
+      ? bundle.category_assignments
+      : {};
+  Object.entries(sourceCategoryAssignments).forEach(([key, value]) => {
+    const channelId = String(key || "").trim();
+    if (!channelId) return;
+    const categoryId = value == null ? null : String(value || "").trim() || null;
+    categoryAssignments[channelId] = categoryId;
+  });
+  return { layoutTokens, separators, collapsed, categoryAssignments };
 }
 
 function getServerLayoutState(serverPublicId) {
   if (!serverChannelLayouts.has(serverPublicId)) {
-    serverChannelLayouts.set(serverPublicId, { layoutTokens: [], separators: {}, collapsed: {} });
+    serverChannelLayouts.set(serverPublicId, {
+      layoutTokens: [],
+      separators: {},
+      collapsed: {},
+      categoryAssignments: {},
+    });
   }
   return serverChannelLayouts.get(serverPublicId);
 }
@@ -11553,6 +11569,7 @@ async function saveServerLayoutState(serverPublicId) {
       layout_tokens: state.layoutTokens,
       separators: state.separators,
       collapsed: state.collapsed,
+      category_assignments: state.categoryAssignments || {},
     }),
   });
   if (!res.ok) throw new Error(`Failed to save server layout: ${res.status}`);
@@ -11715,11 +11732,26 @@ function getBattlemapStateStorageKey(channelId) {
 
 function persistChannelOrder() {
   if (!activeServerId) return;
-  const layoutTokens = [...channelsPanel.querySelectorAll(".channel-item[data-layout-token]")]
-    .map((el) => el.dataset.layoutToken)
-    .filter((token) => String(token || "").startsWith("ch:"));
+  const layoutTokens = [];
+  const categoryAssignments = {};
+  let currentCategoryId = null;
+  [...channelsPanel.children].forEach((el) => {
+    if (!(el instanceof HTMLElement)) return;
+    if (el.classList.contains("channel-category-item")) {
+      currentCategoryId = String(el.dataset.categoryId || "").trim() || null;
+      return;
+    }
+    if (!el.classList.contains("channel-item")) return;
+    const token = String(el.dataset.layoutToken || "").trim();
+    if (token.startsWith("ch:")) {
+      layoutTokens.push(token);
+      const channelId = token.slice(3);
+      if (channelId) categoryAssignments[channelId] = currentCategoryId;
+    }
+  });
   const state = getServerLayoutState(activeServerId);
   state.layoutTokens = layoutTokens;
+  state.categoryAssignments = categoryAssignments;
   serverChannelLayouts.set(activeServerId, state);
   queueSaveServerLayoutState(activeServerId);
   const channelIds = [...channelsPanel.querySelectorAll(".channel-item")].map((el) => el.dataset.channelId);
@@ -12767,6 +12799,10 @@ async function loadChannels(serverPublicId, options = {}) {
         ...(serverLayout?.collapsed || {}),
         ...(localLayoutState?.collapsed || {}),
       },
+      categoryAssignments: {
+        ...(serverLayout?.categoryAssignments || {}),
+        ...(localLayoutState?.categoryAssignments || {}),
+      },
     };
     serverChannelLayouts.set(serverPublicId, mergedLayout);
     const channelIcons = getStoredObject(getChannelIconsStorageKey(serverPublicId), {});
@@ -12787,6 +12823,7 @@ async function loadChannels(serverPublicId, options = {}) {
       layoutTokens: layout,
       separators: {},
       collapsed: collapsedCategories,
+      categoryAssignments: { ...(mergedLayout.categoryAssignments || {}) },
     });
     if (hadLegacySepTokens) queueSaveServerLayoutState(serverPublicId);
 

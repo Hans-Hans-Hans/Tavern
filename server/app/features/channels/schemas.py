@@ -48,6 +48,7 @@ class ServerChannelLayoutIn(BaseModel):
     layout_tokens: list[str] = Field(default_factory=list)
     separators: dict[str, str] = Field(default_factory=dict)
     collapsed: dict[str, bool] = Field(default_factory=dict)
+    category_assignments: dict[str, str | None] = Field(default_factory=dict)
 
 
 class ServerChannelLayoutOut(BaseModel):

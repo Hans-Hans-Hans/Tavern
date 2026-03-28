@@ -82,6 +82,7 @@ def save_server_layout(
         layout_tokens=payload.layout_tokens,
         separators=payload.separators,
         collapsed=payload.collapsed,
+        category_assignments=payload.category_assignments,
     )
 
 
