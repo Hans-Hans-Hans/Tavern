@@ -11697,7 +11697,9 @@ function getBattlemapStateStorageKey(channelId) {
 
 function persistChannelOrder() {
   if (!activeServerId) return;
-  const layoutTokens = [...channelsPanel.querySelectorAll("li[data-layout-token]")].map((el) => el.dataset.layoutToken);
+  const layoutTokens = [...channelsPanel.querySelectorAll(".channel-item[data-layout-token]")]
+    .map((el) => el.dataset.layoutToken)
+    .filter((token) => String(token || "").startsWith("ch:"));
   const state = getServerLayoutState(activeServerId);
   state.layoutTokens = layoutTokens;
   serverChannelLayouts.set(activeServerId, state);
@@ -11706,28 +11708,18 @@ function persistChannelOrder() {
   saveOrder(getChannelOrderStorageKey(activeServerId), channelIds);
 }
 
-function getDisplayChannelName(channel, separatorLabels = null) {
+function getDisplayChannelName(channel) {
   const rawName = String(channel?.name || "").trim();
   const categoryName = String(channel?.category_name || "").trim();
   if (!rawName) return "";
-  const candidatePrefixes = [];
-  if (categoryName) candidatePrefixes.push(categoryName);
-  if (separatorLabels && typeof separatorLabels === "object") {
-    Object.values(separatorLabels).forEach((label) => {
-      const text = String(label || "").trim();
-      if (!text) return;
-      if (!candidatePrefixes.some((entry) => entry.toLowerCase() === text.toLowerCase())) {
-        candidatePrefixes.push(text);
-      }
-    });
-  }
-  for (const prefixBase of candidatePrefixes) {
-    const escaped = prefixBase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  if (categoryName) {
+    const escaped = categoryName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const regex = new RegExp(`^\\s*${escaped}\\s*\\/\\s*(.+)\\s*$`, "i");
     const match = rawName.match(regex);
-    if (!match) continue;
-    const trimmed = String(match[1] || "").trim();
-    return trimmed || rawName;
+    if (match) {
+      const trimmed = String(match[1] || "").trim();
+      return trimmed || rawName;
+    }
   }
   return rawName;
 }
@@ -12745,118 +12737,63 @@ async function loadChannels(serverPublicId, options = {}) {
     serverChannelLayouts.set(serverPublicId, serverLayout);
     const channelIcons = getStoredObject(getChannelIconsStorageKey(serverPublicId), {});
     const channelsById = new Map(channels.map((ch) => [ch.public_id, ch]));
-    const separators = { ...(serverLayout.separators || {}) };
-    const collapsedSeparators = { ...(serverLayout.collapsed || {}) };
+    const collapsedCategories = { ...(serverLayout.collapsed || {}) };
     let layout = Array.isArray(serverLayout.layoutTokens) ? [...serverLayout.layoutTokens] : [];
+    const hadLegacySepTokens = layout.some((token) => String(token || "").startsWith("sep:"));
     if (layout.length === 0) {
       layout = channels.map((channel) => `ch:${channel.public_id}`);
     }
-    layout = layout.filter((token) => {
-      if (token.startsWith("ch:")) return channelsById.has(token.slice(3));
-      if (token.startsWith("sep:")) return Boolean(separators[token.slice(4)]);
-      return false;
-    });
+    layout = layout.filter((token) => token.startsWith("ch:") && channelsById.has(token.slice(3)));
     channels.forEach((channel) => {
       const token = `ch:${channel.public_id}`;
       if (!layout.includes(token)) layout.push(token);
     });
 
-    // Backfill category separators for older imports/layouts that used static headers.
-    const layoutWithCategorySeparators = [];
-    const seenCategorySeparator = new Set(
-      layout
-        .filter((token) => token.startsWith("sep:"))
-        .map((token) => token.slice(4))
-    );
-    let layoutMutated = false;
-    layout.forEach((token) => {
-      if (token.startsWith("ch:")) {
-        const channel = channelsById.get(token.slice(3));
-        const categoryId = String(channel?.category_public_id || "");
-        const categoryName = String(channel?.category_name || "").trim();
-        if (categoryId && !seenCategorySeparator.has(categoryId)) {
-          seenCategorySeparator.add(categoryId);
-          if (!separators[categoryId] && categoryName) separators[categoryId] = categoryName;
-          if (!(categoryId in collapsedSeparators)) collapsedSeparators[categoryId] = false;
-          layoutWithCategorySeparators.push(`sep:${categoryId}`);
-          layoutMutated = true;
-        }
-      }
-      layoutWithCategorySeparators.push(token);
-    });
-    if (layoutMutated) layout = layoutWithCategorySeparators;
-
     serverChannelLayouts.set(serverPublicId, {
       layoutTokens: layout,
-      separators,
-      collapsed: collapsedSeparators,
+      separators: {},
+      collapsed: collapsedCategories,
     });
-    if (layoutMutated) queueSaveServerLayoutState(serverPublicId);
+    if (hadLegacySepTokens) queueSaveServerLayoutState(serverPublicId);
 
     channelsPanel.innerHTML = "";
-    let hideFollowingChannels = false;
+    let previousCategoryId = "__none__";
     layout.forEach((token) => {
-      if (token.startsWith("sep:")) {
-        const separatorId = token.slice(4);
-        const label = separators[separatorId];
-        if (!label) return;
-        const isCollapsed = !!collapsedSeparators[separatorId];
-        hideFollowingChannels = isCollapsed;
-        const sepLi = document.createElement("li");
-        sepLi.classList.add("channel-separator-item");
-        if (isCollapsed) sepLi.classList.add("collapsed");
-        sepLi.dataset.layoutToken = token;
-        sepLi.draggable = true;
-        sepLi.dataset.separatorId = separatorId;
-        const sepToggle = document.createElement("button");
-        sepToggle.type = "button";
-        sepToggle.classList.add("channel-separator-toggle");
-        sepToggle.setAttribute("aria-label", isCollapsed ? "Expand section" : "Collapse section");
-        sepToggle.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
-        sepToggle.innerHTML = `<i class="fas fa-chevron-${isCollapsed ? "right" : "down"}"></i>`;
-        const sepLabel = document.createElement("span");
-        sepLabel.classList.add("channel-separator-label");
-        sepLabel.innerHTML = renderSeparatorContent(label);
-        const toggleSeparatorCollapsed = (event) => {
+      const channel = channelsById.get(token.slice(3));
+      if (!channel) return;
+      const categoryId = String(channel.category_public_id || "").trim() || null;
+      const categoryName = String(channel.category_name || "").trim() || "Category";
+      if (categoryId && categoryId !== previousCategoryId) {
+        const categoryLi = document.createElement("li");
+        categoryLi.className = "channel-category-item";
+        categoryLi.dataset.categoryId = categoryId;
+        const isCollapsed = !!collapsedCategories[categoryId];
+        if (isCollapsed) categoryLi.classList.add("collapsed");
+        const categoryToggle = document.createElement("button");
+        categoryToggle.type = "button";
+        categoryToggle.className = "channel-category-toggle";
+        categoryToggle.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
+        categoryToggle.innerHTML = `<i class="fas fa-chevron-${isCollapsed ? "right" : "down"}"></i>`;
+        const categoryLabel = document.createElement("span");
+        categoryLabel.className = "channel-category-label";
+        categoryLabel.textContent = categoryName;
+        const toggleCategoryCollapsed = (event) => {
           event.preventDefault();
           event.stopPropagation();
           const state = getServerLayoutState(serverPublicId);
-          state.collapsed = { ...(state.collapsed || {}), [separatorId]: !isCollapsed };
+          state.collapsed = { ...(state.collapsed || {}), [categoryId]: !isCollapsed };
           serverChannelLayouts.set(serverPublicId, state);
           queueSaveServerLayoutState(serverPublicId);
           loadChannels(serverPublicId, options);
         };
-        sepToggle.addEventListener("click", toggleSeparatorCollapsed);
-        sepLabel.addEventListener("click", toggleSeparatorCollapsed);
-        const sepDelete = document.createElement("button");
-        sepDelete.type = "button";
-        sepDelete.classList.add("channel-separator-delete");
-        sepDelete.innerHTML = '<i class="fas fa-times"></i>';
-        sepDelete.addEventListener("click", (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          const state = getServerLayoutState(serverPublicId);
-          const nextSeparators = { ...(state.separators || {}) };
-          const nextCollapsed = { ...(state.collapsed || {}) };
-          delete nextSeparators[separatorId];
-          delete nextCollapsed[separatorId];
-          const nextLayout = (state.layoutTokens || []).filter((t) => t !== token);
-          state.separators = nextSeparators;
-          state.collapsed = nextCollapsed;
-          state.layoutTokens = nextLayout;
-          serverChannelLayouts.set(serverPublicId, state);
-          queueSaveServerLayoutState(serverPublicId);
-          loadChannels(serverPublicId);
-        });
-        sepLi.appendChild(sepToggle);
-        sepLi.appendChild(sepLabel);
-        sepLi.appendChild(sepDelete);
-        channelsPanel.appendChild(sepLi);
-        return;
+        categoryToggle.addEventListener("click", toggleCategoryCollapsed);
+        categoryLabel.addEventListener("click", toggleCategoryCollapsed);
+        categoryLi.appendChild(categoryToggle);
+        categoryLi.appendChild(categoryLabel);
+        channelsPanel.appendChild(categoryLi);
       }
-      const channel = channelsById.get(token.slice(3));
-      if (!channel) return;
-      const displayChannelName = getDisplayChannelName(channel, separators);
+      previousCategoryId = categoryId || "__none__";
+      const displayChannelName = getDisplayChannelName(channel);
       const li = document.createElement("li");
       const nameEl = document.createElement("span");
       nameEl.classList.add("channel-name");
@@ -12875,7 +12812,7 @@ async function loadChannels(serverPublicId, options = {}) {
       li.dataset.layoutToken = token;
       li.classList.add("channel-item");
       if ((channel.type || "text") === "voice") li.classList.add("voice-channel-item");
-      if (hideFollowingChannels) {
+      if (categoryId && collapsedCategories[categoryId]) {
         li.classList.add("channel-collapsed-hidden");
         li.hidden = true;
       }
@@ -13452,30 +13389,14 @@ if (openAddSeparatorBtn) {
       alert("Select a server first!");
       return;
     }
-    const raw = window.prompt("Add separator text, or start with `cat:` to create a channel category:");
-    if (!raw || !raw.trim()) return;
-    const trimmed = raw.trim();
-    if (/^cat\s*:/i.test(trimmed)) {
-      const categoryName = trimmed.replace(/^cat\s*:/i, "").trim();
-      if (!categoryName) {
-        alert("Category name is required after `cat:`");
-        return;
-      }
-      try {
-        await createServerCategory(activeServerId, categoryName);
-      } catch (err) {
-        alert(err?.message || "Failed to create category");
-      }
+    const categoryName = (window.prompt("Category name:") || "").trim();
+    if (!categoryName) return;
+    try {
+      await createServerCategory(activeServerId, categoryName);
       await loadChannels(activeServerId);
-      return;
+    } catch (err) {
+      alert(err?.message || "Failed to create category");
     }
-    const separatorId = String(Date.now());
-    const state = getServerLayoutState(activeServerId);
-    state.separators = { ...(state.separators || {}), [separatorId]: trimmed };
-    state.layoutTokens = [...(state.layoutTokens || []), `sep:${separatorId}`];
-    serverChannelLayouts.set(activeServerId, state);
-    queueSaveServerLayoutState(activeServerId);
-    loadChannels(activeServerId);
   });
 }
 

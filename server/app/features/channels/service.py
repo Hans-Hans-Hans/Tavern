@@ -286,14 +286,8 @@ def save_server_channel_layout(
 
     channels = db.query(Channel).filter(Channel.server_id == server.id).all()
     valid_channel_ids = {str(ch.public_id) for ch in channels}
-
-    safe_separators: dict[str, str] = {}
-    for key, value in (separators or {}).items():
-        sep_id = str(key or "").strip()
-        label = str(value or "").strip()
-        if not sep_id or not label:
-            continue
-        safe_separators[sep_id] = label[:300]
+    category_rows = db.query(ChannelCategory).filter(ChannelCategory.server_id == server.id).all()
+    valid_category_ids = {str(cat.public_id) for cat in category_rows}
 
     safe_layout: list[str] = []
     for token in layout_tokens or []:
@@ -302,9 +296,6 @@ def save_server_channel_layout(
             continue
         if text.startswith("ch:"):
             if text[3:] not in valid_channel_ids:
-                continue
-        elif text.startswith("sep:"):
-            if text[4:] not in safe_separators:
                 continue
         else:
             continue
@@ -319,14 +310,14 @@ def save_server_channel_layout(
         if token not in safe_layout:
             safe_layout.append(token)
 
+    server.channel_layout = json.dumps(safe_layout, separators=(",", ":"), ensure_ascii=False)
+    # Separators are deprecated in favor of Discord-style categories.
+    server.channel_separators = json.dumps({}, separators=(",", ":"), ensure_ascii=False)
     safe_collapsed = {
         str(key): bool(value)
         for key, value in (collapsed or {}).items()
-        if str(key) in safe_separators
+        if str(key) in valid_category_ids
     }
-
-    server.channel_layout = json.dumps(safe_layout, separators=(",", ":"), ensure_ascii=False)
-    server.channel_separators = json.dumps(safe_separators, separators=(",", ":"), ensure_ascii=False)
     server.channel_separator_collapsed = json.dumps(safe_collapsed, separators=(",", ":"), ensure_ascii=False)
     db.commit()
     return _server_layout_payload(server)
@@ -407,10 +398,6 @@ def import_discord_layout(
     category_position = 0
     channel_position_by_category: dict[int | None, int] = {}
     layout_tokens: list[str] = []
-    separators: dict[str, str] = {}
-    separator_collapsed: dict[str, bool] = {}
-    seen_separator_ids: set[str] = set()
-
     for row in normalized_rows:
         category = None
         category_name = str(row.get("category_name") or "").strip() or None
@@ -429,12 +416,6 @@ def import_discord_layout(
                 db.flush()
                 created_categories.append(category)
                 category_by_name[key] = category
-            sep_id = category.public_id
-            if sep_id not in seen_separator_ids:
-                seen_separator_ids.add(sep_id)
-                separators[sep_id] = category_name
-                separator_collapsed[sep_id] = False
-                layout_tokens.append(f"sep:{sep_id}")
 
         final_name = row["name"]
         if (not create_categories) and prefix_category and category_name:
@@ -475,17 +456,11 @@ def import_discord_layout(
         for token in layout_tokens:
             if token not in merged_layout:
                 merged_layout.append(token)
-        merged_separators = dict(existing_layout.get("separators") or {})
-        merged_separators.update(separators)
-        merged_collapsed = {
-            key: bool(value)
-            for key, value in dict(existing_layout.get("collapsed") or {}).items()
-        }
-        merged_collapsed.update({key: bool(value) for key, value in separator_collapsed.items()})
 
         server.channel_layout = json.dumps(merged_layout, separators=(",", ":"), ensure_ascii=False)
-        server.channel_separators = json.dumps(merged_separators, separators=(",", ":"), ensure_ascii=False)
-        server.channel_separator_collapsed = json.dumps(merged_collapsed, separators=(",", ":"), ensure_ascii=False)
+        # Separators are deprecated in favor of category headers.
+        server.channel_separators = json.dumps({}, separators=(",", ":"), ensure_ascii=False)
+        server.channel_separator_collapsed = json.dumps({}, separators=(",", ":"), ensure_ascii=False)
 
     db.commit()
     for channel in created_channels:
