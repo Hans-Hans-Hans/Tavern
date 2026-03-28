@@ -240,12 +240,17 @@ class DiscordBotManager:
         ]
         categories.sort(key=lambda ch: (int(getattr(ch, "position", 0)), int(ch.id)))
 
+        text_types: tuple[type, ...] = tuple(
+            cls for cls in (
+                getattr(discord, "TextChannel", None),
+                getattr(discord, "ForumChannel", None),
+                getattr(discord, "NewsChannel", None),
+            )
+            if cls is not None
+        )
+
         def _to_kind(ch: Any) -> str | None:
-            if isinstance(ch, (
-                discord.TextChannel,
-                discord.ForumChannel,
-                discord.NewsChannel,
-            )):
+            if text_types and isinstance(ch, text_types):
                 return "text" if include_text else None
             if isinstance(ch, (discord.VoiceChannel, discord.StageChannel)):
                 return "voice" if include_voice else None
