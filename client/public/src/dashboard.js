@@ -842,7 +842,7 @@ const FRIEND_REQUEST_TOAST_POLL_MS = 30000;
 let notificationPollInFlight = false;
 let lastNotificationPollAt = 0;
 let lastFriendRequestToastPollAt = 0;
-const SERVICE_WORKER_URL = "/sw.js?v=20260316-musicbot2";
+const SERVICE_WORKER_URL = "/sw.js?v=20260328-categoryfix1";
 const PUSH_HEALTHCHECK_MS = 2 * 60 * 1000;
 let pushHealthTimer = null;
 let pushSelfHealInFlight = false;
