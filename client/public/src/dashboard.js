@@ -11706,15 +11706,27 @@ function persistChannelOrder() {
   saveOrder(getChannelOrderStorageKey(activeServerId), channelIds);
 }
 
-function getDisplayChannelName(channel) {
+function getDisplayChannelName(channel, separatorLabels = null) {
   const rawName = String(channel?.name || "").trim();
   const categoryName = String(channel?.category_name || "").trim();
   if (!rawName) return "";
-  if (!categoryName) return rawName;
-  const prefix = `${categoryName} / `;
-  if (rawName.toLowerCase().startsWith(prefix.toLowerCase())) {
-    const trimmed = rawName.slice(prefix.length).trim();
-    return trimmed || rawName;
+  const candidatePrefixes = [];
+  if (categoryName) candidatePrefixes.push(categoryName);
+  if (separatorLabels && typeof separatorLabels === "object") {
+    Object.values(separatorLabels).forEach((label) => {
+      const text = String(label || "").trim();
+      if (!text) return;
+      if (!candidatePrefixes.some((entry) => entry.toLowerCase() === text.toLowerCase())) {
+        candidatePrefixes.push(text);
+      }
+    });
+  }
+  for (const prefixBase of candidatePrefixes) {
+    const prefix = `${prefixBase} / `;
+    if (rawName.toLowerCase().startsWith(prefix.toLowerCase())) {
+      const trimmed = rawName.slice(prefix.length).trim();
+      return trimmed || rawName;
+    }
   }
   return rawName;
 }
@@ -12843,7 +12855,7 @@ async function loadChannels(serverPublicId, options = {}) {
       }
       const channel = channelsById.get(token.slice(3));
       if (!channel) return;
-      const displayChannelName = getDisplayChannelName(channel);
+      const displayChannelName = getDisplayChannelName(channel, separators);
       const li = document.createElement("li");
       const nameEl = document.createElement("span");
       nameEl.classList.add("channel-name");
