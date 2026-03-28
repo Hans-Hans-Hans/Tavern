@@ -11722,11 +11722,12 @@ function getDisplayChannelName(channel, separatorLabels = null) {
     });
   }
   for (const prefixBase of candidatePrefixes) {
-    const prefix = `${prefixBase} / `;
-    if (rawName.toLowerCase().startsWith(prefix.toLowerCase())) {
-      const trimmed = rawName.slice(prefix.length).trim();
-      return trimmed || rawName;
-    }
+    const escaped = prefixBase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`^\\s*${escaped}\\s*\\/\\s*(.+)\\s*$`, "i");
+    const match = rawName.match(regex);
+    if (!match) continue;
+    const trimmed = String(match[1] || "").trim();
+    return trimmed || rawName;
   }
   return rawName;
 }

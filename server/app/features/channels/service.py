@@ -1,6 +1,7 @@
 import uuid
 import asyncio
 import json
+import re
 from typing import Any
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
@@ -82,6 +83,26 @@ def _channel_sort_key(channel: Channel):
     return (1, int(category.position or 0), int(channel.position or 0), int(channel.id or 0))
 
 
+def _strip_legacy_category_prefix(channel: Channel) -> bool:
+    category = channel.category
+    if category is None:
+        return False
+    raw_name = str(channel.name or "").strip()
+    category_name = str(category.name or "").strip()
+    if not raw_name or not category_name:
+        return False
+    # Legacy imports used "Category / channel". Support flexible spacing.
+    pattern = re.compile(rf"^\s*{re.escape(category_name)}\s*/\s*(.+)\s*$", flags=re.IGNORECASE)
+    match = pattern.match(raw_name)
+    if not match:
+        return False
+    next_name = str(match.group(1) or "").strip()
+    if not next_name or next_name == raw_name:
+        return False
+    channel.name = next_name
+    return True
+
+
 # -------------------------------
 # List all channels in a server for a given user
 # -------------------------------
@@ -91,6 +112,14 @@ def list_server_channels(db: Session, server_public_id: str, user_id: int):
         raise HTTPException(status_code=404, detail="Server not found")
     _require_server_membership_or_manage_channels(db, server, user_id)
     channels = db.query(models.Channel).filter(models.Channel.server_id == server.id).all()
+    changed = False
+    for channel in channels:
+        if _strip_legacy_category_prefix(channel):
+            changed = True
+    if changed:
+        db.commit()
+        for channel in channels:
+            db.refresh(channel)
     channels.sort(key=_channel_sort_key)
     return [_serialize_channel(channel) for channel in channels]
 
