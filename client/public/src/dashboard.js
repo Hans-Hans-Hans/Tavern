@@ -842,7 +842,7 @@ const FRIEND_REQUEST_TOAST_POLL_MS = 30000;
 let notificationPollInFlight = false;
 let lastNotificationPollAt = 0;
 let lastFriendRequestToastPollAt = 0;
-const SERVICE_WORKER_URL = "/sw.js?v=20260328-categoryfix1";
+const SERVICE_WORKER_URL = "/sw.js?v=20260328-categoryfix2";
 const PUSH_HEALTHCHECK_MS = 2 * 60 * 1000;
 let pushHealthTimer = null;
 let pushSelfHealInFlight = false;
@@ -13126,13 +13126,13 @@ function setCreateChannelModalMode(mode = "channel") {
   if (createChannelModalMode === "category") {
     if (createChannelModalTitle) createChannelModalTitle.textContent = "Create Category or Channel";
     if (createChannelModalHint) {
-      createChannelModalHint.textContent = "Add a category only, or add a category and a channel together.";
+      createChannelModalHint.textContent = "Add a category only, or add a category and a channel together. If both category fields are used, new category takes priority.";
     }
     if (submitChannelBtn) submitChannelBtn.textContent = "Create";
   } else {
     if (createChannelModalTitle) createChannelModalTitle.textContent = "Create Channel";
     if (createChannelModalHint) {
-      createChannelModalHint.textContent = "Create a channel, or add a category and place the channel into it.";
+      createChannelModalHint.textContent = "Create a channel, or add a category and place the channel into it. If both category fields are used, new category takes priority.";
     }
     if (submitChannelBtn) submitChannelBtn.textContent = "Create Channel";
   }
@@ -13161,19 +13161,13 @@ async function openCreateChannelFlow({ focusNewCategory = false, mode = "channel
   if (channelNameInput) channelNameInput.value = "";
   if (channelNewCategoryInput) channelNewCategoryInput.value = "";
   if (channelTypeInput) channelTypeInput.value = "text";
-  if (channelCategoryInput) {
-    channelCategoryInput.value = "";
-    channelCategoryInput.disabled = false;
-  }
+  if (channelCategoryInput) channelCategoryInput.value = "";
   openModal(createChannelModal);
+  if (channelCategoryInput) {
+    enhanceCustomSelect(channelCategoryInput);
+    syncCustomSelectState(customSelectStates.get(channelCategoryInput));
+  }
   if (focusNewCategory && channelNewCategoryInput) channelNewCategoryInput.focus();
-}
-
-if (channelNewCategoryInput && channelCategoryInput) {
-  channelNewCategoryInput.addEventListener("input", () => {
-    const hasNewCategory = String(channelNewCategoryInput.value || "").trim().length > 0;
-    channelCategoryInput.disabled = hasNewCategory;
-  });
 }
 
 if (createChannelModal && submitChannelBtn) {
@@ -13201,7 +13195,6 @@ if (createChannelModal && submitChannelBtn) {
       }
       if (!name) {
         if (newCategoryName) {
-          if (channelCategoryInput) channelCategoryInput.disabled = false;
           closeModal(createChannelModal);
           await loadChannels(activeServerId);
           showToast(`Category "${newCategoryName}" created`);
@@ -13239,10 +13232,7 @@ if (createChannelModal && submitChannelBtn) {
       channelNameInput.value = "";
       if (channelNewCategoryInput) channelNewCategoryInput.value = "";
       if (channelTypeInput) channelTypeInput.value = "text";
-      if (channelCategoryInput) {
-        channelCategoryInput.value = "";
-        channelCategoryInput.disabled = false;
-      }
+      if (channelCategoryInput) channelCategoryInput.value = "";
       closeModal(createChannelModal);
       await loadChannels(activeServerId);
       if (createChannelModalMode === "category" && name && newCategoryName) {
