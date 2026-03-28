@@ -880,6 +880,10 @@ body.ui-style-boxy.channels-flat .channels-panel .channel-item.has-unread {
   cursor: pointer;
   user-select: none;
 }
+.channel-category-item.empty-category .channel-category-label {
+  opacity: 0.7;
+  font-style: italic;
+}
 .context-menu {
   position: fixed;
   min-width: 180px;

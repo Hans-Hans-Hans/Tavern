@@ -38,6 +38,7 @@ const openCreateItemBtn = document.getElementById("open-create-item");
 const createChannelModal = document.getElementById("create-channel-modal");
 const submitChannelBtn = document.getElementById("submit-channel");
 const channelNameInput = document.getElementById("new-channel-name");
+const channelCategoryInput = document.getElementById("new-channel-category");
 const channelTypeInput = document.getElementById("new-channel-type");
 const discordImportModal = document.getElementById("discord-import-modal");
 const discordImportServerLabel = document.getElementById("discord-import-server-label");
@@ -11371,6 +11372,19 @@ async function createServerCategory(serverPublicId, name) {
   return res.json();
 }
 
+async function fetchServerCategories(serverPublicId) {
+  const res = await fetch(`/channels/server/${serverPublicId}/categories`, { credentials: "include" });
+  if (!res.ok) {
+    let detail = "Failed to load categories";
+    try {
+      const data = await res.json();
+      if (data?.detail) detail = data.detail;
+    } catch {}
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
 async function fetchDiscordOauthSession() {
   const res = await fetch("/discord/oauth/session", { credentials: "include" });
   if (!res.ok) throw new Error(`Failed to load Discord session: ${res.status}`);
@@ -12725,12 +12739,14 @@ function highlightActiveServer() {
 async function loadChannels(serverPublicId, options = {}) {
   try {
     await ensureServerNicknames(serverPublicId, true);
-    const [channelsRes, layoutRes] = await Promise.all([
+    const [channelsRes, layoutRes, categoriesRes] = await Promise.all([
       fetch(`/channels/server/${serverPublicId}`, { credentials: "include" }),
       fetch(`/channels/server/${serverPublicId}/layout`, { credentials: "include" }),
+      fetch(`/channels/server/${serverPublicId}/categories`, { credentials: "include" }),
     ]);
     if (!channelsRes.ok) throw new Error(`Failed to load channels: ${channelsRes.status}`);
     const channels = await channelsRes.json();
+    const categories = categoriesRes.ok ? await categoriesRes.json() : [];
     const serverLayout = layoutRes.ok
       ? normalizeServerLayoutBundle(await layoutRes.json())
       : getServerLayoutState(serverPublicId);
@@ -12757,6 +12773,7 @@ async function loadChannels(serverPublicId, options = {}) {
     if (hadLegacySepTokens) queueSaveServerLayoutState(serverPublicId);
 
     channelsPanel.innerHTML = "";
+    const renderedCategoryIds = new Set();
     let previousCategoryId = "__none__";
     layout.forEach((token) => {
       const channel = channelsById.get(token.slice(3));
@@ -12764,6 +12781,7 @@ async function loadChannels(serverPublicId, options = {}) {
       const categoryId = String(channel.category_public_id || "").trim() || null;
       const categoryName = String(channel.category_name || "").trim() || "Category";
       if (categoryId && categoryId !== previousCategoryId) {
+        renderedCategoryIds.add(categoryId);
         const categoryLi = document.createElement("li");
         categoryLi.className = "channel-category-item";
         categoryLi.dataset.categoryId = categoryId;
@@ -12928,6 +12946,38 @@ async function loadChannels(serverPublicId, options = {}) {
       });
       channelsPanel.appendChild(li);
     });
+    (Array.isArray(categories) ? categories : []).forEach((category) => {
+      const categoryId = String(category?.public_id || "").trim();
+      if (!categoryId || renderedCategoryIds.has(categoryId)) return;
+      const categoryName = String(category?.name || "").trim() || "Category";
+      const categoryLi = document.createElement("li");
+      categoryLi.className = "channel-category-item empty-category";
+      categoryLi.dataset.categoryId = categoryId;
+      const isCollapsed = !!collapsedCategories[categoryId];
+      if (isCollapsed) categoryLi.classList.add("collapsed");
+      const categoryToggle = document.createElement("button");
+      categoryToggle.type = "button";
+      categoryToggle.className = "channel-category-toggle";
+      categoryToggle.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
+      categoryToggle.innerHTML = `<i class="fas fa-chevron-${isCollapsed ? "right" : "down"}"></i>`;
+      const categoryLabel = document.createElement("span");
+      categoryLabel.className = "channel-category-label";
+      categoryLabel.textContent = `${categoryName} (empty)`;
+      const toggleCategoryCollapsed = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const state = getServerLayoutState(serverPublicId);
+        state.collapsed = { ...(state.collapsed || {}), [categoryId]: !isCollapsed };
+        serverChannelLayouts.set(serverPublicId, state);
+        queueSaveServerLayoutState(serverPublicId);
+        loadChannels(serverPublicId, options);
+      };
+      categoryToggle.addEventListener("click", toggleCategoryCollapsed);
+      categoryLabel.addEventListener("click", toggleCategoryCollapsed);
+      categoryLi.appendChild(categoryToggle);
+      categoryLi.appendChild(categoryLabel);
+      channelsPanel.appendChild(categoryLi);
+    });
     renderVoiceUsersInChannelsPanel();
     applyUnreadStyles();
     await syncRealtimeSubscriptions();
@@ -13069,8 +13119,22 @@ if (createServerModal && submitServerBtn) {
 // --------------------
 if (createChannelModal && submitChannelBtn) {
   if (openCreateChannelBtn) {
-    openCreateChannelBtn.addEventListener("click", () => {
+    openCreateChannelBtn.addEventListener("click", async () => {
       if (!activeServerId) return alert("Select a server first!");
+      if (channelCategoryInput) {
+        channelCategoryInput.innerHTML = '<option value="">No Category</option>';
+        try {
+          const categories = await fetchServerCategories(activeServerId);
+          (Array.isArray(categories) ? categories : []).forEach((category) => {
+            const option = document.createElement("option");
+            option.value = category.public_id;
+            option.textContent = category.name || "Category";
+            channelCategoryInput.appendChild(option);
+          });
+        } catch (err) {
+          console.error("Failed to load categories for channel create modal:", err);
+        }
+      }
       openModal(createChannelModal);
     });
   }
@@ -13078,7 +13142,7 @@ if (createChannelModal && submitChannelBtn) {
     const name = channelNameInput.value.trim();
     const type = (channelTypeInput?.value || "text").trim().toLowerCase();
     if (!name || !activeServerId) return;
-    const categoryPublicId = activeChannelId ? (channelCategoryById.get(activeChannelId) || null) : null;
+    const categoryPublicId = String(channelCategoryInput?.value || "").trim() || null;
     try {
       const res = await fetch(`/channels/server/${activeServerId}`, {
         method: "POST",
@@ -13108,6 +13172,7 @@ if (createChannelModal && submitChannelBtn) {
       }
       channelNameInput.value = "";
       if (channelTypeInput) channelTypeInput.value = "text";
+      if (channelCategoryInput) channelCategoryInput.value = "";
       closeModal(createChannelModal);
       await loadChannels(activeServerId);
     } catch (err) {
@@ -13393,6 +13458,7 @@ if (openAddSeparatorBtn) {
     if (!categoryName) return;
     try {
       await createServerCategory(activeServerId, categoryName);
+      showToast(`Category "${categoryName}" created`);
       await loadChannels(activeServerId);
     } catch (err) {
       alert(err?.message || "Failed to create category");
