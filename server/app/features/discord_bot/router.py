@@ -15,7 +15,6 @@ from app.features.discord_bot.service import (
     exchange_discord_code_for_token,
     fetch_discord_oauth_user,
     fetch_discord_user_guilds,
-    fetch_discord_guild_layout_via_user_token,
 )
 from app.features.users.models import User
 
@@ -124,7 +123,7 @@ def discord_oauth_guilds(current_user: User = Depends(get_current_user)):
 
 
 @router.post("/oauth/import-layout", response_model=schemas.DiscordImportLayoutOut)
-def discord_oauth_import_layout(
+async def discord_oauth_import_layout(
     payload: schemas.DiscordImportLayoutIn,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -136,9 +135,12 @@ def discord_oauth_import_layout(
     if not access_token:
         raise HTTPException(status_code=401, detail="Discord OAuth session not connected")
     try:
-        layout = fetch_discord_guild_layout_via_user_token(
-            access_token=access_token,
-            guild_id=payload.guild_id,
+        guild_rows = fetch_discord_user_guilds(access_token)
+        guild_map = {str(row.get("id") or ""): row for row in guild_rows}
+        if str(payload.guild_id) not in guild_map:
+            raise RuntimeError("Selected Discord server is not available for this connected Discord account")
+        layout = await discord_bot_manager.fetch_guild_channel_layout(
+            payload.guild_id,
             include_text=payload.include_text,
             include_voice=payload.include_voice,
         )

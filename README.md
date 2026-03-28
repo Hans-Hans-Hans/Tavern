@@ -134,6 +134,7 @@ User OAuth flow endpoints (dashboard modal uses these):
 - `GET /discord/oauth/session`
 - `GET /discord/oauth/guilds`
 - `POST /discord/oauth/import-layout`
+  - Uses OAuth to verify the user/guild selection, then imports layout through the configured Discord bot connection.
 
 Voice status behavior:
 - Whenever members join/leave a Discord voice channel, the bot updates that channel's name to include current occupants.
