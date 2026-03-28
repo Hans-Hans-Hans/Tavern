@@ -13,7 +13,7 @@ from app.core.runtime_metrics import APP_STARTED_AT, APP_VERSION, uptime_seconds
 from app.core.rate_limit import limiter
 from app.core.uploads import strip_image_metadata_bytes
 
-app = FastAPI(title=settings.PROJECT_NAME)
+app = FastAPI(title=settings.PROJECT_NAME, docs_url=None, redoc_url=None)
 app.state.limiter = limiter
 
 from slowapi.errors import RateLimitExceeded
@@ -319,6 +319,11 @@ def _safe_parse_json_object(raw_value: str | None) -> dict | None:
 @app.get("/dashboard")
 async def dashboard_page(current_user=Depends(get_current_user)):
     return FileResponse(CLIENT_PUBLIC_DIR / "dashboard.html")
+
+
+@app.get("/docs")
+async def docs_page():
+    return FileResponse(CLIENT_PUBLIC_DIR / "docs.html")
 
 # API endpoint for user info
 @app.get("/api/dashboard")

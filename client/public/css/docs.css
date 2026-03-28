@@ -1,0 +1,105 @@
+body {
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  background: radial-gradient(circle at top, #f3f0e7 0%, #ece8dc 45%, #e5e1d6 100%);
+  color: #2f2a23;
+}
+
+.docs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 22px;
+  border-bottom: 1px solid rgba(47, 42, 35, 0.15);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(6px);
+  position: sticky;
+  top: 0;
+}
+
+.docs-logo {
+  font-family: "Playfair Display", serif;
+  font-size: 24px;
+  font-weight: 700;
+  text-decoration: none;
+  color: #2f2a23;
+}
+
+.docs-nav {
+  display: flex;
+  gap: 16px;
+}
+
+.docs-nav a {
+  color: #2f2a23;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.docs-main {
+  max-width: 1050px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.docs-hero h1 {
+  font-family: "Playfair Display", serif;
+  margin: 0;
+  font-size: 40px;
+}
+
+.docs-hero p {
+  margin-top: 8px;
+  color: #5e5548;
+}
+
+.docs-section {
+  margin-top: 28px;
+}
+
+.docs-section h2 {
+  margin: 0 0 12px 0;
+  font-size: 20px;
+}
+
+.docs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 14px;
+}
+
+.docs-card {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(47, 42, 35, 0.15);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.docs-card h3 {
+  margin-top: 0;
+}
+
+.docs-card p {
+  margin: 6px 0 10px;
+  color: #5e5548;
+}
+
+.docs-card ul,
+.docs-card ol {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pill {
+  border-radius: 999px;
+  padding: 7px 12px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(47, 42, 35, 0.18);
+  font-size: 13px;
+}

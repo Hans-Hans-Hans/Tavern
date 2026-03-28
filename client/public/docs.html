@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tavern Docs</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/docs.css">
+</head>
+<body>
+  <header class="docs-header">
+    <a class="docs-logo" href="/">Tavern</a>
+    <nav class="docs-nav">
+      <a href="/">Home</a>
+      <a href="/dashboard">Dashboard</a>
+      <a href="https://github.com/Hans-Hans-Hans/tavern.git" target="_blank" rel="noopener noreferrer">GitHub</a>
+    </nav>
+  </header>
+
+  <main class="docs-main">
+    <section class="docs-hero">
+      <h1>Tavern Docs</h1>
+      <p>Guides, setup walk-throughs, and feature highlights.</p>
+    </section>
+
+    <section class="docs-section">
+      <h2>Guides</h2>
+      <div class="docs-grid">
+        <article class="docs-card">
+          <h3>Discord Import</h3>
+          <p>Connect Discord OAuth, select a guild, and import channels/layout into Tavern.</p>
+          <ul>
+            <li>Per-user OAuth override support</li>
+            <li>Category-to-separator mapping</li>
+            <li>Server-side shared layout persistence</li>
+          </ul>
+        </article>
+        <article class="docs-card">
+          <h3>Docker Deploy</h3>
+          <p>Use Docker Compose for a quick production-like deployment.</p>
+          <ul>
+            <li>Postgres + Tavern services</li>
+            <li>Environment variable setup</li>
+            <li>Volume persistence</li>
+          </ul>
+        </article>
+        <article class="docs-card">
+          <h3>Role Permissions</h3>
+          <p>Use server roles to control channel/server/member management.</p>
+          <ul>
+            <li>Owner/Admin/Mod/Member templates</li>
+            <li>Granular permission flags</li>
+            <li>In-app role assignment</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="docs-section">
+      <h2>How-To</h2>
+      <div class="docs-grid">
+        <article class="docs-card">
+          <h3>Import a Discord Server</h3>
+          <ol>
+            <li>Open a Tavern server and click the Discord icon.</li>
+            <li>Connect Discord in a second tab.</li>
+            <li>Return and click <code>I've Authorized</code>.</li>
+            <li>Select Discord server and import options.</li>
+          </ol>
+        </article>
+        <article class="docs-card">
+          <h3>Customize Sidebar Layout</h3>
+          <ol>
+            <li>Drag channels/separators to reorder.</li>
+            <li>Add separators from the channel action bar.</li>
+            <li>Collapse sections as needed.</li>
+            <li>Layout syncs for all members in the server.</li>
+          </ol>
+        </article>
+        <article class="docs-card">
+          <h3>Troubleshoot Discord Import</h3>
+          <ol>
+            <li>If OAuth fails: verify redirect URI exact match.</li>
+            <li>If guild unknown: ensure bot is in that guild.</li>
+            <li>If unauthorized: reconnect OAuth and refresh.</li>
+          </ol>
+        </article>
+      </div>
+    </section>
+
+    <section class="docs-section">
+      <h2>Cool Features</h2>
+      <div class="pill-row">
+        <span class="pill">Server-side shared layout</span>
+        <span class="pill">Voice channels + occupancy sync</span>
+        <span class="pill">DMs and threaded replies</span>
+        <span class="pill">Battlemap channels</span>
+        <span class="pill">Custom themes and labs effects</span>
+        <span class="pill">Push notifications</span>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

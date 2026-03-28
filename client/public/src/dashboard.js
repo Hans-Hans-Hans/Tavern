@@ -9771,12 +9771,13 @@ async function syncRealtimeSubscriptions() {
         if (!channelsRes.ok) continue;
         const channels = await channelsRes.json();
         for (const channel of channels) {
+          const displayName = getDisplayChannelName(channel);
           nextChannelIds.add(channel.public_id);
           channelSocketFailureCounts.delete(channel.public_id);
           blockedChannelSocketIds.delete(channel.public_id);
           channelToServer.set(channel.public_id, server.public_id);
           channelTypeById.set(channel.public_id, channel.type || "text");
-          channelNameById.set(channel.public_id, channel.name);
+          channelNameById.set(channel.public_id, displayName || channel.name);
           channelCategoryById.set(channel.public_id, channel.category_public_id || null);
           connectChannelSocket(channel.public_id);
         }
@@ -11705,6 +11706,19 @@ function persistChannelOrder() {
   saveOrder(getChannelOrderStorageKey(activeServerId), channelIds);
 }
 
+function getDisplayChannelName(channel) {
+  const rawName = String(channel?.name || "").trim();
+  const categoryName = String(channel?.category_name || "").trim();
+  if (!rawName) return "";
+  if (!categoryName) return rawName;
+  const prefix = `${categoryName} / `;
+  if (rawName.toLowerCase().startsWith(prefix.toLowerCase())) {
+    const trimmed = rawName.slice(prefix.length).trim();
+    return trimmed || rawName;
+  }
+  return rawName;
+}
+
 async function loadDmConversations() {
   const res = await fetch("/dms/", { credentials: "include" });
   if (!res.ok) {
@@ -12829,6 +12843,7 @@ async function loadChannels(serverPublicId, options = {}) {
       }
       const channel = channelsById.get(token.slice(3));
       if (!channel) return;
+      const displayChannelName = getDisplayChannelName(channel);
       const li = document.createElement("li");
       const nameEl = document.createElement("span");
       nameEl.classList.add("channel-name");
@@ -12837,12 +12852,12 @@ async function loadChannels(serverPublicId, options = {}) {
       const customIcon = channelIcons[channel.public_id];
       renderChannelPrefixIcon(channelPrefix, channel, customIcon);
       const channelText = document.createElement("span");
-      channelText.textContent = channel.name;
+      channelText.textContent = displayChannelName || channel.name;
       nameEl.appendChild(channelPrefix);
       nameEl.appendChild(channelText);
       li.dataset.channelId = channel.public_id;
       li.dataset.serverId = serverPublicId;
-      li.dataset.channelName = channel.name;
+      li.dataset.channelName = displayChannelName || channel.name;
       li.dataset.channelType = channel.type;
       li.dataset.layoutToken = token;
       li.classList.add("channel-item");
@@ -12855,7 +12870,7 @@ async function loadChannels(serverPublicId, options = {}) {
 
       channelToServer.set(channel.public_id, serverPublicId);
       channelTypeById.set(channel.public_id, channel.type || "text");
-      channelNameById.set(channel.public_id, channel.name);
+      channelNameById.set(channel.public_id, displayChannelName || channel.name);
       channelCategoryById.set(channel.public_id, channel.category_public_id || null);
       li.draggable = true;
       li.addEventListener("click", async () => {
@@ -12872,7 +12887,7 @@ async function loadChannels(serverPublicId, options = {}) {
         recalculateUnreadServers();
         updateTextVsVoiceUI();
         if (activeChannelType === "voice") {
-          updateTopbar(`[V] ${channel.name}`, false);
+          updateTopbar(`[V] ${displayChannelName || channel.name}`, false);
           joinVoiceChannel(channel.public_id).catch((err) => {
             console.error("Failed to join voice:", err);
             setVoiceStatus("Mic permission or voice connection failed");
@@ -12880,10 +12895,10 @@ async function loadChannels(serverPublicId, options = {}) {
         } else {
           updateTopbar(
             activeChannelType === "notes"
-              ? `[N] ${channel.name}`
+              ? `[N] ${displayChannelName || channel.name}`
               : activeChannelType === "battlemap"
-                ? `[B] ${channel.name}`
-                : `# ${channel.name}`,
+                ? `[B] ${displayChannelName || channel.name}`
+                : `# ${displayChannelName || channel.name}`,
             false
           );
           await ensureServerNicknames(serverPublicId);
@@ -12957,7 +12972,7 @@ async function loadChannels(serverPublicId, options = {}) {
           {
             label: "Delete Channel",
             danger: true,
-            onClick: () => openDeleteChannelModal(channel.public_id, channel.name),
+            onClick: () => openDeleteChannelModal(channel.public_id, displayChannelName || channel.name),
           },
         ]);
       });
