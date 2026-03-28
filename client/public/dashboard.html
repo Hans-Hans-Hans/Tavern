@@ -59,7 +59,7 @@
       <button id="open-server-settings" class="add-btn" title="Server Settings"><i class="fas fa-sliders"></i></button>
       <button id="open-friends" class="add-btn hidden" title="Friends"><i class="fas fa-user-friends"></i></button>
       <button id="open-create-dm" class="add-btn hidden"><i class="fas fa-user-plus"></i></button>
-      <button id="open-add-separator" class="add-btn" title="Add Category"><i class="fas fa-folder-plus"></i></button>
+      <button id="open-add-separator" class="add-btn" title="Create Category / Channel"><i class="fas fa-folder-plus"></i></button>
       <button id="open-discord-import" class="add-btn" title="Import from Discord"><i class="fab fa-discord"></i></button>
       <button id="open-create-item" class="add-btn" title="Create"><i class="fas fa-plus"></i></button>
     </div>
@@ -322,8 +322,10 @@
 <div id="create-channel-modal" class="modal">
   <div class="modal-content">
     <span class="close">&times;</span>
-    <h3>Create Channel</h3>
-    <input type="text" id="new-channel-name" placeholder="Channel Name">
+    <h3 id="create-channel-modal-title">Create Channel</h3>
+    <p id="create-channel-modal-hint" class="modal-helper-text">Create a channel, or add a category and place the channel into it.</p>
+    <input type="text" id="new-channel-name" placeholder="Channel Name (optional if creating only a category)">
+    <input type="text" id="new-channel-category-name" placeholder="New Category Name (optional)">
     <select id="new-channel-category">
       <option value="">No Category</option>
     </select>
@@ -333,7 +335,7 @@
       <option value="notes">Notes</option>
       <option value="voice">Voice</option>
     </select>
-    <button id="submit-channel">Create</button>
+    <button id="submit-channel">Create Channel</button>
   </div>
 </div>
 

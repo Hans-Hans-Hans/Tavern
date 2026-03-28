@@ -2497,6 +2497,12 @@ body.safe-mode * {
 .modal-content h3 {
   margin-bottom: 12px;
 }
+.modal-helper-text {
+  margin: -4px 0 12px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
 .confirm-text {
   margin-bottom: 10px;
   color: var(--muted);

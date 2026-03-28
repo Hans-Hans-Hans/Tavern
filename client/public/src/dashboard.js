@@ -38,8 +38,11 @@ const openCreateItemBtn = document.getElementById("open-create-item");
 const createChannelModal = document.getElementById("create-channel-modal");
 const submitChannelBtn = document.getElementById("submit-channel");
 const channelNameInput = document.getElementById("new-channel-name");
+const channelNewCategoryInput = document.getElementById("new-channel-category-name");
 const channelCategoryInput = document.getElementById("new-channel-category");
 const channelTypeInput = document.getElementById("new-channel-type");
+const createChannelModalTitle = document.getElementById("create-channel-modal-title");
+const createChannelModalHint = document.getElementById("create-channel-modal-hint");
 const discordImportModal = document.getElementById("discord-import-modal");
 const discordImportServerLabel = document.getElementById("discord-import-server-label");
 const discordConnectBtn = document.getElementById("discord-connect-btn");
@@ -141,6 +144,7 @@ function ensureCreateChannelTypeOptions() {
   }
 }
 ensureCreateChannelTypeOptions();
+let createChannelModalMode = "channel";
 const userSettingsModal = document.getElementById("user-settings-modal");
 const publicUserProfileModal = document.getElementById("public-user-profile-modal");
 const publicUserProfileAvatar = document.getElementById("public-user-profile-avatar");
@@ -13117,33 +13121,95 @@ if (createServerModal && submitServerBtn) {
 // --------------------
 // Create Channel Modal
 // --------------------
+function setCreateChannelModalMode(mode = "channel") {
+  createChannelModalMode = mode === "category" ? "category" : "channel";
+  if (createChannelModalMode === "category") {
+    if (createChannelModalTitle) createChannelModalTitle.textContent = "Create Category or Channel";
+    if (createChannelModalHint) {
+      createChannelModalHint.textContent = "Add a category only, or add a category and a channel together.";
+    }
+    if (submitChannelBtn) submitChannelBtn.textContent = "Create";
+  } else {
+    if (createChannelModalTitle) createChannelModalTitle.textContent = "Create Channel";
+    if (createChannelModalHint) {
+      createChannelModalHint.textContent = "Create a channel, or add a category and place the channel into it.";
+    }
+    if (submitChannelBtn) submitChannelBtn.textContent = "Create Channel";
+  }
+}
+
+async function openCreateChannelFlow({ focusNewCategory = false, mode = "channel" } = {}) {
+  if (!activeServerId) {
+    alert("Select a server first!");
+    return;
+  }
+  setCreateChannelModalMode(mode);
+  if (channelCategoryInput) {
+    channelCategoryInput.innerHTML = '<option value="">Use No Category</option>';
+    try {
+      const categories = await fetchServerCategories(activeServerId);
+      (Array.isArray(categories) ? categories : []).forEach((category) => {
+        const option = document.createElement("option");
+        option.value = category.public_id;
+        option.textContent = category.name || "Category";
+        channelCategoryInput.appendChild(option);
+      });
+    } catch (err) {
+      console.error("Failed to load categories for channel create modal:", err);
+    }
+  }
+  if (channelNameInput) channelNameInput.value = "";
+  if (channelNewCategoryInput) channelNewCategoryInput.value = "";
+  if (channelTypeInput) channelTypeInput.value = "text";
+  if (channelCategoryInput) {
+    channelCategoryInput.value = "";
+    channelCategoryInput.disabled = false;
+  }
+  openModal(createChannelModal);
+  if (focusNewCategory && channelNewCategoryInput) channelNewCategoryInput.focus();
+}
+
+if (channelNewCategoryInput && channelCategoryInput) {
+  channelNewCategoryInput.addEventListener("input", () => {
+    const hasNewCategory = String(channelNewCategoryInput.value || "").trim().length > 0;
+    channelCategoryInput.disabled = hasNewCategory;
+  });
+}
+
 if (createChannelModal && submitChannelBtn) {
   if (openCreateChannelBtn) {
-    openCreateChannelBtn.addEventListener("click", async () => {
-      if (!activeServerId) return alert("Select a server first!");
-      if (channelCategoryInput) {
-        channelCategoryInput.innerHTML = '<option value="">No Category</option>';
-        try {
-          const categories = await fetchServerCategories(activeServerId);
-          (Array.isArray(categories) ? categories : []).forEach((category) => {
-            const option = document.createElement("option");
-            option.value = category.public_id;
-            option.textContent = category.name || "Category";
-            channelCategoryInput.appendChild(option);
-          });
-        } catch (err) {
-          console.error("Failed to load categories for channel create modal:", err);
-        }
-      }
-      openModal(createChannelModal);
+    openCreateChannelBtn.addEventListener("click", () => {
+      openCreateChannelFlow().catch((err) => {
+        alert(err?.message || "Failed to open channel creator");
+      });
     });
   }
   submitChannelBtn.addEventListener("click", async () => {
     const name = channelNameInput.value.trim();
+    const newCategoryName = String(channelNewCategoryInput?.value || "").trim();
     const type = (channelTypeInput?.value || "text").trim().toLowerCase();
-    if (!name || !activeServerId) return;
-    const categoryPublicId = String(channelCategoryInput?.value || "").trim() || null;
+    if (!activeServerId) return;
+    if (!name && !newCategoryName) {
+      alert("Enter a category name, a channel name, or both.");
+      return;
+    }
+    let categoryPublicId = String(channelCategoryInput?.value || "").trim() || null;
     try {
+      if (newCategoryName) {
+        const createdCategory = await createServerCategory(activeServerId, newCategoryName);
+        categoryPublicId = String(createdCategory?.public_id || "").trim() || categoryPublicId;
+      }
+      if (!name) {
+        if (newCategoryName) {
+          if (channelCategoryInput) channelCategoryInput.disabled = false;
+          closeModal(createChannelModal);
+          await loadChannels(activeServerId);
+          showToast(`Category "${newCategoryName}" created`);
+          return;
+        }
+        alert("Channel name is required.");
+        return;
+      }
       const res = await fetch(`/channels/server/${activeServerId}`, {
         method: "POST",
         credentials: "include",
@@ -13171,10 +13237,17 @@ if (createChannelModal && submitChannelBtn) {
         throw new Error("Battlemap type was not applied. Restart backend to load latest channel-type support.");
       }
       channelNameInput.value = "";
+      if (channelNewCategoryInput) channelNewCategoryInput.value = "";
       if (channelTypeInput) channelTypeInput.value = "text";
-      if (channelCategoryInput) channelCategoryInput.value = "";
+      if (channelCategoryInput) {
+        channelCategoryInput.value = "";
+        channelCategoryInput.disabled = false;
+      }
       closeModal(createChannelModal);
       await loadChannels(activeServerId);
+      if (createChannelModalMode === "category" && name && newCategoryName) {
+        showToast(`Created category "${newCategoryName}" and channel "${name}"`);
+      }
     } catch (err) {
       console.error(err);
       alert(err.message || "Failed to create channel");
@@ -13267,7 +13340,19 @@ if (openCreateItemBtn) {
     if (activeMode === "server" && activeServerId) {
       menuItems.push({
         label: "Create Channel",
-        onClick: () => openModal(createChannelModal),
+        onClick: () => {
+          openCreateChannelFlow().catch((err) => {
+            alert(err?.message || "Failed to open channel creator");
+          });
+        },
+      });
+      menuItems.push({
+        label: "Create Category",
+        onClick: () => {
+          openCreateChannelFlow({ focusNewCategory: true, mode: "category" }).catch((err) => {
+            alert(err?.message || "Failed to open category creator");
+          });
+        },
       });
       menuItems.push({
         label: "Server Settings",
@@ -13449,20 +13534,10 @@ if (sendFriendRequestBtn) {
 }
 
 if (openAddSeparatorBtn) {
-  openAddSeparatorBtn.addEventListener("click", async () => {
-    if (!activeServerId) {
-      alert("Select a server first!");
-      return;
-    }
-    const categoryName = (window.prompt("Category name:") || "").trim();
-    if (!categoryName) return;
-    try {
-      await createServerCategory(activeServerId, categoryName);
-      showToast(`Category "${categoryName}" created`);
-      await loadChannels(activeServerId);
-    } catch (err) {
-      alert(err?.message || "Failed to create category");
-    }
+  openAddSeparatorBtn.addEventListener("click", () => {
+    openCreateChannelFlow({ focusNewCategory: true, mode: "category" }).catch((err) => {
+      alert(err?.message || "Failed to open category/channel creator");
+    });
   });
 }
 
