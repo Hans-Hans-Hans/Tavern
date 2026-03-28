@@ -60,6 +60,9 @@ class User(Base):
     custom_status: Mapped[str | None] = mapped_column(String(140), nullable=True)
     strip_upload_metadata: Mapped[bool] = mapped_column(default=False, nullable=False)
     appearance_settings: Mapped[str | None] = mapped_column(Text, nullable=True)
+    discord_oauth_client_id: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    discord_oauth_client_secret: Mapped[str | None] = mapped_column(String(240), nullable=True)
+    discord_oauth_redirect_uri: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
 
 class FriendRequest(Base):

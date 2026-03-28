@@ -210,3 +210,16 @@ class FriendRequestHistoryOut(BaseModel):
 
 class UserAppearanceUpdate(BaseModel):
     appearance_settings: dict[str, Any]
+
+
+class UserDiscordOauthSettingsOut(BaseModel):
+    client_id: Optional[str] = None
+    redirect_uri: Optional[str] = None
+    has_client_secret: bool = False
+
+
+class UserDiscordOauthSettingsUpdate(BaseModel):
+    client_id: Optional[str] = None
+    client_secret: Optional[str] = None
+    redirect_uri: Optional[str] = None
+    clear_client_secret: bool = False

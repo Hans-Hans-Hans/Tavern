@@ -35,6 +35,21 @@ def update_current_user_appearance(
     return {"appearance_settings": service.get_user_appearance_settings(updated)}
 
 
+@router.get("/me/discord-oauth-settings", response_model=schemas.UserDiscordOauthSettingsOut)
+def read_current_user_discord_oauth_settings(current_user: models.User = Depends(get_current_user)):
+    return service.get_user_discord_oauth_settings(current_user)
+
+
+@router.put("/me/discord-oauth-settings", response_model=schemas.UserDiscordOauthSettingsOut)
+def update_current_user_discord_oauth_settings(
+    payload: schemas.UserDiscordOauthSettingsUpdate,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    updated = service.update_user_discord_oauth_settings(db, current_user, payload)
+    return service.get_user_discord_oauth_settings(updated)
+
+
 @router.get("/friends", response_model=list[schemas.FriendUserOut])
 def list_friends(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     return service.list_friends(db, current_user.id)

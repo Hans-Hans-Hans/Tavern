@@ -119,6 +119,12 @@ def _ensure_core_schema_updates():
             conn.execute(text("ALTER TABLE users ADD COLUMN strip_upload_metadata BOOLEAN DEFAULT 0"))
         if "appearance_settings" not in user_columns:
             conn.execute(text("ALTER TABLE users ADD COLUMN appearance_settings TEXT"))
+        if "discord_oauth_client_id" not in user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN discord_oauth_client_id VARCHAR(120)"))
+        if "discord_oauth_client_secret" not in user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN discord_oauth_client_secret VARCHAR(240)"))
+        if "discord_oauth_redirect_uri" not in user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN discord_oauth_redirect_uri VARCHAR(500)"))
         if "role_id" not in member_columns:
             conn.execute(text("ALTER TABLE server_members ADD COLUMN role_id INTEGER"))
         if "nickname" not in member_columns:

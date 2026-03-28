@@ -36,34 +36,57 @@ def _require_oauth_configured():
         )
 
 
+def _resolve_oauth_config_for_user(user: User) -> tuple[str, str, str]:
+    client_id = str(getattr(user, "discord_oauth_client_id", "") or "").strip() or settings.DISCORD_OAUTH_CLIENT_ID
+    client_secret = str(getattr(user, "discord_oauth_client_secret", "") or "").strip() or settings.DISCORD_OAUTH_CLIENT_SECRET
+    redirect_uri = str(getattr(user, "discord_oauth_redirect_uri", "") or "").strip() or settings.DISCORD_OAUTH_REDIRECT_URI
+    if not client_id or not client_secret or not redirect_uri:
+        raise HTTPException(
+            status_code=400,
+            detail="Discord OAuth is not configured for this user. Set it in Tavern Settings or server .env.",
+        )
+    return client_id, client_secret, redirect_uri
+
+
 @router.get("/oauth/start")
 def discord_oauth_start(current_user: User = Depends(get_current_user)):
-    _require_oauth_configured()
+    client_id, _client_secret, redirect_uri = _resolve_oauth_config_for_user(current_user)
     state = discord_oauth_store.new_state(current_user.id)
     url = discord_oauth_start_url(
         state=state,
-        redirect_uri=settings.DISCORD_OAUTH_REDIRECT_URI,
-        client_id=settings.DISCORD_OAUTH_CLIENT_ID,
+        redirect_uri=redirect_uri,
+        client_id=client_id,
     )
     return RedirectResponse(url=url, status_code=302)
 
 
 @router.get("/oauth/callback", response_class=HTMLResponse)
-def discord_oauth_callback(code: str | None = None, state: str | None = None, error: str | None = None):
+def discord_oauth_callback(
+    code: str | None = None,
+    state: str | None = None,
+    error: str | None = None,
+    db: Session = Depends(get_db),
+):
     if error:
         return HTMLResponse(f"<html><body><h3>Discord OAuth failed: {error}</h3></body></html>", status_code=400)
     if not code or not state:
         return HTMLResponse("<html><body><h3>Missing OAuth code/state.</h3></body></html>", status_code=400)
-    _require_oauth_configured()
     user_id = discord_oauth_store.consume_state(state)
     if not user_id:
         return HTMLResponse("<html><body><h3>OAuth state expired or invalid. Please retry.</h3></body></html>", status_code=400)
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return HTMLResponse("<html><body><h3>User not found for OAuth state. Please retry.</h3></body></html>", status_code=400)
+    try:
+        client_id, client_secret, redirect_uri = _resolve_oauth_config_for_user(user)
+    except HTTPException as exc:
+        return HTMLResponse(f"<html><body><h3>{exc.detail}</h3></body></html>", status_code=400)
     try:
         token_data = exchange_discord_code_for_token(
             code=code,
-            redirect_uri=settings.DISCORD_OAUTH_REDIRECT_URI,
-            client_id=settings.DISCORD_OAUTH_CLIENT_ID,
-            client_secret=settings.DISCORD_OAUTH_CLIENT_SECRET,
+            redirect_uri=redirect_uri,
+            client_id=client_id,
+            client_secret=client_secret,
         )
         access_token = str(token_data.get("access_token") or "")
         if not access_token:

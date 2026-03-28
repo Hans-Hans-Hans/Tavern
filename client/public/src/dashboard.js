@@ -45,6 +45,11 @@ const discordConnectBtn = document.getElementById("discord-connect-btn");
 const discordRefreshSessionBtn = document.getElementById("discord-refresh-session-btn");
 const discordDisconnectBtn = document.getElementById("discord-disconnect-btn");
 const discordSessionStatus = document.getElementById("discord-session-status");
+const discordOauthClientIdInput = document.getElementById("discord-oauth-client-id-input");
+const discordOauthClientSecretInput = document.getElementById("discord-oauth-client-secret-input");
+const discordOauthRedirectUriInput = document.getElementById("discord-oauth-redirect-uri-input");
+const discordSaveOauthSettingsBtn = document.getElementById("discord-save-oauth-settings-btn");
+const discordClearOauthSecretBtn = document.getElementById("discord-clear-oauth-secret-btn");
 const discordGuildSelect = document.getElementById("discord-guild-select");
 const discordImportReplaceExistingInput = document.getElementById("discord-import-replace-existing");
 const discordImportSkipExistingInput = document.getElementById("discord-import-skip-existing");
@@ -11418,10 +11423,47 @@ async function disconnectDiscordOauthSession() {
   return res.json();
 }
 
+async function fetchDiscordOauthSettings() {
+  const res = await fetch("/users/me/discord-oauth-settings", { credentials: "include" });
+  if (!res.ok) throw new Error(`Failed to load Discord OAuth settings: ${res.status}`);
+  return res.json();
+}
+
+async function saveDiscordOauthSettings(payload) {
+  const res = await fetch("/users/me/discord-oauth-settings", {
+    method: "PUT",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    let detail = "Failed to save Discord OAuth settings";
+    try {
+      const data = await res.json();
+      if (data?.detail) detail = data.detail;
+    } catch {}
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
 async function refreshDiscordImportModalState() {
   if (!discordSessionStatus || !discordGuildSelect) return;
   discordSessionStatus.textContent = "Checking connection...";
   discordGuildSelect.innerHTML = '<option value="">Select Discord server...</option>';
+  try {
+    const oauthSettings = await fetchDiscordOauthSettings();
+    if (discordOauthClientIdInput) discordOauthClientIdInput.value = oauthSettings?.client_id || "";
+    if (discordOauthRedirectUriInput) discordOauthRedirectUriInput.value = oauthSettings?.redirect_uri || "";
+    if (discordOauthClientSecretInput) discordOauthClientSecretInput.value = "";
+    if (discordOauthClientSecretInput?.placeholder) {
+      discordOauthClientSecretInput.placeholder = oauthSettings?.has_client_secret
+        ? "Discord OAuth Client Secret (saved; leave blank to keep)"
+        : "Discord OAuth Client Secret";
+    }
+  } catch (err) {
+    console.error("Failed to load per-user Discord OAuth settings:", err);
+  }
   try {
     const session = await fetchDiscordOauthSession();
     if (!session?.connected) {
@@ -12691,15 +12733,41 @@ async function loadChannels(serverPublicId, options = {}) {
       const token = `ch:${channel.public_id}`;
       if (!layout.includes(token)) layout.push(token);
     });
+
+    // Backfill category separators for older imports/layouts that used static headers.
+    const layoutWithCategorySeparators = [];
+    const seenCategorySeparator = new Set(
+      layout
+        .filter((token) => token.startsWith("sep:"))
+        .map((token) => token.slice(4))
+    );
+    let layoutMutated = false;
+    layout.forEach((token) => {
+      if (token.startsWith("ch:")) {
+        const channel = channelsById.get(token.slice(3));
+        const categoryId = String(channel?.category_public_id || "");
+        const categoryName = String(channel?.category_name || "").trim();
+        if (categoryId && !seenCategorySeparator.has(categoryId)) {
+          seenCategorySeparator.add(categoryId);
+          if (!separators[categoryId] && categoryName) separators[categoryId] = categoryName;
+          if (!(categoryId in collapsedSeparators)) collapsedSeparators[categoryId] = false;
+          layoutWithCategorySeparators.push(`sep:${categoryId}`);
+          layoutMutated = true;
+        }
+      }
+      layoutWithCategorySeparators.push(token);
+    });
+    if (layoutMutated) layout = layoutWithCategorySeparators;
+
     serverChannelLayouts.set(serverPublicId, {
       layoutTokens: layout,
       separators,
       collapsed: collapsedSeparators,
     });
+    if (layoutMutated) queueSaveServerLayoutState(serverPublicId);
 
     channelsPanel.innerHTML = "";
     let hideFollowingChannels = false;
-    let lastCategoryPublicId = "__none__";
     layout.forEach((token) => {
       if (token.startsWith("sep:")) {
         const separatorId = token.slice(4);
@@ -12761,22 +12829,6 @@ async function loadChannels(serverPublicId, options = {}) {
       }
       const channel = channelsById.get(token.slice(3));
       if (!channel) return;
-      const categoryPublicId = String(channel.category_public_id || "");
-      const categoryName = String(channel.category_name || "").trim();
-      if (categoryPublicId && categoryPublicId !== lastCategoryPublicId) {
-        lastCategoryPublicId = categoryPublicId;
-        const categoryLi = document.createElement("li");
-        categoryLi.className = "channel-category-item";
-        categoryLi.dataset.categoryId = categoryPublicId;
-        categoryLi.textContent = categoryName || "Category";
-        if (hideFollowingChannels) {
-          categoryLi.classList.add("channel-collapsed-hidden");
-          categoryLi.hidden = true;
-        }
-        channelsPanel.appendChild(categoryLi);
-      } else if (!categoryPublicId) {
-        lastCategoryPublicId = "__none__";
-      }
       const li = document.createElement("li");
       const nameEl = document.createElement("span");
       nameEl.classList.add("channel-name");
@@ -13417,6 +13469,39 @@ if (openDiscordImportBtn && discordImportModal) {
 if (discordConnectBtn) {
   discordConnectBtn.addEventListener("click", () => {
     window.open("/discord/oauth/start", "_blank", "noopener");
+  });
+}
+
+if (discordSaveOauthSettingsBtn) {
+  discordSaveOauthSettingsBtn.addEventListener("click", async () => {
+    try {
+      const clientId = String(discordOauthClientIdInput?.value || "").trim();
+      const clientSecret = String(discordOauthClientSecretInput?.value || "").trim();
+      const redirectUri = String(discordOauthRedirectUriInput?.value || "").trim();
+      await saveDiscordOauthSettings({
+        client_id: clientId || null,
+        client_secret: clientSecret || null,
+        redirect_uri: redirectUri || null,
+      });
+      if (discordOauthClientSecretInput) discordOauthClientSecretInput.value = "";
+      await refreshDiscordImportModalState();
+      showToast("Saved Discord OAuth settings");
+    } catch (err) {
+      alert(err?.message || "Failed to save Discord OAuth settings");
+    }
+  });
+}
+
+if (discordClearOauthSecretBtn) {
+  discordClearOauthSecretBtn.addEventListener("click", async () => {
+    try {
+      await saveDiscordOauthSettings({ clear_client_secret: true });
+      if (discordOauthClientSecretInput) discordOauthClientSecretInput.value = "";
+      await refreshDiscordImportModalState();
+      showToast("Cleared Discord OAuth secret");
+    } catch (err) {
+      alert(err?.message || "Failed to clear Discord OAuth secret");
+    }
   });
 }
 

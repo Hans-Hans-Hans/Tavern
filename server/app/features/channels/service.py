@@ -400,13 +400,12 @@ def import_discord_layout(
                 db.flush()
                 created_categories.append(category)
                 category_by_name[key] = category
-                if prefix_category:
-                    sep_id = category.public_id
-                    if sep_id not in seen_separator_ids:
-                        seen_separator_ids.add(sep_id)
-                        separators[sep_id] = category_name
-                        separator_collapsed[sep_id] = False
-                        layout_tokens.append(f"sep:{sep_id}")
+            sep_id = category.public_id
+            if sep_id not in seen_separator_ids:
+                seen_separator_ids.add(sep_id)
+                separators[sep_id] = category_name
+                separator_collapsed[sep_id] = False
+                layout_tokens.append(f"sep:{sep_id}")
 
         final_name = row["name"]
         if (not create_categories) and prefix_category and category_name:

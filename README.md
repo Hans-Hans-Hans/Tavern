@@ -98,6 +98,7 @@ python scripts/smoke_test.py --base-url http://127.0.0.1:8000 --username admin -
   - `DISCORD_OAUTH_CLIENT_ID`
   - `DISCORD_OAUTH_CLIENT_SECRET`
   - `DISCORD_OAUTH_REDIRECT_URI` (example: `https://localhost:8000/discord/oauth/callback`)
+  - These are global defaults. Users can now override these in-app per account from the Discord import modal.
 - Install/update dependencies (`pip install -r requirements.txt`) so `discord.py` and `PyNaCl` are available.
 - Invite your bot with permissions for:
   - `Send Messages`
@@ -116,8 +117,8 @@ Admin-only API endpoints:
   - Notes:
     - Imports Discord text/forum/news channels as Tavern `text`
     - Imports Discord voice/stage channels as Tavern `voice`
-    - `create_categories=true` creates Tavern channel categories from Discord categories
-    - `prefix_category=true` keeps category context in names (e.g., `Category / channel-name`)
+    - `create_categories=true` creates Tavern channel categories and sidebar grouping separators from Discord categories
+    - `prefix_category=true` keeps category context in names when importing without category grouping (e.g., `Category / channel-name`)
     - `replace_existing=true` removes current Tavern channels in the target server before importing
 
 Server-side channel layout:
@@ -135,6 +136,9 @@ User OAuth flow endpoints (dashboard modal uses these):
 - `GET /discord/oauth/guilds`
 - `POST /discord/oauth/import-layout`
   - Uses OAuth to verify the user/guild selection, then imports layout through the configured Discord bot connection.
+
+Guide:
+- See [docs/discord-layout-import.mc](docs/discord-layout-import.mc) for step-by-step setup/import/troubleshooting.
 
 Voice status behavior:
 - Whenever members join/leave a Discord voice channel, the bot updates that channel's name to include current occupants.

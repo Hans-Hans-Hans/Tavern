@@ -270,6 +270,14 @@
       <button id="discord-disconnect-btn" type="button" class="secondary-action">Disconnect</button>
     </div>
     <div class="settings-row"><strong>Status:</strong> <span id="discord-session-status">Not connected</span></div>
+    <div class="settings-subtitle">Discord OAuth App (per-user override)</div>
+    <input id="discord-oauth-client-id-input" type="text" placeholder="Discord OAuth Client ID">
+    <input id="discord-oauth-client-secret-input" type="password" placeholder="Discord OAuth Client Secret (leave blank to keep)">
+    <input id="discord-oauth-redirect-uri-input" type="text" placeholder="https://your-domain/discord/oauth/callback">
+    <div class="settings-action-row">
+      <button id="discord-save-oauth-settings-btn" type="button" class="secondary-action">Save OAuth Settings</button>
+      <button id="discord-clear-oauth-secret-btn" type="button" class="secondary-action">Clear Secret</button>
+    </div>
     <select id="discord-guild-select">
       <option value="">Select Discord server...</option>
     </select>

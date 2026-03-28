@@ -3,6 +3,7 @@ from sqlalchemy import or_, and_
 from fastapi import HTTPException
 import secrets
 import json
+from urllib.parse import urlparse
 from app.features.users import models, schemas
 from app.core.security import hash_password, verify_password
 from app.core.announcements import CURRENT_ANNOUNCEMENT_VERSION, build_announcement_message
@@ -145,6 +146,46 @@ def update_user_appearance_settings(db: Session, user: models.User, appearance_s
     if len(encoded.encode("utf-8")) > MAX_APPEARANCE_SETTINGS_BYTES:
         raise HTTPException(status_code=413, detail="Appearance settings payload is too large")
     user.appearance_settings = encoded
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def get_user_discord_oauth_settings(user: models.User) -> dict:
+    return {
+        "client_id": str(user.discord_oauth_client_id or "").strip() or None,
+        "redirect_uri": str(user.discord_oauth_redirect_uri or "").strip() or None,
+        "has_client_secret": bool(str(user.discord_oauth_client_secret or "").strip()),
+    }
+
+
+def _normalize_redirect_uri(value: str | None) -> str | None:
+    raw = str(value or "").strip()
+    if not raw:
+        return None
+    parsed = urlparse(raw)
+    if parsed.scheme.lower() not in {"https", "http"} or not parsed.netloc:
+        raise HTTPException(status_code=400, detail="redirect_uri must be a valid http(s) URL")
+    return raw
+
+
+def update_user_discord_oauth_settings(
+    db: Session,
+    user: models.User,
+    payload: schemas.UserDiscordOauthSettingsUpdate,
+) -> models.User:
+    provided = getattr(payload, "model_fields_set", set())
+    if "client_id" in provided:
+        raw_client_id = str(payload.client_id or "").strip()
+        user.discord_oauth_client_id = raw_client_id or None
+    if "redirect_uri" in provided:
+        user.discord_oauth_redirect_uri = _normalize_redirect_uri(payload.redirect_uri)
+    if payload.clear_client_secret:
+        user.discord_oauth_client_secret = None
+    elif "client_secret" in provided:
+        raw_secret = str(payload.client_secret or "").strip()
+        if raw_secret:
+            user.discord_oauth_client_secret = raw_secret
     db.commit()
     db.refresh(user)
     return user
