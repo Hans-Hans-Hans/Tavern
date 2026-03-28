@@ -845,6 +845,17 @@ body.ui-style-boxy.channels-flat .channels-panel .channel-item.has-unread {
   background: rgba(209, 71, 71, 0.9);
   color: #fff;
 }
+.channel-category-item {
+  margin: 8px 0 2px;
+  padding: 0 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  list-style: none;
+  opacity: 0.92;
+}
 .context-menu {
   position: fixed;
   min-width: 180px;

@@ -56,6 +56,9 @@ class Settings:
         }
     )
     DISCORD_BOT_TOKEN: str = os.getenv("DISCORD_BOT_TOKEN", "").strip()
+    DISCORD_OAUTH_CLIENT_ID: str = os.getenv("DISCORD_OAUTH_CLIENT_ID", "").strip()
+    DISCORD_OAUTH_CLIENT_SECRET: str = os.getenv("DISCORD_OAUTH_CLIENT_SECRET", "").strip()
+    DISCORD_OAUTH_REDIRECT_URI: str = os.getenv("DISCORD_OAUTH_REDIRECT_URI", "").strip()
 
 
 settings = Settings()

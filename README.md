@@ -94,6 +94,10 @@ python scripts/smoke_test.py --base-url http://127.0.0.1:8000 --username admin -
 
 ## Discord Bot Integration
 - Set `DISCORD_BOT_TOKEN` in `.env` and restart the backend.
+- For user OAuth in the dashboard import modal, also set:
+  - `DISCORD_OAUTH_CLIENT_ID`
+  - `DISCORD_OAUTH_CLIENT_SECRET`
+  - `DISCORD_OAUTH_REDIRECT_URI` (example: `https://localhost:8000/discord/oauth/callback`)
 - Install/update dependencies (`pip install -r requirements.txt`) so `discord.py` and `PyNaCl` are available.
 - Invite your bot with permissions for:
   - `Send Messages`
@@ -106,6 +110,30 @@ Admin-only API endpoints:
 - `POST /discord/voice/join` with `{ "channel_id": "...", "self_mute": false, "self_deaf": false }`
 - `POST /discord/voice/leave` with `{ "guild_id": "..." }` or `{}` for all guild voice sessions
 - `POST /discord/voice/sync-name` with `{ "channel_id": "..." }`
+- `POST /discord/import-layout` to copy a Discord guild channel layout into a Tavern server:
+  - Example payload:
+    - `{ "server_public_id": "<tavern-server-id>", "guild_id": "<discord-guild-id>", "replace_existing": false, "skip_existing": true, "include_text": true, "include_voice": true, "create_categories": true, "prefix_category": true }`
+  - Notes:
+    - Imports Discord text/forum/news channels as Tavern `text`
+    - Imports Discord voice/stage channels as Tavern `voice`
+    - `create_categories=true` creates Tavern channel categories from Discord categories
+    - `prefix_category=true` keeps category context in names (e.g., `Category / channel-name`)
+    - `replace_existing=true` removes current Tavern channels in the target server before importing
+
+Server-side channel layout:
+- Channel sidebar layout tokens and custom separators are persisted server-side via:
+  - `GET /channels/server/{server_public_id}/layout`
+  - `PUT /channels/server/{server_public_id}/layout`
+- Channel categories:
+  - `GET /channels/server/{server_public_id}/categories`
+  - `POST /channels/server/{server_public_id}/categories`
+
+User OAuth flow endpoints (dashboard modal uses these):
+- `GET /discord/oauth/start` (opens Discord login/consent in second tab)
+- `GET /discord/oauth/callback` (Discord redirect target)
+- `GET /discord/oauth/session`
+- `GET /discord/oauth/guilds`
+- `POST /discord/oauth/import-layout`
 
 Voice status behavior:
 - Whenever members join/leave a Discord voice channel, the bot updates that channel's name to include current occupants.

@@ -60,6 +60,7 @@
       <button id="open-friends" class="add-btn hidden" title="Friends"><i class="fas fa-user-friends"></i></button>
       <button id="open-create-dm" class="add-btn hidden"><i class="fas fa-user-plus"></i></button>
       <button id="open-add-separator" class="add-btn"><i class="fas fa-grip-lines"></i></button>
+      <button id="open-discord-import" class="add-btn" title="Import from Discord"><i class="fab fa-discord"></i></button>
       <button id="open-create-item" class="add-btn" title="Create"><i class="fas fa-plus"></i></button>
     </div>
   </aside>
@@ -255,6 +256,37 @@
     <h3>Create Direct Message</h3>
     <input type="text" id="dm-friend-search-input" placeholder="Search friends...">
     <div id="dm-friend-picker-list" class="friends-list"></div>
+  </div>
+</div>
+
+<div id="discord-import-modal" class="modal">
+  <div class="modal-content create-dm-modal-content">
+    <span class="close">&times;</span>
+    <h3>Import From Discord</h3>
+    <div class="settings-subtitle" id="discord-import-server-label">Target server: -</div>
+    <div class="settings-action-row">
+      <button id="discord-connect-btn" type="button">Connect Discord</button>
+      <button id="discord-refresh-session-btn" type="button" class="secondary-action">I've Authorized</button>
+    </div>
+    <div class="settings-row"><strong>Status:</strong> <span id="discord-session-status">Not connected</span></div>
+    <select id="discord-guild-select">
+      <option value="">Select Discord server...</option>
+    </select>
+    <div class="settings-control-row">
+      <label><input id="discord-import-replace-existing" type="checkbox"> Replace existing channels</label>
+    </div>
+    <div class="settings-control-row">
+      <label><input id="discord-import-skip-existing" type="checkbox" checked> Skip duplicate name/type channels</label>
+    </div>
+    <div class="settings-control-row">
+      <label><input id="discord-import-create-categories" type="checkbox" checked> Create Tavern categories</label>
+    </div>
+    <div class="settings-control-row">
+      <label><input id="discord-import-prefix-category" type="checkbox" checked> Prefix category in names</label>
+    </div>
+    <div class="settings-action-row">
+      <button id="discord-run-import-btn" type="button">Import Layout</button>
+    </div>
   </div>
 </div>
 

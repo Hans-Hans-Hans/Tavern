@@ -30,7 +30,59 @@ def create_channel(server_public_id: str,
     Create a new channel in the specified server.
     Requires the name of the channel and authenticated user.
     """
-    return service.create_channel(db, server_public_id, channel_in.name, channel_in.type, current_user.id)
+    return service.create_channel(
+        db,
+        server_public_id,
+        channel_in.name,
+        channel_in.type,
+        current_user.id,
+        category_public_id=channel_in.category_public_id,
+    )
+
+
+@router.get("/server/{server_public_id}/categories", response_model=List[schemas.ChannelCategoryOut])
+def list_categories(
+    server_public_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return service.list_server_categories(db, server_public_id, current_user.id)
+
+
+@router.post("/server/{server_public_id}/categories", response_model=schemas.ChannelCategoryOut)
+def create_category(
+    server_public_id: str,
+    payload: schemas.ChannelCategoryCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return service.create_server_category(db, server_public_id, payload.name, current_user.id)
+
+
+@router.get("/server/{server_public_id}/layout", response_model=schemas.ServerChannelLayoutOut)
+def get_server_layout(
+    server_public_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return service.get_server_channel_layout(db, server_public_id, current_user.id)
+
+
+@router.put("/server/{server_public_id}/layout", response_model=schemas.ServerChannelLayoutOut)
+def save_server_layout(
+    server_public_id: str,
+    payload: schemas.ServerChannelLayoutIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return service.save_server_channel_layout(
+        db,
+        server_public_id,
+        current_user.id,
+        layout_tokens=payload.layout_tokens,
+        separators=payload.separators,
+        collapsed=payload.collapsed,
+    )
 
 
 @router.delete("/{channel_public_id}")

@@ -25,6 +25,7 @@ const dmFriendSearchInput = document.getElementById("dm-friend-search-input");
 const dmFriendPickerList = document.getElementById("dm-friend-picker-list");
 const openFriendsBtn = document.getElementById("open-friends");
 const openAddSeparatorBtn = document.getElementById("open-add-separator");
+const openDiscordImportBtn = document.getElementById("open-discord-import");
 const openServerMembersBtn = document.getElementById("open-server-members");
 const openServerSettingsBtn = document.getElementById("open-server-settings");
 const homeDmBtn = document.getElementById("home-dm-btn");
@@ -38,6 +39,17 @@ const createChannelModal = document.getElementById("create-channel-modal");
 const submitChannelBtn = document.getElementById("submit-channel");
 const channelNameInput = document.getElementById("new-channel-name");
 const channelTypeInput = document.getElementById("new-channel-type");
+const discordImportModal = document.getElementById("discord-import-modal");
+const discordImportServerLabel = document.getElementById("discord-import-server-label");
+const discordConnectBtn = document.getElementById("discord-connect-btn");
+const discordRefreshSessionBtn = document.getElementById("discord-refresh-session-btn");
+const discordSessionStatus = document.getElementById("discord-session-status");
+const discordGuildSelect = document.getElementById("discord-guild-select");
+const discordImportReplaceExistingInput = document.getElementById("discord-import-replace-existing");
+const discordImportSkipExistingInput = document.getElementById("discord-import-skip-existing");
+const discordImportCreateCategoriesInput = document.getElementById("discord-import-create-categories");
+const discordImportPrefixCategoryInput = document.getElementById("discord-import-prefix-category");
+const discordRunImportBtn = document.getElementById("discord-run-import-btn");
 const REQUIRED_CHANNEL_TYPES = [
   { value: "text", label: "Text" },
   { value: "voice", label: "Voice" },
@@ -534,6 +546,7 @@ const channelLastSeen = new Map();
 const channelToServer = new Map();
 const channelTypeById = new Map();
 const channelNameById = new Map();
+const channelCategoryById = new Map();
 const serverNicknamesByServer = new Map();
 const serverRolesByServer = new Map();
 const channelSockets = new Map();
@@ -541,6 +554,8 @@ const channelReconnectTimers = new Map();
 const channelSocketFailureCounts = new Map();
 const blockedChannelSocketIds = new Set();
 const channelPresence = new Map();
+const serverChannelLayouts = new Map();
+const serverLayoutSaveTimers = new Map();
 const serverOnlineUsers = new Map();
 const typingUsersByChannel = new Map();
 let typingStopTimer = null;
@@ -5521,6 +5536,7 @@ function updateSidebarModeUI() {
   if (openFriendsBtn) openFriendsBtn.classList.toggle("hidden", !isDmMode);
   if (openCreateDmBtn) openCreateDmBtn.classList.toggle("hidden", !isDmMode);
   if (openAddSeparatorBtn) openAddSeparatorBtn.classList.toggle("hidden", isDmMode);
+  if (openDiscordImportBtn) openDiscordImportBtn.classList.toggle("hidden", isDmMode);
   if (openCreateChannelBtn) openCreateChannelBtn.classList.toggle("hidden", isDmMode);
   if (openServerSwitcherBtn) openServerSwitcherBtn.classList.remove("hidden");
   if (openCreateItemBtn) openCreateItemBtn.classList.toggle("hidden", false);
@@ -9550,6 +9566,7 @@ function removeStaleChannelState(channelId) {
   channelToServer.delete(channelId);
   channelTypeById.delete(channelId);
   channelNameById.delete(channelId);
+  channelCategoryById.delete(channelId);
   if (voiceSocketChannelId === channelId) {
     leaveVoiceChannel();
   }
@@ -9754,6 +9771,7 @@ async function syncRealtimeSubscriptions() {
           channelToServer.set(channel.public_id, server.public_id);
           channelTypeById.set(channel.public_id, channel.type || "text");
           channelNameById.set(channel.public_id, channel.name);
+          channelCategoryById.set(channel.public_id, channel.category_public_id || null);
           connectChannelSocket(channel.public_id);
         }
       }
@@ -11328,6 +11346,156 @@ function saveObject(storageKey, value) {
   }
 }
 
+async function createServerCategory(serverPublicId, name) {
+  const res = await fetch(`/channels/server/${serverPublicId}/categories`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) {
+    let detail = "Failed to create category";
+    try {
+      const data = await res.json();
+      if (data?.detail) detail = data.detail;
+    } catch {}
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
+async function fetchDiscordOauthSession() {
+  const res = await fetch("/discord/oauth/session", { credentials: "include" });
+  if (!res.ok) throw new Error(`Failed to load Discord session: ${res.status}`);
+  return res.json();
+}
+
+async function fetchDiscordOauthGuilds() {
+  const res = await fetch("/discord/oauth/guilds", { credentials: "include" });
+  if (!res.ok) {
+    let detail = "Failed to load Discord servers";
+    try {
+      const data = await res.json();
+      if (data?.detail) detail = data.detail;
+    } catch {}
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
+async function runDiscordOauthImport(payload) {
+  const res = await fetch("/discord/oauth/import-layout", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    let detail = "Discord import failed";
+    try {
+      const data = await res.json();
+      if (data?.detail) detail = data.detail;
+    } catch {}
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
+async function refreshDiscordImportModalState() {
+  if (!discordSessionStatus || !discordGuildSelect) return;
+  discordSessionStatus.textContent = "Checking connection...";
+  discordGuildSelect.innerHTML = '<option value="">Select Discord server...</option>';
+  try {
+    const session = await fetchDiscordOauthSession();
+    if (!session?.connected) {
+      discordSessionStatus.textContent = "Not connected";
+      return;
+    }
+    discordSessionStatus.textContent = `Connected as ${session.username || session.discord_user_id || "Discord user"}`;
+    const guilds = await fetchDiscordOauthGuilds();
+    guilds
+      .sort((a, b) => String(a.guild_name || "").localeCompare(String(b.guild_name || "")))
+      .forEach((guild) => {
+        const option = document.createElement("option");
+        option.value = guild.guild_id;
+        option.textContent = guild.owner ? `${guild.guild_name} (owner)` : guild.guild_name;
+        discordGuildSelect.appendChild(option);
+      });
+  } catch (err) {
+    discordSessionStatus.textContent = "Not connected";
+    console.error("Discord OAuth modal refresh failed:", err);
+  }
+}
+
+function normalizeServerLayoutBundle(raw) {
+  const bundle = raw && typeof raw === "object" ? raw : {};
+  const layoutTokens = Array.isArray(bundle.layout_tokens)
+    ? bundle.layout_tokens.map((token) => String(token || "").trim()).filter(Boolean)
+    : [];
+  const separators = {};
+  const sourceSeparators = bundle.separators && typeof bundle.separators === "object" ? bundle.separators : {};
+  Object.entries(sourceSeparators).forEach(([key, value]) => {
+    const id = String(key || "").trim();
+    const label = String(value || "").trim();
+    if (!id || !label) return;
+    separators[id] = label;
+  });
+  const collapsed = {};
+  const sourceCollapsed = bundle.collapsed && typeof bundle.collapsed === "object" ? bundle.collapsed : {};
+  Object.entries(sourceCollapsed).forEach(([key, value]) => {
+    const id = String(key || "").trim();
+    if (!id) return;
+    collapsed[id] = !!value;
+  });
+  return { layoutTokens, separators, collapsed };
+}
+
+function getServerLayoutState(serverPublicId) {
+  if (!serverChannelLayouts.has(serverPublicId)) {
+    serverChannelLayouts.set(serverPublicId, { layoutTokens: [], separators: {}, collapsed: {} });
+  }
+  return serverChannelLayouts.get(serverPublicId);
+}
+
+async function fetchServerLayoutState(serverPublicId) {
+  const res = await fetch(`/channels/server/${serverPublicId}/layout`, { credentials: "include" });
+  if (!res.ok) throw new Error(`Failed to load server layout: ${res.status}`);
+  const parsed = normalizeServerLayoutBundle(await res.json());
+  serverChannelLayouts.set(serverPublicId, parsed);
+  return parsed;
+}
+
+async function saveServerLayoutState(serverPublicId) {
+  const state = getServerLayoutState(serverPublicId);
+  const res = await fetch(`/channels/server/${serverPublicId}/layout`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      layout_tokens: state.layoutTokens,
+      separators: state.separators,
+      collapsed: state.collapsed,
+    }),
+  });
+  if (!res.ok) throw new Error(`Failed to save server layout: ${res.status}`);
+  const parsed = normalizeServerLayoutBundle(await res.json());
+  serverChannelLayouts.set(serverPublicId, parsed);
+  return parsed;
+}
+
+function queueSaveServerLayoutState(serverPublicId) {
+  if (!serverPublicId) return;
+  const existingTimer = serverLayoutSaveTimers.get(serverPublicId);
+  if (existingTimer) window.clearTimeout(existingTimer);
+  const timer = window.setTimeout(() => {
+    serverLayoutSaveTimers.delete(serverPublicId);
+    saveServerLayoutState(serverPublicId).catch((err) => {
+      console.error("Failed to persist server layout:", err);
+    });
+  }, 180);
+  serverLayoutSaveTimers.set(serverPublicId, timer);
+}
+
 function sortByStoredOrder(items, storageKey, getId) {
   const order = getStoredOrder(storageKey);
   const indexMap = new Map(order.map((id, idx) => [id, idx]));
@@ -11470,7 +11638,10 @@ function getBattlemapStateStorageKey(channelId) {
 function persistChannelOrder() {
   if (!activeServerId) return;
   const layoutTokens = [...channelsPanel.querySelectorAll("li[data-layout-token]")].map((el) => el.dataset.layoutToken);
-  saveOrder(getChannelLayoutStorageKey(activeServerId), layoutTokens);
+  const state = getServerLayoutState(activeServerId);
+  state.layoutTokens = layoutTokens;
+  serverChannelLayouts.set(activeServerId, state);
+  queueSaveServerLayoutState(activeServerId);
   const channelIds = [...channelsPanel.querySelectorAll(".channel-item")].map((el) => el.dataset.channelId);
   saveOrder(getChannelOrderStorageKey(activeServerId), channelIds);
 }
@@ -12476,19 +12647,21 @@ function highlightActiveServer() {
 async function loadChannels(serverPublicId, options = {}) {
   try {
     await ensureServerNicknames(serverPublicId, true);
-    const res = await fetch(`/channels/server/${serverPublicId}`, { credentials: "include" });
-    if (!res.ok) throw new Error(`Failed to load channels: ${res.status}`);
-    const channels = sortByStoredOrder(
-      await res.json(),
-      getChannelOrderStorageKey(serverPublicId),
-      (channel) => channel.public_id
-    );
+    const [channelsRes, layoutRes] = await Promise.all([
+      fetch(`/channels/server/${serverPublicId}`, { credentials: "include" }),
+      fetch(`/channels/server/${serverPublicId}/layout`, { credentials: "include" }),
+    ]);
+    if (!channelsRes.ok) throw new Error(`Failed to load channels: ${channelsRes.status}`);
+    const channels = await channelsRes.json();
+    const serverLayout = layoutRes.ok
+      ? normalizeServerLayoutBundle(await layoutRes.json())
+      : getServerLayoutState(serverPublicId);
+    serverChannelLayouts.set(serverPublicId, serverLayout);
     const channelIcons = getStoredObject(getChannelIconsStorageKey(serverPublicId), {});
     const channelsById = new Map(channels.map((ch) => [ch.public_id, ch]));
-    const separators = getStoredObject(getChannelSeparatorsStorageKey(serverPublicId), {});
-    const collapsedSeparators = getStoredObject(getChannelSeparatorCollapseStorageKey(serverPublicId), {});
-    const layoutKey = getChannelLayoutStorageKey(serverPublicId);
-    let layout = getStoredOrder(layoutKey);
+    const separators = { ...(serverLayout.separators || {}) };
+    const collapsedSeparators = { ...(serverLayout.collapsed || {}) };
+    let layout = Array.isArray(serverLayout.layoutTokens) ? [...serverLayout.layoutTokens] : [];
     if (layout.length === 0) {
       layout = channels.map((channel) => `ch:${channel.public_id}`);
     }
@@ -12501,10 +12674,15 @@ async function loadChannels(serverPublicId, options = {}) {
       const token = `ch:${channel.public_id}`;
       if (!layout.includes(token)) layout.push(token);
     });
-    saveOrder(layoutKey, layout);
+    serverChannelLayouts.set(serverPublicId, {
+      layoutTokens: layout,
+      separators,
+      collapsed: collapsedSeparators,
+    });
 
     channelsPanel.innerHTML = "";
     let hideFollowingChannels = false;
+    let lastCategoryPublicId = "__none__";
     layout.forEach((token) => {
       if (token.startsWith("sep:")) {
         const separatorId = token.slice(4);
@@ -12530,9 +12708,10 @@ async function loadChannels(serverPublicId, options = {}) {
         const toggleSeparatorCollapsed = (event) => {
           event.preventDefault();
           event.stopPropagation();
-          const nextCollapsed = getStoredObject(getChannelSeparatorCollapseStorageKey(serverPublicId), {});
-          nextCollapsed[separatorId] = !isCollapsed;
-          saveObject(getChannelSeparatorCollapseStorageKey(serverPublicId), nextCollapsed);
+          const state = getServerLayoutState(serverPublicId);
+          state.collapsed = { ...(state.collapsed || {}), [separatorId]: !isCollapsed };
+          serverChannelLayouts.set(serverPublicId, state);
+          queueSaveServerLayoutState(serverPublicId);
           loadChannels(serverPublicId, options);
         };
         sepToggle.addEventListener("click", toggleSeparatorCollapsed);
@@ -12544,16 +12723,17 @@ async function loadChannels(serverPublicId, options = {}) {
         sepDelete.addEventListener("click", (event) => {
           event.preventDefault();
           event.stopPropagation();
-          const next = getStoredObject(getChannelSeparatorsStorageKey(serverPublicId), {});
-          delete next[separatorId];
-          saveObject(getChannelSeparatorsStorageKey(serverPublicId), next);
-          const nextCollapsed = getStoredObject(getChannelSeparatorCollapseStorageKey(serverPublicId), {});
-          if (separatorId in nextCollapsed) {
-            delete nextCollapsed[separatorId];
-            saveObject(getChannelSeparatorCollapseStorageKey(serverPublicId), nextCollapsed);
-          }
-          const nextLayout = getStoredOrder(layoutKey).filter((t) => t !== token);
-          saveOrder(layoutKey, nextLayout);
+          const state = getServerLayoutState(serverPublicId);
+          const nextSeparators = { ...(state.separators || {}) };
+          const nextCollapsed = { ...(state.collapsed || {}) };
+          delete nextSeparators[separatorId];
+          delete nextCollapsed[separatorId];
+          const nextLayout = (state.layoutTokens || []).filter((t) => t !== token);
+          state.separators = nextSeparators;
+          state.collapsed = nextCollapsed;
+          state.layoutTokens = nextLayout;
+          serverChannelLayouts.set(serverPublicId, state);
+          queueSaveServerLayoutState(serverPublicId);
           loadChannels(serverPublicId);
         });
         sepLi.appendChild(sepToggle);
@@ -12564,6 +12744,22 @@ async function loadChannels(serverPublicId, options = {}) {
       }
       const channel = channelsById.get(token.slice(3));
       if (!channel) return;
+      const categoryPublicId = String(channel.category_public_id || "");
+      const categoryName = String(channel.category_name || "").trim();
+      if (categoryPublicId && categoryPublicId !== lastCategoryPublicId) {
+        lastCategoryPublicId = categoryPublicId;
+        const categoryLi = document.createElement("li");
+        categoryLi.className = "channel-category-item";
+        categoryLi.dataset.categoryId = categoryPublicId;
+        categoryLi.textContent = categoryName || "Category";
+        if (hideFollowingChannels) {
+          categoryLi.classList.add("channel-collapsed-hidden");
+          categoryLi.hidden = true;
+        }
+        channelsPanel.appendChild(categoryLi);
+      } else if (!categoryPublicId) {
+        lastCategoryPublicId = "__none__";
+      }
       const li = document.createElement("li");
       const nameEl = document.createElement("span");
       nameEl.classList.add("channel-name");
@@ -12591,6 +12787,7 @@ async function loadChannels(serverPublicId, options = {}) {
       channelToServer.set(channel.public_id, serverPublicId);
       channelTypeById.set(channel.public_id, channel.type || "text");
       channelNameById.set(channel.public_id, channel.name);
+      channelCategoryById.set(channel.public_id, channel.category_public_id || null);
       li.draggable = true;
       li.addEventListener("click", async () => {
         stopTypingNow();
@@ -12847,12 +13044,13 @@ if (createChannelModal && submitChannelBtn) {
     const name = channelNameInput.value.trim();
     const type = (channelTypeInput?.value || "text").trim().toLowerCase();
     if (!name || !activeServerId) return;
+    const categoryPublicId = activeChannelId ? (channelCategoryById.get(activeChannelId) || null) : null;
     try {
       const res = await fetch(`/channels/server/${activeServerId}`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, type }),
+        body: JSON.stringify({ name, type, category_public_id: categoryPublicId }),
       });
       if (!res.ok) {
         let detail = "Failed to create channel";
@@ -13152,23 +13350,95 @@ if (sendFriendRequestBtn) {
 }
 
 if (openAddSeparatorBtn) {
-  openAddSeparatorBtn.addEventListener("click", () => {
+  openAddSeparatorBtn.addEventListener("click", async () => {
     if (!activeServerId) {
       alert("Select a server first!");
       return;
     }
-    const label = window.prompt("Separator text (Markdown/HTML allowed):");
-    if (!label || !label.trim()) return;
+    const raw = window.prompt("Add separator text, or start with `cat:` to create a channel category:");
+    if (!raw || !raw.trim()) return;
+    const trimmed = raw.trim();
+    if (/^cat\s*:/i.test(trimmed)) {
+      const categoryName = trimmed.replace(/^cat\s*:/i, "").trim();
+      if (!categoryName) {
+        alert("Category name is required after `cat:`");
+        return;
+      }
+      try {
+        await createServerCategory(activeServerId, categoryName);
+      } catch (err) {
+        alert(err?.message || "Failed to create category");
+      }
+      await loadChannels(activeServerId);
+      return;
+    }
     const separatorId = String(Date.now());
-    const separatorsKey = getChannelSeparatorsStorageKey(activeServerId);
-    const layoutKey = getChannelLayoutStorageKey(activeServerId);
-    const separators = getStoredObject(separatorsKey, {});
-    separators[separatorId] = label.trim();
-    saveObject(separatorsKey, separators);
-    const layout = getStoredOrder(layoutKey);
-    layout.push(`sep:${separatorId}`);
-    saveOrder(layoutKey, layout);
+    const state = getServerLayoutState(activeServerId);
+    state.separators = { ...(state.separators || {}), [separatorId]: trimmed };
+    state.layoutTokens = [...(state.layoutTokens || []), `sep:${separatorId}`];
+    serverChannelLayouts.set(activeServerId, state);
+    queueSaveServerLayoutState(activeServerId);
     loadChannels(activeServerId);
+  });
+}
+
+if (openDiscordImportBtn && discordImportModal) {
+  openDiscordImportBtn.addEventListener("click", async () => {
+    if (!activeServerId) {
+      alert("Select a server first!");
+      return;
+    }
+    if (discordImportServerLabel) {
+      const serverName = getServerNameById(activeServerId) || activeServerId;
+      discordImportServerLabel.textContent = `Target server: ${serverName}`;
+    }
+    openModal(discordImportModal);
+    await refreshDiscordImportModalState();
+  });
+}
+
+if (discordConnectBtn) {
+  discordConnectBtn.addEventListener("click", () => {
+    window.open("/discord/oauth/start", "_blank", "noopener");
+  });
+}
+
+if (discordRefreshSessionBtn) {
+  discordRefreshSessionBtn.addEventListener("click", () => {
+    refreshDiscordImportModalState().catch((err) => {
+      alert(err?.message || "Failed to refresh Discord session");
+    });
+  });
+}
+
+if (discordRunImportBtn) {
+  discordRunImportBtn.addEventListener("click", async () => {
+    if (!activeServerId) {
+      alert("Select a server first!");
+      return;
+    }
+    const guildId = String(discordGuildSelect?.value || "").trim();
+    if (!guildId) {
+      alert("Select a Discord server first.");
+      return;
+    }
+    try {
+      const result = await runDiscordOauthImport({
+        server_public_id: activeServerId,
+        guild_id: guildId,
+        replace_existing: !!discordImportReplaceExistingInput?.checked,
+        skip_existing: !!discordImportSkipExistingInput?.checked,
+        include_text: true,
+        include_voice: true,
+        create_categories: !!discordImportCreateCategoriesInput?.checked,
+        prefix_category: !!discordImportPrefixCategoryInput?.checked,
+      });
+      await loadChannels(activeServerId);
+      closeModal(discordImportModal);
+      showToast(`Imported ${result.created || 0} channels from ${result.guild_name || "Discord"}`);
+    } catch (err) {
+      alert(err?.message || "Discord import failed");
+    }
   });
 }
 
@@ -13238,6 +13508,7 @@ if (confirmDeleteChannelBtn && deleteChannelModal) {
       channelToServer.delete(deleteChannelTarget.publicId);
       channelTypeById.delete(deleteChannelTarget.publicId);
       channelNameById.delete(deleteChannelTarget.publicId);
+      channelCategoryById.delete(deleteChannelTarget.publicId);
       if (activeServerId) {
         const icons = getStoredObject(getChannelIconsStorageKey(activeServerId), {});
         delete icons[deleteChannelTarget.publicId];
@@ -13254,7 +13525,7 @@ if (confirmDeleteChannelBtn && deleteChannelModal) {
   });
 }
 
-[createServerModal, createChannelModal, inviteMemberModal, deleteServerModal, deleteChannelModal, userSettingsModal, publicUserProfileModal, richEditorModal, threadModal, pinsModal, friendsModal, createDmModal, adminModal, serverMembersModal, serverSettingsModal, launchChecklistModal, quickSwitcherModal, shortcutsModal, onboardingTutorialModal, imagePreprocessModal].forEach((modal) => {
+[createServerModal, createChannelModal, inviteMemberModal, deleteServerModal, deleteChannelModal, userSettingsModal, publicUserProfileModal, richEditorModal, threadModal, pinsModal, friendsModal, createDmModal, discordImportModal, adminModal, serverMembersModal, serverSettingsModal, launchChecklistModal, quickSwitcherModal, shortcutsModal, onboardingTutorialModal, imagePreprocessModal].forEach((modal) => {
   if (!modal) return;
   modal.addEventListener("click", (event) => {
     if (event.target === modal) {

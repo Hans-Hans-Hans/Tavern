@@ -129,9 +129,13 @@ def create_server(db: Session, server_in: schemas.ServerCreate, owner_id: int) -
         public_id=str(uuid.uuid4()),
         name="general",
         server_id=server.id,
+        position=0,
         type="text",
     )
     db.add(general_channel)
+    server.channel_layout = json.dumps([f"ch:{general_channel.public_id}"], separators=(",", ":"), ensure_ascii=False)
+    server.channel_separators = json.dumps({}, separators=(",", ":"), ensure_ascii=False)
+    server.channel_separator_collapsed = json.dumps({}, separators=(",", ":"), ensure_ascii=False)
     db.commit()
     return server
 

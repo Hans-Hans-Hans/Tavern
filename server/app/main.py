@@ -125,6 +125,10 @@ def _ensure_core_schema_updates():
             conn.execute(text("ALTER TABLE server_members ADD COLUMN nickname VARCHAR(50)"))
         if "battlemap_state" not in channel_columns:
             conn.execute(text("ALTER TABLE channels ADD COLUMN battlemap_state TEXT"))
+        if "category_id" not in channel_columns:
+            conn.execute(text("ALTER TABLE channels ADD COLUMN category_id INTEGER"))
+        if "position" not in channel_columns:
+            conn.execute(text("ALTER TABLE channels ADD COLUMN position INTEGER DEFAULT 0"))
         if "max_upload_size_mb" not in server_columns:
             conn.execute(text("ALTER TABLE servers ADD COLUMN max_upload_size_mb INTEGER"))
         if "log_retention_days" not in server_columns:
@@ -143,10 +147,19 @@ def _ensure_core_schema_updates():
             conn.execute(text("ALTER TABLE servers ADD COLUMN automod_blocked_terms VARCHAR(4000)"))
         if "automod_blocked_extensions" not in server_columns:
             conn.execute(text("ALTER TABLE servers ADD COLUMN automod_blocked_extensions VARCHAR(1000)"))
+        if "channel_layout" not in server_columns:
+            conn.execute(text("ALTER TABLE servers ADD COLUMN channel_layout VARCHAR(16000)"))
+        if "channel_separators" not in server_columns:
+            conn.execute(text("ALTER TABLE servers ADD COLUMN channel_separators VARCHAR(16000)"))
+        if "channel_separator_collapsed" not in server_columns:
+            conn.execute(text("ALTER TABLE servers ADD COLUMN channel_separator_collapsed VARCHAR(16000)"))
 
     if not inspector.has_table("server_roles"):
         from app.features.servers.models import ServerRole  # noqa: F401
         Base.metadata.create_all(bind=engine, tables=[ServerRole.__table__])
+    if not inspector.has_table("channel_categories"):
+        from app.features.channels.models import ChannelCategory  # noqa: F401
+        Base.metadata.create_all(bind=engine, tables=[ChannelCategory.__table__])
     if not inspector.has_table("friend_requests"):
         from app.features.users.models import FriendRequest  # noqa: F401
         Base.metadata.create_all(bind=engine, tables=[FriendRequest.__table__])

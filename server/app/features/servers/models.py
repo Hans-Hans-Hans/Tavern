@@ -25,6 +25,9 @@ class Server(Base):
     automod_block_invite_links: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     automod_blocked_terms: Mapped[str | None] = mapped_column(String(4000), nullable=True)
     automod_blocked_extensions: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    channel_layout: Mapped[str | None] = mapped_column(String(16000), nullable=True)
+    channel_separators: Mapped[str | None] = mapped_column(String(16000), nullable=True)
+    channel_separator_collapsed: Mapped[str | None] = mapped_column(String(16000), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC))  # Creation timestamp
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC))  # Last updated
 
@@ -40,6 +43,11 @@ class Server(Base):
         "Channel",
         back_populates="server",
         cascade="all, delete-orphan"  # Deleting server deletes channels
+    )
+    channel_categories = relationship(
+        "ChannelCategory",
+        back_populates="server",
+        cascade="all, delete-orphan",
     )
 
     # Relationship to roles

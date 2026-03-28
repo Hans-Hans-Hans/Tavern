@@ -54,3 +54,43 @@ class DiscordVoiceSyncIn(BaseModel):
         if not text.isdigit():
             raise ValueError("channel_id must be a Discord snowflake ID")
         return text
+
+
+class DiscordImportLayoutIn(BaseModel):
+    server_public_id: str = Field(min_length=3, max_length=80)
+    guild_id: str = Field(min_length=5, max_length=30)
+    replace_existing: bool = False
+    skip_existing: bool = True
+    include_text: bool = True
+    include_voice: bool = True
+    create_categories: bool = True
+    prefix_category: bool = True
+
+    @field_validator("guild_id")
+    @classmethod
+    def validate_guild_id(cls, value: str) -> str:
+        text = str(value or "").strip()
+        if not text.isdigit():
+            raise ValueError("guild_id must be a Discord snowflake ID")
+        return text
+
+
+class DiscordImportLayoutOut(BaseModel):
+    guild_id: str
+    guild_name: str
+    created: int
+    skipped_duplicates: int
+    deleted_existing: int
+
+
+class DiscordOauthSessionOut(BaseModel):
+    connected: bool = False
+    discord_user_id: str | None = None
+    username: str | None = None
+    expires_at: str | None = None
+
+
+class DiscordGuildOut(BaseModel):
+    guild_id: str
+    guild_name: str
+    owner: bool = False
